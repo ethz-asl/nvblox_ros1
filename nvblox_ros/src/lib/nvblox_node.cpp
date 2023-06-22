@@ -28,8 +28,6 @@
 #include <utility>
 #include <vector>
 
-#include <nvblox_ros_common/qos.hpp>
-
 #include "nvblox_ros/visualization.hpp"
 
 namespace nvblox

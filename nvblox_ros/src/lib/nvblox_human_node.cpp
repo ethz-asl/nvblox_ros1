@@ -27,8 +27,6 @@
 #include <geometry_msgs/Point.h>
 #include <visualization_msgs/Marker.h>
 
-#include <nvblox_ros_common/qos.hpp>
-
 
 namespace nvblox
 {

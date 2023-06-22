@@ -73,7 +73,6 @@ find_package(catkin REQUIRED COMPONENTS
   cv_bridge
   message_filters
   Threads
-  #nvblox_ros_common
 )
 
 ###################################
@@ -146,33 +145,6 @@ add_library(${PROJECT_NAME}_lib SHARED
   src/lib/nvblox_node.cpp
   src/lib/nvblox_human_node.cpp
 )
-target_link_libraries(${PROJECT_NAME}_lib nvblox::nvblox_lib nvblox::nvblox_eigen pthread)
-ament_target_dependencies(${PROJECT_NAME}_lib
-  ros
-  ros_components
-  nvblox
-  sensor_msgs
-  geometry_msgs
-  nvblox_msgs
-  ros
-  std_msgs
-  visualization_msgs
-  std_srvs
-  tf2_ros
-  message_filters
-  visualization_msgs
-  cv_bridge
-  nvblox_ros_common
-)
-target_include_directories(${PROJECT_NAME}_lib PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>)
-target_include_directories(${PROJECT_NAME}_lib BEFORE PRIVATE
-  $<TARGET_PROPERTY:nvblox::nvblox_eigen,INTERFACE_INCLUDE_DIRECTORIES>)
-
-ros_components_register_nodes(${PROJECT_NAME}_lib "nvblox::NvbloxNode")
-ros_components_register_nodes(${PROJECT_NAME}_lib "nvblox::NvbloxHumanNode")
-
 
 target_link_libraries(${PROJECT_NAME}_lib nvblox::nvblox_lib nvblox::nvblox_eigen pthread
   nvblox_interface
@@ -184,7 +156,6 @@ add_dependencies(${PROJECT_NAME}_lib
 
 target_include_directories(${PROJECT_NAME}_lib SYSTEM PUBLIC
   ${catkin_INCLUDE_DIRS})  
-
 
 
 if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.18)
