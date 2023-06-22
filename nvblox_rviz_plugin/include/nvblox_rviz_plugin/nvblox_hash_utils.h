@@ -22,14 +22,14 @@
 #include <unordered_set>
 #include <utility>
 
-#include <nvblox_msgs/msg/index3_d.hpp>
+#include <nvblox_msgs/Index3D.h>
 
 namespace nvblox_rviz_plugin {
 
 // Minimal functions taken from nvblox/core/hash.h to remove dependency and
 // uses the ROS types instead.
 
-typedef nvblox_msgs::msg::Index3D Index3D;
+typedef nvblox_msgs::Index3D Index3D;
 
 /**
  * Performs deco hashing on block indexes. Based on recommendations of

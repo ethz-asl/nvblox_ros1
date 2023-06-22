@@ -18,9 +18,6 @@
 #include <iostream>
 #include <limits>
 
-#include <OgreSceneManager.h>
-#include <OgreSceneNode.h>
-
 #include "nvblox_rviz_plugin/nvblox_mesh_visual.h"
 
 namespace nvblox_rviz_plugin {
@@ -71,10 +68,10 @@ Ogre::Vector3 NvbloxMeshVisual::lambertShading(
   return std::max<float>(normal.dotProduct(light), 0.0f) * color;
 }
 
-std_msgs::msg::ColorRGBA NvbloxMeshVisual::getMeshColorFromColorAndNormal(
-    const std_msgs::msg::ColorRGBA& color,
-    const geometry_msgs::msg::Point32& normal) const {
-  std_msgs::msg::ColorRGBA output_color;
+std_msgs::ColorRGBA NvbloxMeshVisual::getMeshColorFromColorAndNormal(
+    const std_msgs::ColorRGBA& color,
+    const geometry_msgs::Point32& normal) const {
+  std_msgs::ColorRGBA output_color;
   output_color.a = 1.0f;
   if (mesh_color_ == MeshColor::kColor) {
     output_color = color;
@@ -104,7 +101,7 @@ std_msgs::msg::ColorRGBA NvbloxMeshVisual::getMeshColorFromColorAndNormal(
 }
 
 void NvbloxMeshVisual::setMessage(
-    const nvblox_msgs::msg::Mesh::ConstSharedPtr& msg) {
+    const nvblox_msgs::Mesh::ConstPtr& msg) {
   block_size_ = msg->block_size;
 
   // First, check if we need to clear the existing map.
@@ -117,8 +114,8 @@ void NvbloxMeshVisual::setMessage(
 
   // Iterate over all the blocks in the message and make sure to add them.
   for (size_t i = 0; i < msg->block_indices.size(); i++) {
-    const nvblox_msgs::msg::Index3D& block_index = msg->block_indices[i];
-    const nvblox_msgs::msg::MeshBlock& mesh_block = msg->blocks[i];
+    const nvblox_msgs::Index3D& block_index = msg->block_indices[i];
+    const nvblox_msgs::MeshBlock& mesh_block = msg->blocks[i];
 
     // create ogre object
     Ogre::ManualObject* ogre_object;
@@ -167,7 +164,7 @@ void NvbloxMeshVisual::setMessage(
       ogre_object->normal(mesh_block.normals[i].x, mesh_block.normals[i].y,
                           mesh_block.normals[i].z);
 
-      std_msgs::msg::ColorRGBA color;
+      std_msgs::ColorRGBA color;
       if (!mesh_block.colors.empty()) {
         color = mesh_block.colors[i];
       }

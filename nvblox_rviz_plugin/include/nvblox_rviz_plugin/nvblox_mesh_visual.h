@@ -17,9 +17,15 @@
 
 #pragma once
 
-#include <OgreManualObject.h>
+#include <OGRE/OgreManualObject.h>
+#include <OGRE/OgreQuaternion.h>
+#include <OGRE/OgreSceneManager.h>
+#include <OGRE/OgreSceneNode.h>
+#include <OGRE/OgreVector3.h>
 
-#include <nvblox_msgs/msg/mesh.hpp>
+#include <std_msgs/ColorRGBA.h>
+#include <geometry_msgs/Point32.h>
+#include <nvblox_msgs/Mesh.h>
 
 #include "nvblox_rviz_plugin/nvblox_hash_utils.h"
 
@@ -34,7 +40,7 @@ class NvbloxMeshVisual {
                    Ogre::SceneNode* parent_node);
   virtual ~NvbloxMeshVisual();
 
-  void setMessage(const nvblox_msgs::msg::Mesh::ConstSharedPtr& msg);
+  void setMessage(const nvblox_msgs::Mesh::ConstPtr& msg);
 
   /// Set the coordinate frame pose.
   void setFramePosition(const Ogre::Vector3& position);
@@ -49,9 +55,9 @@ class NvbloxMeshVisual {
                                const Ogre::Vector3& light,
                                const Ogre::Vector3& color) const;
 
-  std_msgs::msg::ColorRGBA getMeshColorFromColorAndNormal(
-      const std_msgs::msg::ColorRGBA& color,
-      const geometry_msgs::msg::Point32& normal) const;
+  std_msgs::ColorRGBA getMeshColorFromColorAndNormal(
+      const std_msgs::ColorRGBA& color,
+      const geometry_msgs::Point32& normal) const;
 
   Ogre::SceneNode* frame_node_;
   Ogre::SceneManager* scene_manager_;
