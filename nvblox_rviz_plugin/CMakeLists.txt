@@ -21,10 +21,11 @@ project(nvblox_rviz_plugin)
 # Default to C++17
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)
+  set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
+  add_compile_options(-Wall -Wextra -Wpedantic -O3)
 endif()
 
 # Default to release build
@@ -37,17 +38,37 @@ message( STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}" )
 ## This setting causes Qt's "MOC" generation to happen automatically.
 set(CMAKE_AUTOMOC ON)
 
-# find dependencies
-find_package(ament_cmake REQUIRED)
-find_package(rviz_common REQUIRED)
-find_package(rviz_rendering REQUIRED)
-find_package(rviz_ogre_vendor REQUIRED)
-find_package(Qt5 REQUIRED COMPONENTS Widgets)
-find_package(rviz_default_plugins REQUIRED)
-find_package(nvblox_msgs REQUIRED)
-find_package(pluginlib REQUIRED)
+find_package(catkin REQUIRED COMPONENTS
+  rviz
+  pluginlib
+  nvblox_msgs
+  std_msgs
+  geometry_msgs
+)
 
-include_directories(include)
+# QT5
+find_package(Qt5 COMPONENTS Widgets REQUIRED)
+
+catkin_package(
+  INCLUDE_DIRS
+    include
+  LIBRARIES
+    ${PROJECT_NAME}
+    Qt5::Widgets
+  CATKIN_DEPENDS
+    rviz
+    pluginlib
+    nvblox_msgs
+    std_msgs
+    geometry_msgs
+)
+
+include_directories(
+  include
+  ${catkin_INCLUDE_DIRS}
+  ${QT_INCLUDE_DIRS}
+  ${CMAKE_CURRENT_BINARY_DIR}
+  )
 
 #############
 # LIBRARIES #
@@ -59,59 +80,42 @@ add_library(${PROJECT_NAME} SHARED
   src/nvblox_mesh_display.cpp
   src/nvblox_mesh_visual.cpp
 )
+
+add_dependencies(${PROJECT_NAME}
+  ${catkin_EXPORTED_TARGETS}
+)
+
+target_include_directories(${PROJECT_NAME} PUBLIC
+  ${catkin_INCLUDE_DIRS}
+)
+
 target_link_libraries(${PROJECT_NAME} PUBLIC
-  rviz_ogre_vendor::OgreMain
-  rviz_ogre_vendor::OgreOverlay
+  Qt5::Widgets
+  ${catkin_LIBRARIES}
 )
-ament_target_dependencies(${PROJECT_NAME} PUBLIC 
-  nvblox_msgs 
-  rviz_common 
-  rviz_rendering 
-  pluginlib
-  rviz_ogre_vendor
-  rviz_default_plugins  
-)
-
-
-target_compile_definitions(${PROJECT_NAME}  PRIVATE "RVIZ_DEFAULT_PLUGINS_BUILDING_LIBRARY")
-
-# prevent pluginlib from using boost
-target_compile_definitions(${PROJECT_NAME}  PUBLIC "PLUGINLIB__DISABLE_BOOST_FUNCTIONS")
-
 ##########
 # EXPORT #
 ##########
-ament_export_include_directories(include)
-ament_export_targets(${PROJECT_NAME} HAS_LIBRARY_TARGET)
-ament_export_dependencies(
-  Qt5
-  rviz_common
-  rviz_rendering
-  rviz_ogre_vendor
-  rviz_default_plugins
-  rclcpp
-  nvblox_msgs
-)
+# prevent pluginlib from using boost
+target_compile_definitions(${PROJECT_NAME}  PUBLIC "PLUGINLIB__DISABLE_BOOST_FUNCTIONS")
+
+install(
+  FILES plugins_description.xml
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+
+install(
+  DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/icons" 
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+
+install(
+  DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
 
 install(
   TARGETS ${PROJECT_NAME}
   EXPORT ${PROJECT_NAME}
-  ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin
-  INCLUDES DESTINATION include
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  INCLUDES DESTINATION include/${PROJECT_NAME}/
 )
-
-install(
-  DIRECTORY include/
-  DESTINATION include
-)
-
-install(
-  DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/icons"
-  DESTINATION "share/${PROJECT_NAME}"
-)
-
-pluginlib_export_plugin_description_file(rviz_common plugins_description.xml)
-
-ament_package()

@@ -24,21 +24,28 @@
   <version>0.31.0</version>
   <description>RViz visualization plugin for Nvblox meshes</description>
   
-  <maintainer email="holeynikova@nvidia.com">Helen Oleynikova</maintainer>  
+  <maintainer email="helen.oleynikova@ethz-asl.ch">Helen Oleynikova</maintainer>
+  <maintainer email="tutuna@ethz.ch">Turcan Tuna</maintainer> 
   <license>Apache-2.0</license>
   <url type="website">https://developer.nvidia.com/isaac-ros/</url>   
   <author>Helen Oleynikova</author>
   <author>Alexander Millane</author>
 
-  <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>catkin</buildtool_depend>
 
-  <depend>nvblox_msgs</depend>
-  <depend>pluginlib</depend>
-  <depend>rviz_common</depend>
-  <depend>rviz_ogre_vendor</depend>
-  <depend>rviz_rendering</depend>  
+  <build_depend>nvblox_msgs</build_depend>
+  <build_depend>pluginlib</build_depend>
+  <build_depend>rviz</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>std_msgs</build_depend>
+
+  <exec_depend>pluginlib</exec_depend>
+  <exec_depend>rviz</exec_depend>
+  <exec_depend>nvblox_msgs</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
 
   <export>
-    <build_type>ament_cmake</build_type>
+    <rviz plugin="${prefix}/plugins_description.xml"/>
   </export>
 </package>
