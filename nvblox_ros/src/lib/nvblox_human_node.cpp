@@ -334,7 +334,7 @@ bool NvbloxHumanNode::processDepthImage(
   integration_timer.Stop();
 
   timing::Timer overlay_timer("ros/depth/output/human_overlay");
-  if (depth_frame_overlay_publisher_->get_subscription_count() > 0) {
+  if (depth_frame_overlay_publisher_.getNumSubscribers() > 0) {
     sensor_msgs::Image img_msg;
     const ColorImage & depth_overlay =
       multi_mapper_->getLastDepthFrameMaskOverlay();
@@ -415,7 +415,7 @@ bool NvbloxHumanNode::processColorImage(
   integration_timer.Stop();
 
   timing::Timer overlay_timer("ros/color/output/human_overlay");
-  if (color_frame_overlay_publisher_->get_subscription_count() > 0) {
+  if (color_frame_overlay_publisher_.getNumSubscribers() > 0) {
     sensor_msgs::Image img_msg;
     const ColorImage & color_overlay =
       multi_mapper_->getLastColorFrameMaskOverlay();
@@ -457,8 +457,8 @@ void NvbloxHumanNode::processHumanEsdf()
 
   // Check if anyone wants any human slice
   if (esdf_distance_slice_ &&
-    (human_esdf_pointcloud_publisher_->get_subscription_count() > 0) ||
-    (human_map_slice_publisher_->get_subscription_count() > 0))
+    (human_esdf_pointcloud_publisher_.getNumSubscribers() > 0) ||
+    (human_map_slice_publisher_.getNumSubscribers() > 0))
   {
     // Get the slice as an image
     timing::Timer esdf_slice_compute_timer("ros/humans/esdf/output/compute");
@@ -469,35 +469,35 @@ void NvbloxHumanNode::processHumanEsdf()
     esdf_slice_compute_timer.Stop();
 
     // Human slice pointcloud (for visualization)
-    if (human_esdf_pointcloud_publisher_->get_subscription_count() > 0) {
+    if (human_esdf_pointcloud_publisher_.getNumSubscribers() > 0) {
       timing::Timer esdf_output_human_pointcloud_timer("ros/humans/esdf/output/pointcloud");
       sensor_msgs::PointCloud2 pointcloud_msg;
       esdf_slice_converter_.sliceImageToPointcloud(
         map_slice_image, aabb, esdf_slice_height_,
         human_mapper_->esdf_layer().voxel_size(), &pointcloud_msg);
       pointcloud_msg.header.frame_id = global_frame_;
-      pointcloud_msg.header.stamp = get_clock()->now();
+      pointcloud_msg.header.stamp = ros::Time::now();
       human_esdf_pointcloud_publisher_->publish(pointcloud_msg);
     }
 
     // Human slice (for navigation)
-    if (human_map_slice_publisher_->get_subscription_count() > 0) {
+    if (human_map_slice_publisher_.getNumSubscribers() > 0) {
       timing::Timer esdf_output_human_slice_timer("ros/humans/esdf/output/slice");
       nvblox_msgs::DistanceMapSlice map_slice_msg;
       esdf_slice_converter_.distanceMapSliceImageToMsg(
         map_slice_image, aabb, esdf_slice_height_,
         human_mapper_->voxel_size_m(), &map_slice_msg);
       map_slice_msg.header.frame_id = global_frame_;
-      map_slice_msg.header.stamp = get_clock()->now();
+      map_slice_msg.header.stamp = ros::Time::now();
       human_map_slice_publisher_->publish(map_slice_msg);
     }
   }
 
   // Check if anyone wants any human+statics slice
   if (esdf_distance_slice_ &&
-    (combined_esdf_pointcloud_publisher_->get_subscription_count() >
+    (combined_esdf_pointcloud_publisher_.getNumSubscribers() >
     0) ||
-    (combined_map_slice_publisher_->get_subscription_count() > 0))
+    (combined_map_slice_publisher_.getNumSubscribers() > 0))
   {
     // Combined slice
     timing::Timer esdf_slice_compute_timer("ros/humans/esdf/output/combined/compute");
@@ -509,7 +509,7 @@ void NvbloxHumanNode::processHumanEsdf()
     esdf_slice_compute_timer.Stop();
 
     // Human+Static slice pointcloud (for visualization)
-    if (combined_esdf_pointcloud_publisher_->get_subscription_count() > 0) {
+    if (combined_esdf_pointcloud_publisher_.getNumSubscribers() > 0) {
       timing::Timer esdf_output_human_pointcloud_timer(
         "ros/humans/esdf/output/combined/pointcloud");
       sensor_msgs::PointCloud2 pointcloud_msg;
@@ -517,19 +517,19 @@ void NvbloxHumanNode::processHumanEsdf()
         combined_slice_image, combined_aabb, esdf_slice_height_,
         human_mapper_->esdf_layer().voxel_size(), &pointcloud_msg);
       pointcloud_msg.header.frame_id = global_frame_;
-      pointcloud_msg.header.stamp = get_clock()->now();
+      pointcloud_msg.header.stamp = ros::Time::now();
       combined_esdf_pointcloud_publisher_->publish(pointcloud_msg);
     }
 
     // Human+Static slice (for navigation)
-    if (combined_map_slice_publisher_->get_subscription_count() > 0) {
+    if (combined_map_slice_publisher_.getNumSubscribers() > 0) {
       timing::Timer esdf_output_human_slice_timer("ros/humans/esdf/output/combined/slice");
       nvblox_msgs::DistanceMapSlice map_slice_msg;
       esdf_slice_converter_.distanceMapSliceImageToMsg(
         combined_slice_image, combined_aabb, esdf_slice_height_,
         human_mapper_->voxel_size_m(), &map_slice_msg);
       map_slice_msg.header.frame_id = global_frame_;
-      map_slice_msg.header.stamp = get_clock()->now();
+      map_slice_msg.header.stamp = ros::Time::now();
       human_map_slice_publisher_->publish(map_slice_msg);
     }
   }
@@ -543,8 +543,8 @@ void NvbloxHumanNode::publishHumanDebugOutput()
   timing::Timer ros_human_debug_timer("ros/humans/output/debug");
 
   // Get a human pointcloud
-  if (human_pointcloud_publisher_->get_subscription_count() +
-    human_voxels_publisher_->get_subscription_count() >
+  if (human_pointcloud_publisher_.getNumSubscribers() +
+    human_voxels_publisher_.getNumSubscribers() >
     0)
   {
     // Grab the human only image.
@@ -560,19 +560,19 @@ void NvbloxHumanNode::publishHumanDebugOutput()
   }
 
   // Publish the human pointcloud
-  if (human_pointcloud_publisher_->get_subscription_count() > 0) {
+  if (human_pointcloud_publisher_.getNumSubscribers() > 0) {
     // Back-project human depth image to pointcloud and publish.
     sensor_msgs::PointCloud2 pointcloud_msg;
     pointcloud_converter_.pointcloudMsgFromPointcloud(
       human_pointcloud_L_device_,
       &pointcloud_msg);
     pointcloud_msg.header.frame_id = global_frame_;
-    pointcloud_msg.header.stamp = get_clock()->now();
+    pointcloud_msg.header.stamp = ros::Time::now();
     human_pointcloud_publisher_->publish(pointcloud_msg);
   }
 
   // Publish human voxels
-  if (human_voxels_publisher_->get_subscription_count() > 0) {
+  if (human_voxels_publisher_.getNumSubscribers() > 0) {
     // Human voxels from points (in the layer frame)
     image_back_projector_.pointcloudToVoxelCentersOnGPU(
       human_pointcloud_L_device_, voxel_size_,
@@ -583,18 +583,18 @@ void NvbloxHumanNode::publishHumanDebugOutput()
       human_voxel_centers_L_device_.points().toVector(), voxel_size_,
       Color::Red(), &marker_msg);
     marker_msg.header.frame_id = global_frame_;
-    marker_msg.header.stamp = get_clock()->now();
+    marker_msg.header.stamp = ros::Time::now();
     human_voxels_publisher_->publish(marker_msg);
   }
 
   // Publish the human occupancy layer
-  if (human_occupancy_publisher_->get_subscription_count() > 0) {
+  if (human_occupancy_publisher_.getNumSubscribers() > 0) {
     sensor_msgs::PointCloud2 pointcloud_msg;
     layer_converter_.pointcloudMsgFromLayer(
       human_mapper_->occupancy_layer(),
       &pointcloud_msg);
     pointcloud_msg.header.frame_id = global_frame_;
-    pointcloud_msg.header.stamp = get_clock()->now();
+    pointcloud_msg.header.stamp = ros::Time::now();
     human_occupancy_publisher_->publish(pointcloud_msg);
   }
 }

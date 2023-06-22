@@ -6,8 +6,6 @@
   <arg name="default_param_file"     value="$(find nvblox_ros)/config/parameters.yaml"/>
   <arg name="output"                 default="screen"                    doc="Output target: screen or log."/>
 
-  <env name="ROSCONSOLE_CONFIG_FILE" value="$(find nvblox_ros)/config/rosconsole.config"/>
-
   <!-- Node name -->
   <arg name="node_name"                       default="nvblox_ros"/>
 

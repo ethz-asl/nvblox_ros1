@@ -181,7 +181,7 @@ bool Transformer::lookupSensorTransform(
     }
     bool success = lookupTransformTf(
       pose_frame_, sensor_frame,
-      node_->get_clock()->now(), transform);
+      node_->ros::Time::now(), transform);
     if (success) {
       sensor_transforms_[sensor_frame] = *transform;
     } else {

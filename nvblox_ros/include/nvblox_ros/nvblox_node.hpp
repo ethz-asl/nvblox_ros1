@@ -191,8 +191,7 @@ protected:
   color_camera_info_sub_;
 
   // Pointcloud sub.
-  ros::Subscription<sensor_msgs::PointCloud2>::SharedPtr
-    pointcloud_sub_;
+  ros::Subscriber pointcloud_sub_;
 
   // Optional transform subs.
   ros::Subscriber transform_sub_;
@@ -211,13 +210,13 @@ protected:
   ros::ServiceServer load_map_service_;
 
   // Timers.
-  ros::TimerBase::SharedPtr depth_processing_timer_;
-  ros::TimerBase::SharedPtr color_processing_timer_;
-  ros::TimerBase::SharedPtr pointcloud_processing_timer_;
-  ros::TimerBase::SharedPtr occupancy_publishing_timer_;
-  ros::TimerBase::SharedPtr esdf_processing_timer_;
-  ros::TimerBase::SharedPtr mesh_processing_timer_;
-  ros::TimerBase::SharedPtr clear_outside_radius_timer_;
+  ros::Timer depth_processing_timer_;
+  ros::Timer color_processing_timer_;
+  ros::Timer pointcloud_processing_timer_;
+  ros::Timer occupancy_publishing_timer_;
+  ros::Timer esdf_processing_timer_;
+  ros::Timer mesh_processing_timer_;
+  ros::Timer clear_outside_radius_timer_;
 
   // ROS & nvblox settings
   float voxel_size_ = 0.05f;

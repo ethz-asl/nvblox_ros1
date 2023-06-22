@@ -132,8 +132,8 @@ protected:
     color_frame_overlay_publisher_;
 
   // Timers
-  ros::TimerBase::SharedPtr human_occupancy_decay_timer_;
-  ros::TimerBase::SharedPtr human_esdf_processing_timer_;
+  ros::Timer human_occupancy_decay_timer_;
+  ros::Timer human_esdf_processing_timer_;
 
   // Rates.
   float human_occupancy_decay_rate_hz_ = 10.0f;

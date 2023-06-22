@@ -144,7 +144,7 @@ void NvbloxNode::printMessageArrivalStatistics(
   // Calculate statistics
   statistics_collector->OnMessageReceived(
     message,
-    get_clock()->now().nanoseconds());
+    ros::Time::now().nanoseconds());
   // Print statistics
   constexpr int kPublishPeriodMs = 10000;
   auto & clk = *get_clock();
