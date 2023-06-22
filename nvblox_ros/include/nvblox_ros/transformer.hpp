@@ -22,15 +22,15 @@
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
+#include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/TransformStamped.h>
+#include <ros/ros.h>
 #include <ros/time.h>
 
 #include <map>
 #include <memory>
 #include <string>
 #include <unordered_map>
-
-#include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/TransformStamped.h>
 
 namespace nvblox
 {
@@ -40,7 +40,7 @@ namespace nvblox
 class Transformer
 {
 public:
-  explicit Transformer(ros::Node * node);
+  explicit Transformer(ros::NodeHandle& nodeHandle);
 
   /// @brief Looks up the transform between the frame with the passed name and the global frame
   ///        (which is set by the setters below). We either use tf2 or a stored queue of

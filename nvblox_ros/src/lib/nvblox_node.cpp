@@ -33,11 +33,7 @@
 namespace nvblox
 {
 
-NvbloxNode::NvbloxNode(
-  const ros::NodeOptions & options,
-  const std::string & node_name)
-: Node(node_name, options), transformer_(this)
-{
+NvbloxNode::NvbloxNode(ros::NodeHandle& nodeHandle) : nodeHandle_(nodeHandle), transformer_(nodeHandle){
   // Get parameters first (stuff below depends on parameters)
   getParameters();
 
@@ -64,9 +60,9 @@ NvbloxNode::NvbloxNode(
   advertiseServices();
 
   // Start the message statistics
-  depth_frame_statistics_.Start();
-  rgb_frame_statistics_.Start();
-  pointcloud_frame_statistics_.Start();
+  //depth_frame_statistics_.Start();
+  //rgb_frame_statistics_.Start();
+  //pointcloud_frame_statistics_.Start();
 
   ROS_INFO_STREAM("Started up nvblox node in frame " <<
       global_frame_ << " and voxel size " <<
@@ -80,23 +76,16 @@ NvbloxNode::NvbloxNode(
 
 void NvbloxNode::getParameters()
 {
-  ros_INFO_STREAM("NvbloxNode::getParameters()");
+  ROS_INFO_STREAM("NvbloxNode::getParameters()");
 
   const bool is_occupancy =
     declare_parameter<bool>("use_static_occupancy_layer", false);
   if (is_occupancy) {
     static_projective_layer_type_ = ProjectiveLayerType::kOccupancy;
-    ros_INFO_STREAM(
-       ,
-      "static_projective_layer_type: occupancy "
-      "(Attention: ESDF and Mesh integration is not yet implemented "
-      "for occupancy.)");
+    ROS_INFO_STREAM("static_projective_layer_type: occupancy (Attention: ESDF and Mesh integration is not yet implemented for occupancy.)");
   } else {
     static_projective_layer_type_ = ProjectiveLayerType::kTsdf;
-    ros_INFO_STREAM(
-       ,
-      "static_projective_layer_type: TSDF"
-      " (for occupancy set the use_static_occupancy_layer parameter)");
+    ROS_INFO_STREAM("static_projective_layer_type: TSDF (for occupancy set the use_static_occupancy_layer parameter)");
   }
 
   // Declare & initialize the parameters.
@@ -218,19 +207,13 @@ void NvbloxNode::advertiseTopics()
 {
   ROS_INFO_STREAM("NvbloxNode::advertiseTopics()");
 
-  mesh_publisher_ = create_publisher<nvblox_msgs::Mesh>("~/mesh", 1);
-  esdf_pointcloud_publisher_ =
-    create_publisher<sensor_msgs::PointCloud2>("~/esdf_pointcloud", 1);
-  map_slice_publisher_ =
-    create_publisher<nvblox_msgs::DistanceMapSlice>("~/map_slice", 1);
-  mesh_marker_publisher_ =
-    create_publisher<visualization_msgs::MarkerArray>(
-    "~/mesh_marker",
-    1);
-  slice_bounds_publisher_ = create_publisher<visualization_msgs::Marker>(
-    "~/map_slice_bounds", 1);
-  occupancy_publisher_ =
-    create_publisher<sensor_msgs::PointCloud2>("~/occupancy", 1);
+  mesh_publisher_ = nodeHandle_.advertise<nvblox_msgs::Mesh>("mesh",1,false);
+  esdf_pointcloud_publisher_ = nodeHandle_.advertise<sensor_msgs::PointCloud2>("esdf_pointcloud",1,false);
+  map_slice_publisher_ = nodeHandle_.advertise<nvblox_msgs::DistanceMapSlice>("map_slice",1,false);
+  mesh_marker_publisher_ = nodeHandle_.advertise<visualization_msgs::MarkerArray>("mesh_marker",1,false);
+  slice_bounds_publisher_ = nodeHandle_.advertise<visualization_msgs::Marker>("map_slice_bounds",1,false);
+  occupancy_publisher_ = nodeHandle_.advertise<sensor_msgs::PointCloud2>("occupancy",1,false);
+
 }
 
 void NvbloxNode::advertiseServices()

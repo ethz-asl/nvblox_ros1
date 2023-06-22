@@ -33,32 +33,31 @@
 #include <string>
 #include <utility>
 
-#include <libstatistics_collector/topic_statistics_collector/topic_statistics_collector.hpp>
-#include <nvblox_msgs/srv/file_path.hpp>
-#include <ros/ros.hpp>
+#include <nvblox_msgs/FilePath.h>
+#include <ros/node_handle.h>
+#include <ros/publisher.h>
+#include <ros/ros.h>
+#include <ros/service_server.h>
+#include <ros/time.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/PointCloud2.h>
-#include <std_msgs/string.hpp>
-#include <visualization_msgs/marker.hpp>
+#include <std_msgs/String.h>
+#include <visualization_msgs/Marker.h>
 
+#include "nvblox_ros/conversions/esdf_slice_conversions.hpp"
 #include "nvblox_ros/conversions/image_conversions.hpp"
 #include "nvblox_ros/conversions/layer_conversions.hpp"
 #include "nvblox_ros/conversions/mesh_conversions.hpp"
 #include "nvblox_ros/conversions/pointcloud_conversions.hpp"
-#include "nvblox_ros/conversions/esdf_slice_conversions.hpp"
 #include "nvblox_ros/mapper_initialization.hpp"
 #include "nvblox_ros/transformer.hpp"
 
-namespace nvblox
-{
+namespace nvblox {
 
-class NvbloxNode : public ros::Node
-{
-public:
-  explicit NvbloxNode(
-    const ros::NodeOptions & options = ros::NodeOptions(),
-    const std::string & node_name = "nvblox_node");
+class NvbloxNode {
+ public:
+  explicit NvbloxNode(ros::NodeHandle& nodeHandle);
   virtual ~NvbloxNode() = default;
 
   // Setup. These are called by the constructor.
@@ -70,23 +69,22 @@ public:
 
   // Callback functions. These just stick images in a queue.
   void depthImageCallback(
-    const sensor_msgs::ImageConstPtr & depth_img_ptr,
-    const sensor_msgs::CameraInfo::ConstPtr & camera_info_msg);
+      const sensor_msgs::ImageConstPtr& depth_img_ptr,
+      const sensor_msgs::CameraInfo::ConstPtr& camera_info_msg);
   void colorImageCallback(
-    const sensor_msgs::ImageConstPtr & color_img_ptr,
-    const sensor_msgs::CameraInfo::ConstPtr & color_info_msg);
-  void pointcloudCallback(
-    const sensor_msgs::PointCloud2::ConstPtr pointcloud);
+      const sensor_msgs::ImageConstPtr& color_img_ptr,
+      const sensor_msgs::CameraInfo::ConstPtr& color_info_msg);
+  void pointcloudCallback(const sensor_msgs::PointCloud2::ConstPtr pointcloud);
 
   void savePly(
-    const std::shared_ptr<nvblox_msgs::srv::FilePath::Request> request,
-    std::shared_ptr<nvblox_msgs::srv::FilePath::Response> response);
+      const std::shared_ptr<nvblox_msgs::srv::FilePath::Request> request,
+      std::shared_ptr<nvblox_msgs::srv::FilePath::Response> response);
   void saveMap(
-    const std::shared_ptr<nvblox_msgs::srv::FilePath::Request> request,
-    std::shared_ptr<nvblox_msgs::srv::FilePath::Response> response);
+      const std::shared_ptr<nvblox_msgs::srv::FilePath::Request> request,
+      std::shared_ptr<nvblox_msgs::srv::FilePath::Response> response);
   void loadMap(
-    const std::shared_ptr<nvblox_msgs::srv::FilePath::Request> request,
-    std::shared_ptr<nvblox_msgs::srv::FilePath::Response> response);
+      const std::shared_ptr<nvblox_msgs::srv::FilePath::Request> request,
+      std::shared_ptr<nvblox_msgs::srv::FilePath::Response> response);
 
   // Does whatever processing there is to be done, depending on what
   // transforms are available.
@@ -101,21 +99,19 @@ public:
 
   // Process data
   virtual bool processDepthImage(
-    const std::pair<sensor_msgs::ImageConstPtr,
-    sensor_msgs::CameraInfo::ConstPtr> &
-    depth_camera_pair);
+      const std::pair<sensor_msgs::ImageConstPtr,
+                      sensor_msgs::CameraInfo::ConstPtr>& depth_camera_pair);
   virtual bool processColorImage(
-    const std::pair<sensor_msgs::ImageConstPtr,
-    sensor_msgs::CameraInfo::ConstPtr> &
-    color_camera_pair);
+      const std::pair<sensor_msgs::ImageConstPtr,
+                      sensor_msgs::CameraInfo::ConstPtr>& color_camera_pair);
   virtual bool processLidarPointcloud(
-    const sensor_msgs::PointCloud2::ConstPtr & pointcloud_ptr);
+      const sensor_msgs::PointCloud2::ConstPtr& pointcloud_ptr);
 
-  bool canTransform(const std_msgs::Header & header);
+  bool canTransform(const std_msgs::Header& header);
 
-  void publishSlicePlane(const ros::Time & timestamp, const Transform & T_L_C);
+  void publishSlicePlane(const ros::Time& timestamp, const Transform& T_L_C);
 
-protected:
+ protected:
   // Map clearing
   void clearMapOutsideOfRadiusOfLastKnownPose();
 
@@ -124,11 +120,10 @@ protected:
   /// @param message Message to be added to the queue.
   /// @param queue_ptr Queue where to add the message.
   /// @param queue_mutex_ptr Mutex protecting the queue.
-  template<typename MessageType>
-  void pushMessageOntoQueue(
-    MessageType message,
-    std::deque<MessageType> * queue_ptr,
-    std::mutex * queue_mutex_ptr);
+  template <typename MessageType>
+  void pushMessageOntoQueue(MessageType message,
+                            std::deque<MessageType>* queue_ptr,
+                            std::mutex* queue_mutex_ptr);
   /*
   template<typename MessageType>
   void printMessageArrivalStatistics(
@@ -138,10 +133,10 @@ protected:
 
   // Used internally to unify processing of queues that process a message and a
   // matching transform.
-  template<typename MessageType>
-  using ProcessMessageCallback = std::function<bool (const MessageType &)>;
-  template<typename MessageType>
-  using MessageReadyCallback = std::function<bool (const MessageType &)>;
+  template <typename MessageType>
+  using ProcessMessageCallback = std::function<bool(const MessageType&)>;
+  template <typename MessageType>
+  using MessageReadyCallback = std::function<bool(const MessageType&)>;
 
   /// Processes a queue of messages by detecting if they're ready and then
   /// passing them to a callback.
@@ -151,22 +146,21 @@ protected:
   /// @param message_ready_check Callback called on each message to check if
   /// it's ready to be processed
   /// @param callback Callback to process each ready message.
-  template<typename MessageType>
+  template <typename MessageType>
   void processMessageQueue(
-    std::deque<MessageType> * queue_ptr, std::mutex * queue_mutex_ptr,
-    MessageReadyCallback<MessageType> message_ready_check,
-    ProcessMessageCallback<MessageType> callback);
+      std::deque<MessageType>* queue_ptr, std::mutex* queue_mutex_ptr,
+      MessageReadyCallback<MessageType> message_ready_check,
+      ProcessMessageCallback<MessageType> callback);
 
   // Check if interval between current stamp
-  bool isUpdateTooFrequent(
-    const ros::Time & current_stamp,
-    const ros::Time & last_update_stamp,
-    float max_update_rate_hz);
+  bool isUpdateTooFrequent(const ros::Time& current_stamp,
+                           const ros::Time& last_update_stamp,
+                           float max_update_rate_hz);
 
-  template<typename MessageType>
+  template <typename MessageType>
   void limitQueueSizeByDeletingOldestMessages(
-    const int max_num_messages, const std::string & queue_name,
-    std::deque<MessageType> * queue_ptr, std::mutex * queue_mutex_ptr);
+      const int max_num_messages, const std::string& queue_name,
+      std::deque<MessageType>* queue_ptr, std::mutex* queue_mutex_ptr);
 
   // ROS publishers and subscribers
 
@@ -174,21 +168,22 @@ protected:
   Transformer transformer_;
 
   // Time Sync
-  typedef message_filters::sync_policies::ExactTime<
-      sensor_msgs::Image, sensor_msgs::CameraInfo>
-    time_policy_t;
+  typedef message_filters::sync_policies::ExactTime<sensor_msgs::Image,
+                                                    sensor_msgs::CameraInfo>
+      time_policy_t;
 
   // Depth sub.
   std::shared_ptr<message_filters::Synchronizer<time_policy_t>> timesync_depth_;
   message_filters::Subscriber<sensor_msgs::Image> depth_sub_;
-  message_filters::Subscriber<sensor_msgs::CameraInfo>
-  depth_camera_info_sub_;
+  message_filters::Subscriber<sensor_msgs::CameraInfo> depth_camera_info_sub_;
 
   // Color sub
   std::shared_ptr<message_filters::Synchronizer<time_policy_t>> timesync_color_;
   message_filters::Subscriber<sensor_msgs::Image> color_sub_;
-  message_filters::Subscriber<sensor_msgs::CameraInfo>
-  color_camera_info_sub_;
+  message_filters::Subscriber<sensor_msgs::CameraInfo> color_camera_info_sub_;
+
+  // Ros handle
+  ros::NodeHandle nodeHandle_;
 
   // Pointcloud sub.
   ros::Subscriber pointcloud_sub_;
@@ -224,7 +219,7 @@ protected:
   bool esdf_distance_slice_ = true;
   float esdf_slice_height_ = 1.0f;
   ProjectiveLayerType static_projective_layer_type_ =
-    ProjectiveLayerType::kTsdf;
+      ProjectiveLayerType::kTsdf;
   bool is_realsense_data_ = false;
 
   // Toggle parameters
@@ -316,12 +311,12 @@ protected:
   size_t mesh_subscriber_count_ = 0;
 
   // Image queues.
-  std::deque<std::pair<sensor_msgs::ImageConstPtr,
-    sensor_msgs::CameraInfo::ConstPtr>>
-  depth_image_queue_;
-  std::deque<std::pair<sensor_msgs::ImageConstPtr,
-    sensor_msgs::CameraInfo::ConstPtr>>
-  color_image_queue_;
+  std::deque<
+      std::pair<sensor_msgs::ImageConstPtr, sensor_msgs::CameraInfo::ConstPtr>>
+      depth_image_queue_;
+  std::deque<
+      std::pair<sensor_msgs::ImageConstPtr, sensor_msgs::CameraInfo::ConstPtr>>
+      color_image_queue_;
   std::deque<sensor_msgs::PointCloud2::ConstPtr> pointcloud_queue_;
 
   // Image queue mutexes.
