@@ -90,14 +90,14 @@ To simplify development, we strongly recommend leveraging the Isaac ROS Dev Dock
     ```
 
     ```bash
-    git clone --recurse-submodules https://github.com/NVIDIA-ISAAC-ROS/isaac_ros_nvblox && \
-        cd isaac_ros_nvblox && git lfs pull
+    git clone --recurse-submodules https://github.com/ethz-asl/nvblox_ros1.git && \
+        cd nvblox_ros1 && git lfs pull
     ```
 
 3. Pull down a ROS Bag of sample data:
 
     ```bash
-    cd ~/workspaces/isaac_ros-dev/src/isaac_ros_nvblox && \ 
+    cd ~/workspaces/isaac_ros-dev/src/nvblox_ros1 && \ 
       git lfs pull -X "" -I "nvblox_ros/test/test_cases/rosbags/nvblox_pol"
     ```
 
@@ -119,21 +119,21 @@ To simplify development, we strongly recommend leveraging the Isaac ROS Dev Dock
 
     ```bash
     cd /workspaces/isaac_ros-dev && \
-      colcon build --symlink-install && \
+      catkin build && \
       source install/setup.bash
     ```
 
-8. (Optional) Run tests to verify complete and correct installation:  
+8. (Optional) Run tests to verify complete and correct installation: (TODO[TT] Convert to cmake tests or remove.)  
 
     ```bash
     colcon test --executor sequential
     ```
 
-9. In a **current terminal** inside the Docker container, run the launch file for Nvblox with `nav2`:
+9. In a **current terminal** inside the Docker container, run the launch file for Nvblox:
 
     ```bash
-    source /workspaces/isaac_ros-dev/install/setup.bash && \
-        ros2 launch nvblox_examples_bringup isaac_sim_example.launch.py
+    source /workspaces/isaac_ros-dev/devel/setup.bash && \
+        roslaunch nvblox_ros nvblox_live.launch
     ```
 
 10. Open a **second terminal** inside the docker container:
@@ -146,7 +146,7 @@ To simplify development, we strongly recommend leveraging the Isaac ROS Dev Dock
 11. In the **second terminal**, play the ROS Bag:
 
     ```bash
-    ros2 bag play src/isaac_ros_nvblox/nvblox_ros/test/test_cases/rosbags/nvblox_pol
+    rosbag play src/isaac_ros_nvblox/nvblox_ros/test/test_cases/rosbags/nvblox_pol
     ```
 
 You should see the robot reconstructing a mesh, with the 2d esdf slice overlaid on top.
