@@ -75,10 +75,7 @@ void NvbloxNode::processMessageQueue(
     const int num_messages_processed = items_to_process.size();
     if (num_messages_deleted > num_messages_processed) {
       const int num_messages_lost = num_messages_deleted - num_messages_processed;
-      constexpr int kLostMessagesPublishPeriodMs = 1000;
-      auto & clk = *get_clock();
-      ROS_WARN_STREAM_THROTTLE(clk, kLostMessagesPublishPeriodMs,
-        "Deleted " << num_messages_lost << "because we could not interpolate transforms.");
+      ROS_WARN_STREAM("Deleted " << num_messages_lost << "because we could not interpolate transforms.");
     }
   }
   lock.unlock();
@@ -93,11 +90,7 @@ void NvbloxNode::processMessageQueue(
   }
 
   // nvblox statistics
-  constexpr int kPublishPeriodMs = 10000;
-  auto & clk = *get_clock();
-  ROS_INFO_STREAM_THROTTLE(clk, kPublishPeriodMs,
-    "Timing statistics: \n" <<
-      nvblox::timing::Timing::Print());
+  ROS_INFO_STREAM("Timing statistics: \n" << nvblox::timing::Timing::Print());
 }
 
 template<typename MessageType>
@@ -127,10 +120,7 @@ void NvbloxNode::limitQueueSizeByDeletingOldestMessages(
     queue_ptr->erase(
       queue_ptr->begin(),
       queue_ptr->begin() + num_elements_to_delete);
-    constexpr int kPublishPeriodMs = 1000;
-    auto & clk = *get_clock();
-    ROS_INFO_STREAM_THROTTLE(clk, kPublishPeriodMs,
-      queue_name << " queue was longer than " << max_num_messages <<
+    ROS_INFO_STREAM(queue_name << " queue was longer than " << max_num_messages <<
         " deleted " << num_elements_to_delete << " messages.");
   }
 }

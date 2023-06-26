@@ -39,7 +39,7 @@ namespace nvblox
 class NvbloxHumanNode : public NvbloxNode
 {
 public:
-  explicit NvbloxHumanNode(const ros::NodeOptions & options = ros::NodeOptions());
+  explicit NvbloxHumanNode(ros::NodeHandle& nodeHandle);
   virtual ~NvbloxHumanNode() = default;
 
   // Setup. These are called by the constructor.
@@ -111,29 +111,22 @@ protected:
   message_filters::Subscriber<sensor_msgs::CameraInfo>
   segmentation_camera_info_sub_;
 
+  ros::NodeHandle nodeHandle_;
+
   // Publishers
-  ros::Publisher<sensor_msgs::PointCloud2>::SharedPtr
-    human_pointcloud_publisher_;
-  ros::Publisher<sensor_msgs::PointCloud2>::SharedPtr
-    human_esdf_pointcloud_publisher_;
-  ros::Publisher<sensor_msgs::PointCloud2>::SharedPtr
-    combined_esdf_pointcloud_publisher_;
-  ros::Publisher<visualization_msgs::Marker>::SharedPtr
-    human_voxels_publisher_;
-  ros::Publisher<sensor_msgs::PointCloud2>::SharedPtr
-    human_occupancy_publisher_;
-  ros::Publisher<nvblox_msgs::DistanceMapSlice>::SharedPtr
-    human_map_slice_publisher_;
-  ros::Publisher<nvblox_msgs::DistanceMapSlice>::SharedPtr
-    combined_map_slice_publisher_;
-  ros::Publisher<sensor_msgs::Image>::SharedPtr
-    depth_frame_overlay_publisher_;
-  ros::Publisher<sensor_msgs::Image>::SharedPtr
-    color_frame_overlay_publisher_;
+  ros::Publisher human_pointcloud_publisher_;
+  ros::Publisher human_esdf_pointcloud_publisher_;
+  ros::Publisher combined_esdf_pointcloud_publisher_;
+  ros::Publisher human_voxels_publisher_;
+  ros::Publisher human_occupancy_publisher_;
+  ros::Publisher human_map_slice_publisher_;
+  ros::Publisher combined_map_slice_publisher_;
+  ros::Publisher depth_frame_overlay_publisher_;
+  ros::Publisher color_frame_overlay_publisher_;
 
   // Timers
-  ros::Timer human_occupancy_decay_timer_;
-  ros::Timer human_esdf_processing_timer_;
+  ros::WallTimer human_occupancy_decay_timer_;
+  ros::WallTimer human_esdf_processing_timer_;
 
   // Rates.
   float human_occupancy_decay_rate_hz_ = 10.0f;

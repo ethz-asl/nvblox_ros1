@@ -25,19 +25,16 @@
 namespace nvblox
 {
 
-Transformer::Transformer(ros::Node * node)
-: node_(node)
+Transformer::Transformer(ros::NodeHandle& nodeHandle)
+: nodeHandle_(nodeHandle)
 {
   // Get params like "use_tf_transforms".
-  use_tf_transforms_ =
-    node->declare_parameter<bool>("use_tf_transforms", use_tf_transforms_);
-  use_topic_transforms_ = node->declare_parameter<bool>(
-    "use_topic_transforms",
-    use_topic_transforms_);
+  nodeHandle_.param<bool>("use_tf_transforms", use_tf_transforms_, false);
+  nodeHandle_.param<bool>("use_topic_transforms", use_topic_transforms_, false);
 
   // Init the transform listeners if we ARE using TF at all.
   if (use_tf_transforms_) {
-    tf_buffer_ = std::make_unique<tf2_ros::Buffer>(node->get_clock());
+    tf_buffer_ = std::make_unique<tf2_ros::Buffer>();
     transform_listener_ =
       std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
   }
@@ -50,8 +47,7 @@ bool Transformer::lookupTransformToGlobalFrame(
 {
   if (!use_tf_transforms_ && !use_topic_transforms_) {
     // ERROR HERE, literally can't do anything.
-    ros_ERROR(
-      node_-> ,
+    ROS_ERROR(
       "Not using TF OR topic transforms, what do you want us to use?");
     return false;
   }
@@ -116,16 +112,13 @@ bool Transformer::lookupTransformTf(
     {
       T_L_C_msg = tf_buffer_->lookupTransform(from_frame, to_frame, timestamp);
     } else {
-      ros_DEBUG_STREAM(
-        node_-> ,
+      ROS_DEBUG_STREAM(
         "Cant transform: from:" << from_frame << " to " << to_frame << ". Error string: " <<
           error_string);
       return false;
     }
   } catch (tf2::TransformException & e) {
-    ros_DEBUG_STREAM(
-      node_-> ,
-      "Cant transform: from:" << from_frame << " to " << to_frame << ". Error: " << e.what());
+    ROS_DEBUG_STREAM("Cant transform: from:" << from_frame << " to " << to_frame << ". Error: " << e.what());
     return false;
   }
 
@@ -180,14 +173,11 @@ bool Transformer::lookupSensorTransform(
       return false;
     }
     bool success = lookupTransformTf(
-      pose_frame_, sensor_frame,
-      node_->ros::Time::now(), transform);
+      pose_frame_, sensor_frame, ros::Time::now(), transform);
     if (success) {
       sensor_transforms_[sensor_frame] = *transform;
     } else {
-      ros_INFO(
-        node_-> ,
-        "Could not look up transform to sensor.");
+      ROS_INFO("Could not look up transform to sensor.");
     }
     return success;
   } else {

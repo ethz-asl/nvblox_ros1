@@ -28,12 +28,14 @@ namespace nvblox
 template<typename ParameterType>
 void inline declareParameterWithoutDefault(
   const std::string & name,
-  ros::Node * node_ptr)
+  ros::NodeHandle& nodeHandle)
 {
   try {
-    node_ptr->declare_parameter<ParameterType>(name);
+    // TODO figure out how to replicate this
+    //nodeHandle_.param<ParameterType>(name, is_occupancy, false);
+
   } catch (
-    ros::Exception("Attempted null pointer operation"))
+    ros::Exception("Attempted null pointer operation"));
   {
   }
 }

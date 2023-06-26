@@ -47,7 +47,7 @@ NvbloxNode::NvbloxNode(ros::NodeHandle& nodeHandle) : nodeHandle_(nodeHandle), t
   // - Map layers
   // - Integrators
   const std::string mapper_name = "mapper";
-  declareMapperParameters(mapper_name, this);
+  //declareMapperParameters(mapper_name, this);
   mapper_ = std::make_shared<Mapper>(
     voxel_size_, MemoryType::kDevice,
     static_projective_layer_type_);
@@ -69,17 +69,17 @@ NvbloxNode::NvbloxNode(ros::NodeHandle& nodeHandle) : nodeHandle_(nodeHandle), t
       voxel_size_);
 
   // Set state.
-  last_depth_update_time_ = ros::Time(0ul, get_clock()->get_clock_type());
-  last_color_update_time_ = ros::Time(0ul, get_clock()->get_clock_type());
-  last_lidar_update_time_ = ros::Time(0ul, get_clock()->get_clock_type());
+  last_depth_update_time_ = ros::Time(0.0);
+  last_color_update_time_ = ros::Time(0.0);
+  last_lidar_update_time_ = ros::Time(0.0);
 }
 
 void NvbloxNode::getParameters()
 {
   ROS_INFO_STREAM("NvbloxNode::getParameters()");
+  const bool is_occupancy = false;
+  nodeHandle_.param<bool>("use_static_occupancy_layer", is_occupancy, false);
 
-  const bool is_occupancy =
-    declare_parameter<bool>("use_static_occupancy_layer", false);
   if (is_occupancy) {
     static_projective_layer_type_ = ProjectiveLayerType::kOccupancy;
     ROS_INFO_STREAM("static_projective_layer_type: occupancy (Attention: ESDF and Mesh integration is not yet implemented for occupancy.)");
@@ -89,69 +89,52 @@ void NvbloxNode::getParameters()
   }
 
   // Declare & initialize the parameters.
-  voxel_size_ = declare_parameter<float>("voxel_size", voxel_size_);
-  global_frame_ = declare_parameter<std::string>("global_frame", global_frame_);
-  pose_frame_ = declare_parameter<std::string>("pose_frame", pose_frame_);
-  is_realsense_data_ =
-    declare_parameter<bool>("is_realsense_data", is_realsense_data_);
-  compute_mesh_ = declare_parameter<bool>("compute_mesh", compute_mesh_);
-  compute_esdf_ = declare_parameter<bool>("compute_esdf", compute_esdf_);
-  esdf_2d_ = declare_parameter<bool>("esdf_2d", esdf_2d_);
-  esdf_distance_slice_ =
-    declare_parameter<bool>("esdf_distance_slice", esdf_distance_slice_);
-  use_color_ = declare_parameter<bool>("use_color", use_color_);
-  use_depth_ = declare_parameter<bool>("use_depth", use_depth_);
-  use_lidar_ = declare_parameter<bool>("use_lidar", use_lidar_);
-  esdf_slice_height_ =
-    declare_parameter<float>("esdf_slice_height", esdf_slice_height_);
-  esdf_2d_min_height_ =
-    declare_parameter<float>("esdf_2d_min_height", esdf_2d_min_height_);
-  esdf_2d_max_height_ =
-    declare_parameter<float>("esdf_2d_max_height", esdf_2d_max_height_);
-  lidar_width_ = declare_parameter<int>("lidar_width", lidar_width_);
-  lidar_height_ = declare_parameter<int>("lidar_height", lidar_height_);
-  lidar_vertical_fov_rad_ = declare_parameter<float>(
-    "lidar_vertical_fov_rad",
-    lidar_vertical_fov_rad_);
-  slice_visualization_attachment_frame_id_ =
-    declare_parameter<std::string>(
-    "slice_visualization_attachment_frame_id",
-    slice_visualization_attachment_frame_id_);
-  slice_visualization_side_length_ = declare_parameter<float>(
-    "slice_visualization_side_length", slice_visualization_side_length_);
+  nodeHandle_.param<float>("voxel_size", voxel_size_, 0.05f);
 
-  // Update rates
-  max_depth_update_hz_ =
-    declare_parameter<float>("max_depth_update_hz", max_depth_update_hz_);
-  max_color_update_hz_ =
-    declare_parameter<float>("max_color_update_hz", max_color_update_hz_);
-  max_lidar_update_hz_ =
-    declare_parameter<float>("max_lidar_update_hz", max_lidar_update_hz_);
-  mesh_update_rate_hz_ =
-    declare_parameter<float>("mesh_update_rate_hz", mesh_update_rate_hz_);
-  esdf_update_rate_hz_ =
-    declare_parameter<float>("esdf_update_rate_hz", esdf_update_rate_hz_);
-  occupancy_publication_rate_hz_ = declare_parameter<float>(
-    "occupancy_publication_rate_hz", occupancy_publication_rate_hz_);
-  max_poll_rate_hz_ =
-    declare_parameter<float>("max_poll_rate_hz", max_poll_rate_hz_);
+  nodeHandle_.param<std::string>("global_frame", global_frame_, "map"); 
+  nodeHandle_.param<std::string>("pose_frame", pose_frame_, "base");
 
-  maximum_sensor_message_queue_length_ =
-    declare_parameter<int>(
-    "maximum_sensor_message_queue_length",
-    maximum_sensor_message_queue_length_);
+  nodeHandle_.param<bool>("is_realsense_data", is_realsense_data_, false);
+  nodeHandle_.param<bool>("compute_mesh", compute_mesh_, false);
+  nodeHandle_.param<bool>("compute_esdf", compute_esdf_, false);
+  nodeHandle_.param<bool>("esdf_2d", esdf_2d_, false);
+  nodeHandle_.param<bool>("esdf_distance_slice", esdf_distance_slice_, false);
+  nodeHandle_.param<bool>("use_color", use_color_, false);
+  nodeHandle_.param<bool>("use_depth", use_depth_, false);
+  nodeHandle_.param<bool>("use_lidar", use_lidar_, false);
 
-  // Settings for QoS.
-  depth_qos_str_ = declare_parameter<std::string>("depth_qos", depth_qos_str_);
-  color_qos_str_ = declare_parameter<std::string>("color_qos", color_qos_str_);
+  nodeHandle_.param<float>("esdf_slice_height", esdf_slice_height_, 0.05f);
+  nodeHandle_.param<float>("esdf_2d_min_height", esdf_2d_min_height_, 0.05f);
+  nodeHandle_.param<float>("esdf_2d_max_height", esdf_2d_max_height_, 0.05f);
 
-  // Settings for map clearing
-  map_clearing_radius_m_ =
-    declare_parameter<float>("map_clearing_radius_m", map_clearing_radius_m_);
-  map_clearing_frame_id_ = declare_parameter<std::string>(
-    "map_clearing_frame_id", map_clearing_frame_id_);
-  clear_outside_radius_rate_hz_ = declare_parameter<float>(
-    "clear_outside_radius_rate_hz", clear_outside_radius_rate_hz_);
+  nodeHandle_.param<int>("lidar_width", lidar_width_, 10);
+  nodeHandle_.param<int>("lidar_height", lidar_width_, 10);
+
+  nodeHandle_.param<float>("lidar_vertical_fov_rad", lidar_vertical_fov_rad_, 0.05f);
+
+  nodeHandle_.param<std::string>("slice_visualization_attachment_frame_id", slice_visualization_attachment_frame_id_, "test");
+
+  nodeHandle_.param<float>("slice_visualization_side_length_", slice_visualization_side_length_, 0.05f);
+
+  nodeHandle_.param<float>("max_depth_update_hz", max_depth_update_hz_, 0.05f);
+  nodeHandle_.param<float>("max_color_update_hz", max_color_update_hz_, 0.05f);
+  nodeHandle_.param<float>("max_lidar_update_hz", max_lidar_update_hz_, 0.05f);
+
+  nodeHandle_.param<float>("mesh_update_rate_hz", mesh_update_rate_hz_, 0.05f);
+  nodeHandle_.param<float>("esdf_update_rate_hz", esdf_update_rate_hz_, 0.05f);
+  nodeHandle_.param<float>("occupancy_publication_rate_hz", occupancy_publication_rate_hz_, 0.05f);
+  nodeHandle_.param<float>("max_poll_rate_hz", max_poll_rate_hz_, 0.05f);
+
+  nodeHandle_.param<int>("maximum_sensor_message_queue_length", maximum_sensor_message_queue_length_, 10);
+
+  nodeHandle_.param<std::string>("depth_qos", depth_qos_str_, "test");
+  nodeHandle_.param<std::string>("color_qos", color_qos_str_, "test");
+
+  nodeHandle_.param<float>("map_clearing_radius_m", map_clearing_radius_m_, 0.05f);
+
+  nodeHandle_.param<std::string>("map_clearing_frame_id", map_clearing_frame_id_, "test");
+
+  nodeHandle_.param<float>("clear_outside_radius_rate_hz", clear_outside_radius_rate_hz_, 0.05f);
 }
 
 void NvbloxNode::subscribeToTopics()
@@ -801,7 +784,3 @@ void NvbloxNode::loadMap(
 }
 
 }  // namespace nvblox
-
-// Register the node as a component
-#include "ros_components/register_node_macro.hpp"
-//ROS_COMPONENTS_REGISTER_NODE(nvblox::NvbloxNode)

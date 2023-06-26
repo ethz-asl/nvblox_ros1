@@ -31,8 +31,9 @@
 namespace nvblox
 {
 
-NvbloxHumanNode::NvbloxHumanNode(const ros::NodeOptions & options)
-: NvbloxNode(options, "nvblox_human_node"),
+NvbloxHumanNode::NvbloxHumanNode(ros::NodeHandle& nodeHandle)
+: NvbloxNode(nodeHandle),
+  nodeHandle_(nodeHandle),
   human_pointcloud_C_device_(MemoryType::kDevice),
   human_pointcloud_L_device_(MemoryType::kDevice)
 {
@@ -88,7 +89,7 @@ void NvbloxHumanNode::initializeMultiMapper()
   const std::string mapper_name = "human_mapper";
   human_mapper_ = multi_mapper_.get()->masked_mapper();
   // Human mapper params have not been declared yet
-  declareMapperParameters(mapper_name, this);
+  //declareMapperParameters(mapper_name, this);
   initializeMapper(mapper_name, human_mapper_.get(), this);
   // Set to a distance bigger than the max. integration distance to not include
   // non human pixels on the human mapper, but clear along the projection.
@@ -149,41 +150,21 @@ void NvbloxHumanNode::subscribeToTopics()
 void NvbloxHumanNode::advertiseTopics()
 {
   // Add some stuff
-  human_pointcloud_publisher_ =
-    create_publisher<sensor_msgs::PointCloud2>("~/human_pointcloud", 1);
-  human_voxels_publisher_ =
-    create_publisher<visualization_msgs::Marker>("~/human_voxels", 1);
-  human_occupancy_publisher_ =
-    create_publisher<sensor_msgs::PointCloud2>("~/human_occupancy", 1);
-  human_esdf_pointcloud_publisher_ =
-    create_publisher<sensor_msgs::PointCloud2>(
-    "~/human_esdf_pointcloud",
-    1);
-  combined_esdf_pointcloud_publisher_ =
-    create_publisher<sensor_msgs::PointCloud2>(
-    "~/combined_esdf_pointcloud", 1);
-  human_map_slice_publisher_ =
-    create_publisher<nvblox_msgs::DistanceMapSlice>(
-    "~/human_map_slice",
-    1);
-  combined_map_slice_publisher_ =
-    create_publisher<nvblox_msgs::DistanceMapSlice>(
-    "~/combined_map_slice", 1);
-  depth_frame_overlay_publisher_ =
-    create_publisher<sensor_msgs::Image>("~/depth_frame_overlay", 1);
-  color_frame_overlay_publisher_ =
-    create_publisher<sensor_msgs::Image>("~/color_frame_overlay", 1);
+  human_pointcloud_publisher_ = nodeHandle_.advertise<sensor_msgs::PointCloud2>("human_pointcloud",1,false);
+  human_voxels_publisher_ = nodeHandle_.advertise<visualization_msgs::Marker>("human_voxels",1,false);
+  human_occupancy_publisher_ = nodeHandle_.advertise<sensor_msgs::PointCloud2>("human_occupancy",1,false);
+  human_esdf_pointcloud_publisher_ = nodeHandle_.advertise<sensor_msgs::PointCloud2>("human_esdf_pointcloud",1,false);
+  combined_esdf_pointcloud_publisher_ = nodeHandle_.advertise<sensor_msgs::PointCloud2>("combined_esdf_pointcloud",1,false);
+  human_map_slice_publisher_ = nodeHandle_.advertise<nvblox_msgs::DistanceMapSlice>("human_map_slice",1,false);
+  combined_map_slice_publisher_ = nodeHandle_.advertise<nvblox_msgs::DistanceMapSlice>("combined_map_slice",1,false);
+  depth_frame_overlay_publisher_ = nodeHandle_.advertise<sensor_msgs::Image>("depth_frame_overlay",1,false);
+  color_frame_overlay_publisher_ = nodeHandle_.advertise<sensor_msgs::Image>("color_frame_overlay",1,false);
 }
 
 void NvbloxHumanNode::setupTimers()
 {
-  human_occupancy_decay_timer_ = create_wall_timer(
-    std::chrono::duration<double>(1.0 / human_occupancy_decay_rate_hz_),
-    std::bind(&NvbloxHumanNode::decayHumanOccupancy, this),
-    group_processing_);
-  human_esdf_processing_timer_ = create_wall_timer(
-    std::chrono::duration<double>(1.0 / human_esdf_update_rate_hz_),
-    std::bind(&NvbloxHumanNode::processHumanEsdf, this), group_processing_);
+  human_occupancy_decay_timer_= nodeHandle_.createWallTimer(ros::WallDuration(1.0 / human_occupancy_decay_rate_hz_), &NvbloxHumanNode::decayHumanOccupancy, this, false, true);
+  human_esdf_processing_timer_= nodeHandle_.createWallTimer(ros::WallDuration(1.0 / human_esdf_update_rate_hz_), &NvbloxHumanNode::processHumanEsdf, this, false, true);
 }
 
 void NvbloxHumanNode::depthPlusMaskImageCallback(

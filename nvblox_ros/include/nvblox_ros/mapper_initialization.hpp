@@ -29,16 +29,16 @@
 namespace nvblox
 {
 
-void declareMapperParameters(const std::string & mapper_name, ros::Node * node);
+void declareMapperParameters(const std::string & mapper_name, ros::NodeHandle& nodeHandle);
 
 template<typename T>
 void set_mapper_parameter(
   const std::string & mapper_name,
   const std::string & parameter_name,
   std::function<void(T)> parameter_setter,
-  ros::Node * node);
+  ros::NodeHandle& nodeHandle);
 
-void initializeMapper(const std::string & mapper_name, Mapper * mapper_ptr, ros::Node * node);
+void initializeMapper(const std::string & mapper_name, Mapper * mapper_ptr, ros::NodeHandle& nodeHandle);
 
 }  // namespace nvblox
 

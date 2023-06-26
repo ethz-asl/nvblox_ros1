@@ -91,7 +91,7 @@ private:
   Transform poseToEigen(const geometry_msgs::Pose & pose) const;
 
   /// ROS State
-  ros::Node * node_;
+  ros::NodeHandle nodeHandle_;
   std::shared_ptr<tf2_ros::TransformListener> transform_listener_;
   std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
 
