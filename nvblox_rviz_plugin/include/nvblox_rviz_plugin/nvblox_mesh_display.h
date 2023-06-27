@@ -19,12 +19,12 @@
 
 #include <memory>
 
-#include <rviz_common/message_filter_display.hpp>
-#include <rviz_common/properties/bool_property.hpp>
-#include <rviz_common/properties/enum_property.hpp>
-#include <rviz_common/properties/float_property.hpp>
+#include <rviz/message_filter_display.h>
+#include <rviz/properties/bool_property.h>
+#include <rviz/properties/enum_property.h>
+#include <rviz/properties/float_property.h>
 
-#include <nvblox_msgs/msg/mesh.hpp>
+#include <nvblox_msgs/Mesh.h>
 
 #include "nvblox_rviz_plugin/nvblox_mesh_visual.h"
 
@@ -32,8 +32,7 @@ namespace nvblox_rviz_plugin {
 
 class NvbloxMeshVisual;
 
-class __attribute__((visibility("default"))) NvbloxMeshDisplay
-    : public rviz_common::MessageFilterDisplay<nvblox_msgs::msg::Mesh> {
+class NvbloxMeshDisplay : public rviz::MessageFilterDisplay<nvblox_msgs::Mesh> {
   Q_OBJECT
  public:
   NvbloxMeshDisplay();
@@ -50,12 +49,11 @@ class __attribute__((visibility("default"))) NvbloxMeshDisplay
   virtual void reset();
 
  private:
-  void processMessage(
-      const nvblox_msgs::msg::Mesh::ConstSharedPtr msg) override;
+ void processMessage(const nvblox_msgs::Mesh::ConstPtr& msg) override;
 
-  rviz_common::properties::BoolProperty* cut_ceiling_property_;
-  rviz_common::properties::FloatProperty* ceiling_height_property_;
-  rviz_common::properties::EnumProperty* mesh_color_property_;
+  rviz::BoolProperty* cut_ceiling_property_;
+  rviz::FloatProperty* ceiling_height_property_;
+  rviz::EnumProperty* mesh_color_property_;
 
   std::unique_ptr<NvbloxMeshVisual> visual_;
 };
