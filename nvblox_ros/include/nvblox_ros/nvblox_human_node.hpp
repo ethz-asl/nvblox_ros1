@@ -70,8 +70,8 @@ public:
       sensor_msgs::CameraInfo::ConstPtr>;
 
   // Override the depth processing from the base node
-  void processDepthQueue() override;
-  void processColorQueue() override;
+  void processDepthQueue(const ros::TimerEvent& /*event*/) override;
+  void processColorQueue(const ros::TimerEvent& /*event*/) override;
 
   // The methods for processing images from the internal queue.
   virtual bool processDepthImage(
@@ -80,10 +80,10 @@ public:
     const ImageSegmentationMaskMsgTuple & color_mask_msg);
 
   // Publish human data on fixed frequency
-  void processHumanEsdf();
+  void processHumanEsdf(const ros::WallTimerEvent& /*event*/);
 
   // Decay the human occupancy grid on fixed frequency
-  void decayHumanOccupancy();
+  void decayHumanOccupancy(const ros::WallTimerEvent& /*event*/);
 
 protected:
   // Publish human data (if any subscribers) that helps

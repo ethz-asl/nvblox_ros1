@@ -34,9 +34,10 @@ void inline declareParameterWithoutDefault(
     // TODO figure out how to replicate this
     //nodeHandle_.param<ParameterType>(name, is_occupancy, false);
 
-  } catch (
-    ros::Exception("Attempted null pointer operation"));
+  } catch (ros::Exception& e)
   {
+    ROS_ERROR(" Parameter Declare Error: %s ", e.what());
+    // log the error
   }
 }
 

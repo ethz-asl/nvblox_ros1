@@ -98,28 +98,26 @@ void declareMapperParameters(
     */
 }
 
-void initializeMapper(
-  const std::string & mapper_name, Mapper * mapper_ptr,
-  ros::NodeHandle& nodeHandle)
+void initializeMapper(const std::string & mapper_name, Mapper * mapper_ptr, ros::NodeHandle& nodeHandle)
 {
   ROS_INFO_STREAM("Initialize Mapper:");
 
   // tsdf or occupancy integrator
   float projective_integrator_max_integration_distance_m = 10.0f;
-  nodeHandle_.param<float>("projective_integrator_max_integration_distance_m", projective_integrator_max_integration_distance_m, 10.0f);
+  nodeHandle.param<float>("projective_integrator_max_integration_distance_m", projective_integrator_max_integration_distance_m, 10.0f);
   mapper_ptr->tsdf_integrator().max_integration_distance_m(projective_integrator_max_integration_distance_m);
   mapper_ptr->occupancy_integrator().max_integration_distance_m(projective_integrator_max_integration_distance_m);
 
 
   float lidar_projective_integrator_max_integration_distance_m = 10.0f;
-  nodeHandle_.param<float>("lidar_projective_integrator_max_integration_distance_m", lidar_projective_integrator_max_integration_distance_m, 10.0f);
+  nodeHandle.param<float>("lidar_projective_integrator_max_integration_distance_m", lidar_projective_integrator_max_integration_distance_m, 10.0f);
 
   mapper_ptr->lidar_tsdf_integrator().max_integration_distance_m(lidar_projective_integrator_max_integration_distance_m);
   mapper_ptr->lidar_occupancy_integrator().max_integration_distance_m(lidar_projective_integrator_max_integration_distance_m);
 
 
   float projective_integrator_truncation_distance_vox = 10.0f;
-  nodeHandle_.param<float>("projective_integrator_truncation_distance_vox", projective_integrator_truncation_distance_vox, 10.0f);
+  nodeHandle.param<float>("projective_integrator_truncation_distance_vox", projective_integrator_truncation_distance_vox, 10.0f);
 
   mapper_ptr->tsdf_integrator().truncation_distance_vox(projective_integrator_truncation_distance_vox);
   mapper_ptr->occupancy_integrator().truncation_distance_vox(projective_integrator_truncation_distance_vox);
@@ -132,78 +130,78 @@ void initializeMapper(
   // integrator.
 
   std::string weighting_mode_param = "test";
-  nodeHandle_.param<std::string>("weighting_mode", weighting_mode_param, "test");
+  nodeHandle.param<std::string>("weighting_mode", weighting_mode_param, "test");
 
   const WeightingFunctionType weight_mode = weighting_function_type_from_string(weighting_mode_param);
   mapper_ptr->tsdf_integrator().weighting_function_type(weight_mode);
   mapper_ptr->color_integrator().weighting_function_type(weight_mode);
 
   float tsdf_integrator_max_weight = 10.0f;
-  nodeHandle_.param<float>("tsdf_integrator_max_weight", tsdf_integrator_max_weight, 10.0f);
+  nodeHandle.param<float>("tsdf_integrator_max_weight", tsdf_integrator_max_weight, 10.0f);
 
   mapper_ptr->tsdf_integrator().max_weight(tsdf_integrator_max_weight);
   mapper_ptr->lidar_tsdf_integrator().max_weight(tsdf_integrator_max_weight);
 
   // occupancy integrator
   float free_region_occupancy_probability = 10.0f;
-  nodeHandle_.param<float>("free_region_occupancy_probability", free_region_occupancy_probability, 10.0f);
+  nodeHandle.param<float>("free_region_occupancy_probability", free_region_occupancy_probability, 10.0f);
 
   mapper_ptr->occupancy_integrator().free_region_occupancy_probability(free_region_occupancy_probability);
   mapper_ptr->lidar_occupancy_integrator().free_region_occupancy_probability(free_region_occupancy_probability);
 
   float occupied_region_occupancy_probability = 10.0f;
-  nodeHandle_.param<float>("occupied_region_occupancy_probability", occupied_region_occupancy_probability, 10.0f);
+  nodeHandle.param<float>("occupied_region_occupancy_probability", occupied_region_occupancy_probability, 10.0f);
 
   mapper_ptr->occupancy_integrator().occupied_region_occupancy_probability(occupied_region_occupancy_probability);
   mapper_ptr->lidar_occupancy_integrator().occupied_region_occupancy_probability(occupied_region_occupancy_probability);
 
   float unobserved_region_occupancy_probability = 10.0f;
-  nodeHandle_.param<float>("unobserved_region_occupancy_probability", unobserved_region_occupancy_probability, 10.0f);
+  nodeHandle.param<float>("unobserved_region_occupancy_probability", unobserved_region_occupancy_probability, 10.0f);
 
   mapper_ptr->occupancy_integrator().unobserved_region_occupancy_probability(unobserved_region_occupancy_probability);
   mapper_ptr->lidar_occupancy_integrator().unobserved_region_occupancy_probability(unobserved_region_occupancy_probability);
 
   float occupied_region_half_width_m = 10.0f;
-  nodeHandle_.param<float>("occupied_region_half_width_m", occupied_region_half_width_m, 10.0f);
+  nodeHandle.param<float>("occupied_region_half_width_m", occupied_region_half_width_m, 10.0f);
 
   mapper_ptr->occupancy_integrator().occupied_region_half_width_m(occupied_region_half_width_m);
   mapper_ptr->lidar_occupancy_integrator().occupied_region_half_width_m(occupied_region_half_width_m);
 
   float free_region_decay_probability = 10.0f;
-  nodeHandle_.param<float>("free_region_decay_probability", free_region_decay_probability, 10.0f);
+  nodeHandle.param<float>("free_region_decay_probability", free_region_decay_probability, 10.0f);
 
   mapper_ptr->occupancy_decay_integrator().free_region_decay_probability(free_region_decay_probability);
 
   float occupied_region_decay_probability = 10.0f;
-  nodeHandle_.param<float>("occupied_region_decay_probability", occupied_region_decay_probability, 10.0f);
+  nodeHandle.param<float>("occupied_region_decay_probability", occupied_region_decay_probability, 10.0f);
 
   mapper_ptr->occupancy_decay_integrator().occupied_region_decay_probability(occupied_region_decay_probability);
 
   float mesh_integrator_min_weight = 10.0f;
-  nodeHandle_.param<float>("mesh_integrator_min_weight", mesh_integrator_min_weight, 10.0f);
-  mapper_ptr->mesh_integrator().min_weight(mesh_integrator_min_weight)
+  nodeHandle.param<float>("mesh_integrator_min_weight", mesh_integrator_min_weight, 10.0f);
+  mapper_ptr->mesh_integrator().min_weight(mesh_integrator_min_weight);
 
   bool mesh_integrator_weld_vertices = 10.0f;
-  nodeHandle_.param<bool>("mesh_integrator_weld_vertices", mesh_integrator_weld_vertices, 10.0f);
-  mapper_ptr->mesh_integrator().weld_vertices(value);
+  nodeHandle.param<bool>("mesh_integrator_weld_vertices", mesh_integrator_weld_vertices, 10.0f);
+  mapper_ptr->mesh_integrator().weld_vertices(mesh_integrator_weld_vertices);
 
   // color integrator
   float color_integrator_max_integration_distance_m = 10.0f;
-  nodeHandle_.param<float>("color_integrator_max_integration_distance_m", color_integrator_max_integration_distance_m, 10.0f);
+  nodeHandle.param<float>("color_integrator_max_integration_distance_m", color_integrator_max_integration_distance_m, 10.0f);
   mapper_ptr->color_integrator().max_integration_distance_m(color_integrator_max_integration_distance_m);
 
   // esdf integrator
   float esdf_integrator_min_weight = 10.0f;
-  nodeHandle_.param<float>("esdf_integrator_min_weight", esdf_integrator_min_weight, 10.0f);
+  nodeHandle.param<float>("esdf_integrator_min_weight", esdf_integrator_min_weight, 10.0f);
   mapper_ptr->esdf_integrator().min_weight(esdf_integrator_min_weight);
 
   float esdf_integrator_max_site_distance_vox = 10.0f;
-  nodeHandle_.param<float>("esdf_integrator_max_site_distance_vox", esdf_integrator_max_site_distance_vox, 10.0f);
+  nodeHandle.param<float>("esdf_integrator_max_site_distance_vox", esdf_integrator_max_site_distance_vox, 10.0f);
   mapper_ptr->esdf_integrator().max_site_distance_vox(esdf_integrator_max_site_distance_vox);
 
   float esdf_integrator_max_distance_m = 10.0f;
-  nodeHandle_.param<float>("esdf_integrator_max_distance_m", esdf_integrator_max_distance_m, 10.0f);
-  mapper_ptr->esdf_integrator().max_distance_m(value);
+  nodeHandle.param<float>("esdf_integrator_max_distance_m", esdf_integrator_max_distance_m, 10.0f);
+  mapper_ptr->esdf_integrator().max_distance_m(esdf_integrator_max_distance_m);
 
 }
 

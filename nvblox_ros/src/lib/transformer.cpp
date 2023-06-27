@@ -83,18 +83,18 @@ bool Transformer::lookupTransformToGlobalFrame(
 }
 
 void Transformer::transformCallback(
-  const geometry_msgs::TransformStamped::ConstPtr transform_msg)
+  const geometry_msgs::TransformStampedConstPtr& transform_msg)
 {
   ros::Time timestamp = transform_msg->header.stamp;
-  transform_queue_[timestamp.nanoseconds()] =
+  transform_queue_[timestamp.toNSec()] =
     transformToEigen(transform_msg->transform);
 }
 
 void Transformer::poseCallback(
-  const geometry_msgs::PoseStamped::ConstPtr transform_msg)
+  const geometry_msgs::PoseStampedConstPtr& transform_msg)
 {
   ros::Time timestamp = transform_msg->header.stamp;
-  transform_queue_[timestamp.nanoseconds()] = poseToEigen(transform_msg->pose);
+  transform_queue_[timestamp.toNSec()] = poseToEigen(transform_msg->pose);
 }
 
 bool Transformer::lookupTransformTf(
@@ -106,9 +106,7 @@ bool Transformer::lookupTransformTf(
   geometry_msgs::TransformStamped T_L_C_msg;
   try {
     std::string error_string;
-    if (tf_buffer_->canTransform(
-        from_frame, to_frame, timestamp,
-        ros::Duration::from_nanoseconds(0), &error_string))
+    if (tf_buffer_->canTransform(from_frame, to_frame, timestamp, ros::Duration(0.1)))
     {
       T_L_C_msg = tf_buffer_->lookupTransform(from_frame, to_frame, timestamp);
     } else {
@@ -140,7 +138,7 @@ bool Transformer::lookupTransformQueue(
     return true;
   } else {
     // Get closest transform
-    uint64_t timestamp_ns = timestamp.nanoseconds();
+    uint64_t timestamp_ns = timestamp.toNSec();
 
     auto closest_match = transform_queue_.lower_bound(timestamp_ns);
     if (closest_match == transform_queue_.end()) {

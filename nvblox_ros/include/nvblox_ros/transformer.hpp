@@ -58,9 +58,9 @@ public:
   /// Assumes these transforms are from GLOBAL frame to POSE frame. Ignores
   /// frame_id.
   void transformCallback(
-    const geometry_msgs::TransformStamped::ConstPtr transform_msg);
+    const geometry_msgs::TransformStampedConstPtr& transform_msg);
   void poseCallback(
-    const geometry_msgs::PoseStamped::ConstPtr transform_msg);
+    const geometry_msgs::PoseStampedConstPtr& transform_msg);
 
   /// Set the names of the frames.
   void set_global_frame(const std::string & global_frame)

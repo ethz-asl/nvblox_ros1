@@ -76,26 +76,30 @@ class NvbloxNode {
       const sensor_msgs::CameraInfo::ConstPtr& color_info_msg);
   void pointcloudCallback(const sensor_msgs::PointCloud2::ConstPtr pointcloud);
 
-  void savePly(
-      const std::shared_ptr<nvblox_msgs::srv::FilePath::Request> request,
-      std::shared_ptr<nvblox_msgs::srv::FilePath::Response> response);
-  void saveMap(
-      const std::shared_ptr<nvblox_msgs::srv::FilePath::Request> request,
-      std::shared_ptr<nvblox_msgs::srv::FilePath::Response> response);
-  void loadMap(
-      const std::shared_ptr<nvblox_msgs::srv::FilePath::Request> request,
-      std::shared_ptr<nvblox_msgs::srv::FilePath::Response> response);
+  bool savePly(
+  nvblox_msgs::FilePath::Request& request,
+  nvblox_msgs::FilePath::Response& response);
+  bool saveMap(
+  nvblox_msgs::FilePath::Request& request,
+  nvblox_msgs::FilePath::Response& response);
+  bool loadMap(
+  nvblox_msgs::FilePath::Request& request,
+  nvblox_msgs::FilePath::Response& response);
 
   // Does whatever processing there is to be done, depending on what
   // transforms are available.
-  virtual void processDepthQueue();
-  virtual void processColorQueue();
-  virtual void processPointcloudQueue();
-  virtual void processEsdf();
-  virtual void processMesh();
+  virtual void processDepthQueue(const ros::TimerEvent& /*event*/);
+  virtual void processColorQueue(const ros::TimerEvent& /*event*/);
+  virtual void processPointcloudQueue(const ros::TimerEvent& /*event*/);
+  virtual void processEsdf(const ros::TimerEvent& /*event*/);
+  virtual void processMesh(const ros::TimerEvent& /*event*/);
+
+  // Alternative callbacks to using TF.
+  void transformCallback(const geometry_msgs::TransformStampedConstPtr& transform_msg);
+  void poseCallback(const geometry_msgs::PoseStampedConstPtr& transform_msg);
 
   // Publish data on fixed frequency
-  void publishOccupancyPointcloud();
+  void publishOccupancyPointcloud(const ros::TimerEvent& /*event*/);
 
   // Process data
   virtual bool processDepthImage(
@@ -113,7 +117,7 @@ class NvbloxNode {
 
  protected:
   // Map clearing
-  void clearMapOutsideOfRadiusOfLastKnownPose();
+  void clearMapOutsideOfRadiusOfLastKnownPose(const ros::TimerEvent& /*event*/);
 
   /// Used by callbacks (internally) to add messages to queues.
   /// @tparam MessageType The type of the Message stored by the queue.
@@ -195,6 +199,7 @@ class NvbloxNode {
   // Publishers
   ros::Publisher mesh_publisher_;
   ros::Publisher esdf_pointcloud_publisher_;
+  ros::Publisher occupancy_publisher_;
   ros::Publisher map_slice_publisher_;
   ros::Publisher slice_bounds_publisher_;
   ros::Publisher mesh_marker_publisher_;

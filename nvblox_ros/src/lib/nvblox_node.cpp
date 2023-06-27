@@ -17,6 +17,7 @@
 
 #include "nvblox_ros/nvblox_node.hpp"
 
+
 #include <nvblox/io/mesh_io.h>
 #include <nvblox/io/pointcloud_io.h>
 #include <nvblox/utils/timing.h>
@@ -29,6 +30,7 @@
 #include <vector>
 
 #include "nvblox_ros/visualization.hpp"
+#include "nvblox_ros/transformer.hpp"
 
 namespace nvblox
 {
@@ -51,7 +53,7 @@ NvbloxNode::NvbloxNode(ros::NodeHandle& nodeHandle) : nodeHandle_(nodeHandle), t
   mapper_ = std::make_shared<Mapper>(
     voxel_size_, MemoryType::kDevice,
     static_projective_layer_type_);
-  initializeMapper(mapper_name, mapper_.get(), this);
+  initializeMapper(mapper_name, mapper_.get(), nodeHandle_);
 
   // Setup interactions with ROS
   subscribeToTopics();
@@ -77,7 +79,7 @@ NvbloxNode::NvbloxNode(ros::NodeHandle& nodeHandle) : nodeHandle_(nodeHandle), t
 void NvbloxNode::getParameters()
 {
   ROS_INFO_STREAM("NvbloxNode::getParameters()");
-  const bool is_occupancy = false;
+  bool is_occupancy = false;
   nodeHandle_.param<bool>("use_static_occupancy_layer", is_occupancy, false);
 
   if (is_occupancy) {
@@ -149,8 +151,6 @@ void NvbloxNode::subscribeToTopics()
 
   if (use_depth_) {
     // Subscribe to synchronized depth + cam_info topics
-    depth_sub_.subscribe(this, "depth/image", parseQosString(depth_qos_str_));
-    depth_camera_info_sub_.subscribe(this, "depth/camera_info");
 
     depth_sub_.subscribe(nodeHandle_, "depth/image", 20);
     depth_camera_info_sub_.subscribe(nodeHandle_, "depth/camera_info", 20);
@@ -212,25 +212,33 @@ void NvbloxNode::setupTimers()
 {
   ROS_INFO_STREAM("NvbloxNode::setupTimers()");
   if (use_depth_) {
-    depth_processing_timer_ = nh_.createTimer(ros::Duration(1.0 / max_poll_rate_hz_), &NvbloxNode::processDepthQueue, this);
+    depth_processing_timer_ = nodeHandle_.createTimer(ros::Duration(1.0 / max_poll_rate_hz_), &NvbloxNode::processDepthQueue, this);
   }
   if (use_color_) {
-    color_processing_timer_ = nh_.createTimer(ros::Duration(1.0 / max_poll_rate_hz_), &NvbloxNode::processColorQueue, this);
+    color_processing_timer_ = nodeHandle_.createTimer(ros::Duration(1.0 / max_poll_rate_hz_), &NvbloxNode::processColorQueue, this);
   }
   if (use_lidar_) {
-    pointcloud_processing_timer_ = nh_.createTimer(ros::Duration(1.0 / max_poll_rate_hz_), &NvbloxNode::processPointcloudQueue, this);
+    pointcloud_processing_timer_ = nodeHandle_.createTimer(ros::Duration(1.0 / max_poll_rate_hz_), &NvbloxNode::processPointcloudQueue, this);
   }
 
-  esdf_processing_timer_ = nh_.createTimer(ros::Duration(1.0 / esdf_update_rate_hz_), &NvbloxNode::processEsdf, this);
-  mesh_processing_timer_ = nh_.createTimer(ros::Duration(1.0 / mesh_update_rate_hz_), &NvbloxNode::processMesh, this);
+  esdf_processing_timer_ = nodeHandle_.createTimer(ros::Duration(1.0 / esdf_update_rate_hz_), &NvbloxNode::processEsdf, this);
+  mesh_processing_timer_ = nodeHandle_.createTimer(ros::Duration(1.0 / mesh_update_rate_hz_), &NvbloxNode::processMesh, this);
 
   if (static_projective_layer_type_ == ProjectiveLayerType::kOccupancy) {
-    occupancy_publishing_timer_ = nh_.createTimer(ros::Duration(1.0 / occupancy_publication_rate_hz_), &NvbloxNode::publishOccupancyPointcloud, this);
+    occupancy_publishing_timer_ = nodeHandle_.createTimer(ros::Duration(1.0 / occupancy_publication_rate_hz_), &NvbloxNode::publishOccupancyPointcloud, this);
   }
 
   if (map_clearing_radius_m_ > 0.0f) {
-    clear_outside_radius_timer_ = nh_.createTimer(ros::Duration(1.0 / clear_outside_radius_rate_hz_), &NvbloxNode::clearMapOutsideOfRadiusOfLastKnownPose, this);
+    clear_outside_radius_timer_ = nodeHandle_.createTimer(ros::Duration(1.0 / clear_outside_radius_rate_hz_), &NvbloxNode::clearMapOutsideOfRadiusOfLastKnownPose, this);
   }
+}
+
+void NvbloxNode::transformCallback(const geometry_msgs::TransformStampedConstPtr& transform_msg){
+  transformer_.transformCallback(transform_msg);
+}
+
+void NvbloxNode::poseCallback(const geometry_msgs::PoseStampedConstPtr& transform_msg){
+  transformer_.poseCallback(transform_msg);
 }
 
 void NvbloxNode::depthImageCallback(
@@ -271,7 +279,7 @@ void NvbloxNode::pointcloudCallback(
     &pointcloud_queue_mutex_);
 }
 
-void NvbloxNode::processDepthQueue()
+void NvbloxNode::processDepthQueue(const ros::TimerEvent& /*event*/)
 {
   using ImageInfoMsgPair =
     std::pair<sensor_msgs::ImageConstPtr,
@@ -292,7 +300,7 @@ void NvbloxNode::processDepthQueue()
     &depth_queue_mutex_);
 }
 
-void NvbloxNode::processColorQueue()
+void NvbloxNode::processColorQueue(const ros::TimerEvent& /*event*/)
 {
   using ImageInfoMsgPair =
     std::pair<sensor_msgs::ImageConstPtr,
@@ -313,7 +321,7 @@ void NvbloxNode::processColorQueue()
     &color_queue_mutex_);
 }
 
-void NvbloxNode::processPointcloudQueue()
+void NvbloxNode::processPointcloudQueue(const ros::TimerEvent& /*event*/)
 {
   using PointcloudMsg = sensor_msgs::PointCloud2::ConstPtr;
   auto message_ready = [this](const PointcloudMsg & msg) {
@@ -333,7 +341,7 @@ void NvbloxNode::processPointcloudQueue()
     &pointcloud_queue_mutex_);
 }
 
-void NvbloxNode::processEsdf()
+void NvbloxNode::processEsdf(const ros::TimerEvent& /*event*/)
 {
   if (!compute_esdf_) {
     return;
@@ -380,7 +388,7 @@ void NvbloxNode::processEsdf()
         mapper_->esdf_layer().voxel_size(), &pointcloud_msg);
       pointcloud_msg.header.frame_id = global_frame_;
       pointcloud_msg.header.stamp = ros::Time::now();
-      esdf_pointcloud_publisher_->publish(pointcloud_msg);
+      esdf_pointcloud_publisher_.publish(pointcloud_msg);
     }
 
     // Also publish the map slice (costmap for nav2).
@@ -392,7 +400,7 @@ void NvbloxNode::processEsdf()
         mapper_->voxel_size_m(), &map_slice_msg);
       map_slice_msg.header.frame_id = global_frame_;
       map_slice_msg.header.stamp = ros::Time::now();
-      map_slice_publisher_->publish(map_slice_msg);
+      map_slice_publisher_.publish(map_slice_msg);
     }
   }
 
@@ -409,7 +417,7 @@ void NvbloxNode::processEsdf()
       const visualization_msgs::Marker marker = sliceLimitsToMarker(
         T_S_PB, slice_visualization_side_length_, timestamp, global_frame_,
         esdf_2d_min_height_, esdf_2d_max_height_);
-      slice_bounds_publisher_->publish(marker);
+      slice_bounds_publisher_.publish(marker);
     } else {
       constexpr float kTimeBetweenDebugMessages = 1.0;
       ROS_INFO_STREAM_THROTTLE(kTimeBetweenDebugMessages,
@@ -419,7 +427,7 @@ void NvbloxNode::processEsdf()
   }
 }
 
-void NvbloxNode::processMesh()
+void NvbloxNode::processMesh(const ros::TimerEvent& /*event*/)
 {
   if (!compute_mesh_) {
     return;
@@ -464,7 +472,7 @@ void NvbloxNode::processMesh()
     mesh_msg.header.frame_id = global_frame_;
     mesh_msg.header.stamp = timestamp;
     if (should_publish) {
-      mesh_publisher_->publish(mesh_msg);
+      mesh_publisher_.publish(mesh_msg);
     }
   }
   mesh_subscriber_count_ = new_subscriber_count;
@@ -475,7 +483,7 @@ void NvbloxNode::processMesh()
     conversions::markerMessageFromMeshLayer(
       mapper_->mesh_layer(), global_frame_,
       &marker_msg);
-    mesh_marker_publisher_->publish(marker_msg);
+    mesh_marker_publisher_.publish(marker_msg);
   }
 
   mesh_output_timer.Stop();
@@ -495,7 +503,7 @@ bool NvbloxNode::isUpdateTooFrequent(
   float max_update_rate_hz)
 {
   if (max_update_rate_hz > 0.0f &&
-    (current_stamp - last_update_stamp).seconds() <
+    (current_stamp - last_update_stamp).toSec() <
     1.0f / max_update_rate_hz)
   {
     return true;
@@ -664,7 +672,7 @@ bool NvbloxNode::processLidarPointcloud(
   return true;
 }
 
-void NvbloxNode::publishOccupancyPointcloud()
+void NvbloxNode::publishOccupancyPointcloud(const ros::TimerEvent& /*event*/)
 {
   timing::Timer ros_total_timer("ros/total");
   timing::Timer esdf_output_timer("ros/occupancy/output");
@@ -674,11 +682,11 @@ void NvbloxNode::publishOccupancyPointcloud()
     layer_converter_.pointcloudMsgFromLayer(mapper_->occupancy_layer(), &pointcloud_msg);
     pointcloud_msg.header.frame_id = global_frame_;
     pointcloud_msg.header.stamp = ros::Time::now();
-    occupancy_publisher_->publish(pointcloud_msg);
+    occupancy_publisher_.publish(pointcloud_msg);
   }
 }
 
-void NvbloxNode::clearMapOutsideOfRadiusOfLastKnownPose()
+void NvbloxNode::clearMapOutsideOfRadiusOfLastKnownPose(const ros::TimerEvent& /*event*/)
 {
   if (map_clearing_radius_m_ > 0.0f) {
     timing::Timer("ros/clear_outside_radius");
@@ -713,74 +721,77 @@ bool ends_with(const std::string & value, const std::string & ending)
     });
 }
 
-void NvbloxNode::savePly(
-  const std::shared_ptr<nvblox_msgs::srv::FilePath::Request> request,
-  std::shared_ptr<nvblox_msgs::srv::FilePath::Response> response)
+bool NvbloxNode::savePly(
+  nvblox_msgs::FilePath::Request& request,
+  nvblox_msgs::FilePath::Response& response)
 {
   // If we get a full path, then write to that path.
   bool success = false;
-  if (ends_with(request->file_path, ".ply")) {
+  if (ends_with(request.file_path, ".ply")) {
     success =
-      io::outputMeshLayerToPly(mapper_->mesh_layer(), request->file_path);
+      io::outputMeshLayerToPly(mapper_->mesh_layer(), request.file_path);
   } else {
     // If we get a partial path then output a bunch of stuff to a folder.
     io::outputVoxelLayerToPly(
       mapper_->tsdf_layer(),
-      request->file_path + "/ros2_tsdf.ply");
+      request.file_path + "/ros2_tsdf.ply");
     io::outputVoxelLayerToPly(
       mapper_->esdf_layer(),
-      request->file_path + "/ros2_esdf.ply");
+      request.file_path + "/ros2_esdf.ply");
     success = io::outputMeshLayerToPly(
       mapper_->mesh_layer(),
-      request->file_path + "/ros2_mesh.ply");
+      request.file_path + "/ros2_mesh.ply");
   }
   if (success) {
-    ROS_INFO_STREAM("Output PLY file(s) to " << request->file_path);
-    response->success = true;
+    ROS_INFO_STREAM("Output PLY file(s) to " << request.file_path);
+    response.success = true;
   } else {
-    ROS_WARN_STREAM("Failed to write PLY file(s) to " << request->file_path);
-    response->success = false;
+    ROS_WARN_STREAM("Failed to write PLY file(s) to " << request.file_path);
+    response.success = false;
   }
+  return true;
 }
 
-void NvbloxNode::saveMap(
-  const std::shared_ptr<nvblox_msgs::srv::FilePath::Request> request,
-  std::shared_ptr<nvblox_msgs::srv::FilePath::Response> response)
+bool NvbloxNode::saveMap(
+  nvblox_msgs::FilePath::Request& request,
+  nvblox_msgs::FilePath::Response& response)
 {
   std::unique_lock<std::mutex> lock1(depth_queue_mutex_);
   std::unique_lock<std::mutex> lock2(color_queue_mutex_);
 
-  std::string filename = request->file_path;
-  if (!ends_with(request->file_path, ".nvblx")) {
+  std::string filename = request.file_path;
+  if (!ends_with(request.file_path, ".nvblx")) {
     filename += ".nvblx";
   }
 
-  response->success = mapper_->saveMap(filename);
-  if (response->success) {
+  response.success = mapper_->saveMap(filename);
+  if (response.success) {
     ROS_INFO_STREAM("Output map to file to " << filename);
   } else {
     ROS_WARN_STREAM("Failed to write file to " << filename);
   }
+  return true;
 }
 
-void NvbloxNode::loadMap(
-  const std::shared_ptr<nvblox_msgs::srv::FilePath::Request> request,
-  std::shared_ptr<nvblox_msgs::srv::FilePath::Response> response)
+bool NvbloxNode::loadMap(
+  nvblox_msgs::FilePath::Request& request,
+  nvblox_msgs::FilePath::Response& response)
 {
   std::unique_lock<std::mutex> lock1(depth_queue_mutex_);
   std::unique_lock<std::mutex> lock2(color_queue_mutex_);
 
-  std::string filename = request->file_path;
-  if (!ends_with(request->file_path, ".nvblx")) {
+  std::string filename = request.file_path;
+  if (!ends_with(request.file_path, ".nvblx")) {
     filename += ".nvblx";
   }
 
-  response->success = mapper_->loadMap(filename);
-  if (response->success) {
+  response.success = mapper_->loadMap(filename);
+  if (response.success) {
     ROS_INFO_STREAM("Loaded map to file from " << filename);
   } else {
     ROS_WARN_STREAM("Failed to load map file from " << filename);
   }
+  return true;
 }
 
 }  // namespace nvblox

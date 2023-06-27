@@ -25,8 +25,8 @@ namespace conversions {
 // Convert camera info message to NVBlox camera object
 Camera cameraFromMessage(
     const sensor_msgs::CameraInfo& camera_info) {
-  Camera camera(camera_info.k[0], camera_info.k[4], camera_info.k[2],
-                camera_info.k[5], camera_info.width, camera_info.height);
+  Camera camera(camera_info.K[0], camera_info.K[4], camera_info.K[2],
+                camera_info.K[5], camera_info.width, camera_info.height);
   return camera;
 }
 

@@ -57,10 +57,9 @@ NvbloxHumanNode::NvbloxHumanNode(ros::NodeHandle& nodeHandle)
 
 void NvbloxHumanNode::getParameters()
 {
-  human_occupancy_decay_rate_hz_ = declare_parameter<float>(
-    "human_occupancy_decay_rate_hz", human_occupancy_decay_rate_hz_);
-  human_esdf_update_rate_hz_ = declare_parameter<float>(
-    "human_esdf_update_rate_hz", human_esdf_update_rate_hz_);
+  nodeHandle_.param<float>("human_occupancy_decay_rate_hz", human_occupancy_decay_rate_hz_, 0.05f);
+  nodeHandle_.param<float>("human_esdf_update_rate_hz_", human_esdf_update_rate_hz_, 0.05f);
+
 }
 
 void NvbloxHumanNode::initializeMultiMapper()
@@ -80,7 +79,7 @@ void NvbloxHumanNode::initializeMultiMapper()
   // calling initializeMapper() (again) (it its also called in the base
   // constructor, on the now-deleted Mapper).
   mapper_ = multi_mapper_.get()->unmasked_mapper();
-  initializeMapper("mapper", mapper_.get(), this);
+  initializeMapper("mapper", mapper_.get(), nodeHandle_);
   // Set to an invalid depth to ignore human pixels in the unmasked mapper
   // during integration.
   multi_mapper_->setDepthUnmaskedImageInvalidPixel(-1.f);
@@ -90,7 +89,7 @@ void NvbloxHumanNode::initializeMultiMapper()
   human_mapper_ = multi_mapper_.get()->masked_mapper();
   // Human mapper params have not been declared yet
   //declareMapperParameters(mapper_name, this);
-  initializeMapper(mapper_name, human_mapper_.get(), this);
+  initializeMapper(mapper_name, human_mapper_.get(), nodeHandle_);
   // Set to a distance bigger than the max. integration distance to not include
   // non human pixels on the human mapper, but clear along the projection.
   // TODO(remosteiner): Think of a better way to do this.
@@ -112,11 +111,8 @@ void NvbloxHumanNode::subscribeToTopics()
   NvbloxNode::timesync_depth_.reset();
   NvbloxNode::timesync_color_.reset();
 
-  // Subscribe to segmentation masks
-  segmentation_mask_sub_.subscribe(
-    this, "mask/image",
-    parseQosString(color_qos_str_));
-  segmentation_camera_info_sub_.subscribe(this, "mask/camera_info");
+  segmentation_mask_sub_.subscribe(nodeHandle_, "mask/image", 20);
+  segmentation_camera_info_sub_.subscribe(nodeHandle_, "mask/camera_info", 20);
 
   if (use_depth_) {
     // Unsubscribe from the depth topic in nvblox_node
@@ -163,8 +159,8 @@ void NvbloxHumanNode::advertiseTopics()
 
 void NvbloxHumanNode::setupTimers()
 {
-  human_occupancy_decay_timer_= nodeHandle_.createWallTimer(ros::WallDuration(1.0 / human_occupancy_decay_rate_hz_), &NvbloxHumanNode::decayHumanOccupancy, this, false, true);
-  human_esdf_processing_timer_= nodeHandle_.createWallTimer(ros::WallDuration(1.0 / human_esdf_update_rate_hz_), &NvbloxHumanNode::processHumanEsdf, this, false, true);
+  human_occupancy_decay_timer_= nodeHandle_.createWallTimer(ros::WallDuration(1.0 / human_occupancy_decay_rate_hz_), &NvbloxHumanNode::decayHumanOccupancy, this);
+  human_esdf_processing_timer_= nodeHandle_.createWallTimer(ros::WallDuration(1.0 / human_esdf_update_rate_hz_), &NvbloxHumanNode::processHumanEsdf, this);
 }
 
 void NvbloxHumanNode::depthPlusMaskImageCallback(
@@ -201,7 +197,7 @@ void NvbloxHumanNode::colorPlusMaskImageCallback(
     &color_mask_image_queue_, &color_mask_queue_mutex_);
 }
 
-void NvbloxHumanNode::processDepthQueue()
+void NvbloxHumanNode::processDepthQueue(const ros::TimerEvent& /*event*/)
 {
   auto message_ready = [this](const ImageSegmentationMaskMsgTuple & msg) {
       return this->canTransform(std::get<0>(msg)->header) &&
@@ -221,7 +217,7 @@ void NvbloxHumanNode::processDepthQueue()
     &depth_mask_queue_mutex_);
 }
 
-void NvbloxHumanNode::processColorQueue()
+void NvbloxHumanNode::processColorQueue(const ros::TimerEvent& /*event*/)
 {
   auto message_ready = [this](const ImageSegmentationMaskMsgTuple & msg) {
       return this->canTransform(std::get<0>(msg)->header) &&
@@ -320,7 +316,7 @@ bool NvbloxHumanNode::processDepthImage(
     conversions::imageMessageFromColorImage(
       depth_overlay, depth_img_frame,
       &img_msg);
-    depth_frame_overlay_publisher_->publish(img_msg);
+    depth_frame_overlay_publisher_.publish(img_msg);
   }
 
   return true;
@@ -401,18 +397,18 @@ bool NvbloxHumanNode::processColorImage(
     conversions::imageMessageFromColorImage(
       color_overlay, color_img_frame,
       &img_msg);
-    color_frame_overlay_publisher_->publish(img_msg);
+    color_frame_overlay_publisher_.publish(img_msg);
   }
 
   return true;
 }
 
-void NvbloxHumanNode::processHumanEsdf()
+void NvbloxHumanNode::processHumanEsdf(const ros::WallTimerEvent& /*event*/)
 {
   timing::Timer ros_total_timer("ros/total");
   timing::Timer ros_human_total_timer("ros/humans");
 
-  if (last_depth_update_time_.seconds() <= 0.f) {
+  if (last_depth_update_time_.toSec() <= 0.f) {
     return;  // no data yet.
   }
   publishHumanDebugOutput();
@@ -456,7 +452,7 @@ void NvbloxHumanNode::processHumanEsdf()
         human_mapper_->esdf_layer().voxel_size(), &pointcloud_msg);
       pointcloud_msg.header.frame_id = global_frame_;
       pointcloud_msg.header.stamp = ros::Time::now();
-      human_esdf_pointcloud_publisher_->publish(pointcloud_msg);
+      human_esdf_pointcloud_publisher_.publish(pointcloud_msg);
     }
 
     // Human slice (for navigation)
@@ -468,7 +464,7 @@ void NvbloxHumanNode::processHumanEsdf()
         human_mapper_->voxel_size_m(), &map_slice_msg);
       map_slice_msg.header.frame_id = global_frame_;
       map_slice_msg.header.stamp = ros::Time::now();
-      human_map_slice_publisher_->publish(map_slice_msg);
+      human_map_slice_publisher_.publish(map_slice_msg);
     }
   }
 
@@ -497,7 +493,7 @@ void NvbloxHumanNode::processHumanEsdf()
         human_mapper_->esdf_layer().voxel_size(), &pointcloud_msg);
       pointcloud_msg.header.frame_id = global_frame_;
       pointcloud_msg.header.stamp = ros::Time::now();
-      combined_esdf_pointcloud_publisher_->publish(pointcloud_msg);
+      combined_esdf_pointcloud_publisher_.publish(pointcloud_msg);
     }
 
     // Human+Static slice (for navigation)
@@ -509,13 +505,13 @@ void NvbloxHumanNode::processHumanEsdf()
         human_mapper_->voxel_size_m(), &map_slice_msg);
       map_slice_msg.header.frame_id = global_frame_;
       map_slice_msg.header.stamp = ros::Time::now();
-      human_map_slice_publisher_->publish(map_slice_msg);
+      human_map_slice_publisher_.publish(map_slice_msg);
     }
   }
   esdf_output_timer.Stop();
 }
 
-void NvbloxHumanNode::decayHumanOccupancy() {human_mapper_->decayOccupancy();}
+void NvbloxHumanNode::decayHumanOccupancy(const ros::WallTimerEvent& /*event*/) {human_mapper_->decayOccupancy();}
 
 void NvbloxHumanNode::publishHumanDebugOutput()
 {
@@ -547,7 +543,7 @@ void NvbloxHumanNode::publishHumanDebugOutput()
       &pointcloud_msg);
     pointcloud_msg.header.frame_id = global_frame_;
     pointcloud_msg.header.stamp = ros::Time::now();
-    human_pointcloud_publisher_->publish(pointcloud_msg);
+    human_pointcloud_publisher_.publish(pointcloud_msg);
   }
 
   // Publish human voxels
@@ -563,7 +559,7 @@ void NvbloxHumanNode::publishHumanDebugOutput()
       Color::Red(), &marker_msg);
     marker_msg.header.frame_id = global_frame_;
     marker_msg.header.stamp = ros::Time::now();
-    human_voxels_publisher_->publish(marker_msg);
+    human_voxels_publisher_.publish(marker_msg);
   }
 
   // Publish the human occupancy layer
@@ -574,12 +570,8 @@ void NvbloxHumanNode::publishHumanDebugOutput()
       &pointcloud_msg);
     pointcloud_msg.header.frame_id = global_frame_;
     pointcloud_msg.header.stamp = ros::Time::now();
-    human_occupancy_publisher_->publish(pointcloud_msg);
+    human_occupancy_publisher_.publish(pointcloud_msg);
   }
 }
 
 }  // namespace nvblox
-
-// Register the node as a component
-#include "ros_components/register_node_macro.hpp"
-//ROS_COMPONENTS_REGISTER_NODE(nvblox::NvbloxHumanNode)

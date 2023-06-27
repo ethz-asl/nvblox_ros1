@@ -15,18 +15,14 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-cmake_minimum_required(VERSION 3.10)
-
-# This is 100% not the right thing to do. Requies cmake magic to find the exiting cuda compiler.
+cmake_minimum_required(VERSION 3.20)
 set(CMAKE_CUDA_COMPILER /usr/local/cuda/bin/nvcc)
-
 project(nvblox_ros LANGUAGES CXX CUDA)
 add_compile_options(-Wall -Wextra -Wpedantic -O3)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 endif()
-
 
 # Default to C++17
 if(NOT CMAKE_CXX_STANDARD)
@@ -43,7 +39,6 @@ message( STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}" )
 # DEPENDENCIES #
 ################
 
-
 list(APPEND CMAKE_INCLUDE_PATH "/usr/local/include")
 
 if(NOT WIN32)
@@ -58,7 +53,13 @@ message("${Magenta}INFO: ${CMAKE_PREFIX_PATH}.${ColourReset}")
 message("${Magenta}INFO: ${CMAKE_FIND_ROOT_PATH}.${ColourReset}")
 message("${Magenta}INFO: ${CMAKE_INCLUDE_PATH}.${ColourReset}")
 
-find_package (Eigen3 3.3.7 REQUIRED NO_MODULE)
+set(gflags_DIR /usr/lib/x86_64-linux-gnu/cmake/gflags)
+find_package(gflags REQUIRED PATHS /usr/lib/x86_64-linux-gnu/cmake/gflags)
+if(gflags_FOUND)
+  message(STATUS "Found installed version of gflags: ${gflags_DIR}")
+endif()
+
+find_package(Eigen3 3.3.7 REQUIRED NO_MODULE)
 find_package(OpenCV REQUIRED)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
@@ -72,7 +73,6 @@ find_package(catkin REQUIRED COMPONENTS
   nvblox_msgs
   cv_bridge
   message_filters
-  Threads
 )
 
 ###################################
@@ -98,13 +98,15 @@ catkin_package(
     tf2_ros
     tf2_eigen
     nvblox_msgs
-    Threads
+    nvblox
     message_filters
     visualization_msgs
 )
 
 # Process nvblox
+#set(NVBLOX_DIR /home/tutuna/nvblox_ws/src/nvblox_ros1/nvblox/nvblox)
 set(NVBLOX_DIR ../nvblox/nvblox)
+
 
 # Disable tests and experiments
 set(BUILD_EXPERIMENTS OFF)
@@ -121,7 +123,6 @@ set(STDGPU_INSTALL_DESTINATION ${CMAKE_INSTALL_PREFIX})
 # NVBLOX #
 ##########
 add_subdirectory(${NVBLOX_DIR} nvblox)
-
 include_directories(AFTER include ${catkin_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
 
 ########
@@ -146,22 +147,19 @@ add_library(${PROJECT_NAME}_lib SHARED
   src/lib/nvblox_human_node.cpp
 )
 
-target_link_libraries(${PROJECT_NAME}_lib nvblox::nvblox_lib nvblox::nvblox_eigen pthread
+target_link_libraries(${PROJECT_NAME}_lib 
   nvblox_interface
   ${catkin_LIBRARIES}
   ${OpenCV_LIBRARIES})
 
-add_dependencies(${PROJECT_NAME}_lib
-  ${catkin_EXPORTED_TARGETS})
+set_target_properties(${PROJECT_NAME}_lib PROPERTIES CUDA_ARCHITECTURES "62;72;75;80;86;87")
 
 target_include_directories(${PROJECT_NAME}_lib SYSTEM PUBLIC
-  ${catkin_INCLUDE_DIRS})  
+${catkin_INCLUDE_DIRS})  
 
+target_include_directories(${PROJECT_NAME}_lib BEFORE PRIVATE
+  $<TARGET_PROPERTY:INTERFACE_INCLUDE_DIRECTORIES>)
 
-if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.18)
-  get_target_property(CUDA_ARCHS nvblox::nvblox_lib CUDA_ARCHITECTURES)
-  set_property(TARGET ${PROJECT_NAME}_lib APPEND PROPERTY CUDA_ARCHITECTURES ${CUDA_ARCHS})
-endif()
 
 ############
 # BINARIES #
@@ -175,10 +173,6 @@ add_dependencies(nvblox_node
   ${catkin_EXPORTED_TARGETS}
 )
 
-target_include_directories(nvblox_node SYSTEM PUBLIC
-  ${catkin_INCLUDE_DIRS}
-)
-
 add_executable(nvblox_human_node
   src/nvblox_human_node_main.cpp
 )
@@ -188,44 +182,35 @@ add_dependencies(nvblox_human_node
   ${catkin_EXPORTED_TARGETS}
 )
 
-target_include_directories(nvblox_human_node SYSTEM PUBLIC
-  ${catkin_INCLUDE_DIRS}
-)
-
-# 62 Should be TX2, jetson
-set_target_properties(${PROJECT_NAME}_lib PROPERTIES CUDA_ARCHITECTURES "62;72;75;80;86;87")
-
+#get_target_property(nvblox_INCLUDES nvblox_interface INTERFACE_INCLUDE_DIRECTORIES)
 ###########
 # INSTALL #
 ###########
-# catkin_simple doesn't manage everything in our case, where we're installing
-# not only the ros package nvblox_ros, but it's dependancies from nvblox.
-# We therefore export the nvblox target along with the nvblox_ros stuff.
-get_target_property(nvblox_INCLUDES nvblox_interface INTERFACE_INCLUDE_DIRECTORIES)
 
+# Install includes.
 install(
   DIRECTORY 
-    include/${PROJECT_NAME}/
-  DESTINATION include
-)
-
-install(
-  DIRECTORY
+  include/${PROJECT_NAME}/
+    include/
     config
     launch
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+    rviz
+  DESTINATION 
+    include
+    #${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
+# Install the library target.
 install(
-  TARGETS ${PROJECT_NAME}_lib nvblox_lib nvblox_gpu_hash nvblox_cuda_check
-  EXPORT ${PROJECT_NAME}_lib
+  TARGETS ${PROJECT_NAME}_lib nvblox_lib nvblox_gpu_hash nvblox_eigen
+  EXPORT ${PROJECT_NAME}Targets
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib
   RUNTIME DESTINATION bin
   INCLUDES DESTINATION include
 )
 
-# Install nodes
+# Install nodes which live in lib for some reason.
 install(
   TARGETS nvblox_node nvblox_human_node
   DESTINATION lib/${PROJECT_NAME}
