@@ -108,7 +108,7 @@ void NvbloxNode::pushMessageOntoQueue(
 }
 
 template<typename MessageType>
-void NvbloxNode::limitQueueSizeByDeletingOldestMessages(
+inline void NvbloxNode::limitQueueSizeByDeletingOldestMessages(
   const int max_num_messages, const std::string & queue_name,
   std::deque<MessageType> * queue_ptr, std::mutex * queue_mutex_ptr)
 {

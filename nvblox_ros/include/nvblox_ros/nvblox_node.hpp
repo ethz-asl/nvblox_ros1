@@ -336,4 +336,6 @@ class NvbloxNode {
 
 }  // namespace nvblox
 
+#include "nvblox_ros/impl/nvblox_node_impl.hpp"
+
 #endif  // NVBLOX_ROS__NVBLOX_NODE_HPP_

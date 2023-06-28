@@ -191,8 +191,9 @@ target_include_directories(${PROJECT_NAME}_lib BEFORE PRIVATE
   $<TARGET_PROPERTY:nvblox::nvblox_eigen,INTERFACE_INCLUDE_DIRECTORIES>)
 
 
-get_target_property(TEST_INCLUDE_DIRS ${PROJECT_NAME}_lib INCLUDE_DIRECTORIES)
-message(">>>>> TEST INCLUDE DIRS: ${TEST_INCLUDE_DIRS}")
+add_dependencies(${PROJECT_NAME}_lib
+  ${catkin_EXPORTED_TARGETS}
+)
 
 ############
 # BINARIES #
