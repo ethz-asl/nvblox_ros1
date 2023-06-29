@@ -225,12 +225,12 @@ class NvbloxNode {
   float esdf_slice_height_ = 1.0f;
   ProjectiveLayerType static_projective_layer_type_ =
       ProjectiveLayerType::kTsdf;
-  bool is_realsense_data_ = false;
+  bool is_realsense_data_ = true;
 
   // Toggle parameters
   bool use_depth_ = true;
-  bool use_lidar_ = true;
-  bool use_color_ = true;
+  bool use_lidar_ = false;
+  bool use_color_ = false;
   bool compute_esdf_ = true;
   bool compute_mesh_ = true;
 
@@ -246,13 +246,13 @@ class NvbloxNode {
   float esdf_2d_max_height_ = 1.0f;
 
   // Slice visualization params
-  std::string slice_visualization_attachment_frame_id_ = "base_link";
+  std::string slice_visualization_attachment_frame_id_ = "lidar";
   float slice_visualization_side_length_ = 10.0f;
 
   // ROS settings & update throttles
-  std::string global_frame_ = "odom";
+  std::string global_frame_ = "map";
   /// Pose frame to use if using transform topics.
-  std::string pose_frame_ = "base_link";
+  std::string pose_frame_ = "lidar";
   float max_depth_update_hz_ = 10.0f;
   float max_color_update_hz_ = 5.0f;
   float max_lidar_update_hz_ = 10.0f;
@@ -272,7 +272,7 @@ class NvbloxNode {
   /// Map clearing params
   /// Note that values <=0.0 indicate that no clearing is performed.
   float map_clearing_radius_m_ = -1.0f;
-  std::string map_clearing_frame_id_ = "base_link";
+  std::string map_clearing_frame_id_ = "lidar";
   float clear_outside_radius_rate_hz_ = 1.0f;
 
   // The QoS settings for the image input topics

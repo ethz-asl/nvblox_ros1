@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <launch>
- <arg name="use_sim_time"                    default="true" doc="Path to the ROS bag dataset to run SLAM on."/>
+ <arg name="use_sim_time"            default="true" doc="Path to the ROS bag dataset to run NVBLXO on."/>
 
   <arg name="default_param_file"     value="$(find nvblox_ros)/config/parameters.yaml"/>
   <arg name="output"                 default="screen"                    doc="Output target: screen or log."/>
@@ -13,6 +13,13 @@
 
   <!-- Launch loop_detector_manager_ros node. --> 
   <node pkg="nvblox_ros" type="nvblox_node" name="$(arg node_name)" respawn="true" output="$(arg output)" >
+    <rosparam command="load" file="$(arg default_param_file)"/> 
+
+    <param name="use_sim_time"               value="$(arg use_sim_time)"/>
+
+  </node>
+
+  <node pkg="nvblox_ros" type="nvblox_human_node" name="nvblox_ros_human" respawn="true" output="$(arg output)" >
     <rosparam command="load" file="$(arg default_param_file)"/> 
 
     <param name="use_sim_time"               value="$(arg use_sim_time)"/>

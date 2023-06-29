@@ -119,6 +119,8 @@ bool depthImageFromImageMessage(
   // If the image is int16, we need to divide by 1000 to get the correct
   // format for us.
 
+  std::cout << "image_msg->encoding: " << image_msg->encoding << std::endl;
+
   // First check if we actually have a valid image here.
   if (image_msg->encoding != "32FC1" && image_msg->encoding != "16UC1") {
     return false;

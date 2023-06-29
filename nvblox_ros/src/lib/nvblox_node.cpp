@@ -80,7 +80,7 @@ void NvbloxNode::getParameters()
 {
   ROS_INFO_STREAM("NvbloxNode::getParameters()");
   bool is_occupancy = false;
-  nodeHandle_.param<bool>("use_static_occupancy_layer", is_occupancy, false);
+  nodeHandle_.getParam("use_static_occupancy_layer", is_occupancy);
 
   if (is_occupancy) {
     static_projective_layer_type_ = ProjectiveLayerType::kOccupancy;
@@ -91,52 +91,52 @@ void NvbloxNode::getParameters()
   }
 
   // Declare & initialize the parameters.
-  nodeHandle_.param<float>("voxel_size", voxel_size_, 0.05f);
+  nodeHandle_.getParam("voxel_size", voxel_size_);
 
-  nodeHandle_.param<std::string>("global_frame", global_frame_, "map"); 
-  nodeHandle_.param<std::string>("pose_frame", pose_frame_, "base");
+  nodeHandle_.getParam("global_frame", global_frame_); 
+  nodeHandle_.getParam("pose_frame", pose_frame_);
 
-  nodeHandle_.param<bool>("is_realsense_data", is_realsense_data_, false);
-  nodeHandle_.param<bool>("compute_mesh", compute_mesh_, false);
-  nodeHandle_.param<bool>("compute_esdf", compute_esdf_, false);
-  nodeHandle_.param<bool>("esdf_2d", esdf_2d_, false);
-  nodeHandle_.param<bool>("esdf_distance_slice", esdf_distance_slice_, false);
-  nodeHandle_.param<bool>("use_color", use_color_, false);
-  nodeHandle_.param<bool>("use_depth", use_depth_, false);
-  nodeHandle_.param<bool>("use_lidar", use_lidar_, false);
+  nodeHandle_.getParam("is_realsense_data", is_realsense_data_);
+  nodeHandle_.getParam("compute_mesh", compute_mesh_);
+  nodeHandle_.getParam("compute_esdf", compute_esdf_);
+  nodeHandle_.getParam("esdf_2d", esdf_2d_);
+  nodeHandle_.getParam("esdf_distance_slice", esdf_distance_slice_);
+  nodeHandle_.getParam("use_color", use_color_);
+  nodeHandle_.getParam("use_depth", use_depth_);
+  nodeHandle_.getParam("use_lidar", use_lidar_);
 
-  nodeHandle_.param<float>("esdf_slice_height", esdf_slice_height_, 0.05f);
-  nodeHandle_.param<float>("esdf_2d_min_height", esdf_2d_min_height_, 0.05f);
-  nodeHandle_.param<float>("esdf_2d_max_height", esdf_2d_max_height_, 0.05f);
+  nodeHandle_.getParam("esdf_slice_height", esdf_slice_height_);
+  nodeHandle_.getParam("esdf_2d_min_height", esdf_2d_min_height_);
+  nodeHandle_.getParam("esdf_2d_max_height", esdf_2d_max_height_);
 
-  nodeHandle_.param<int>("lidar_width", lidar_width_, 10);
-  nodeHandle_.param<int>("lidar_height", lidar_width_, 10);
+  nodeHandle_.getParam("lidar_width", lidar_width_);
+  nodeHandle_.getParam("lidar_height", lidar_width_);
 
-  nodeHandle_.param<float>("lidar_vertical_fov_rad", lidar_vertical_fov_rad_, 0.05f);
+  nodeHandle_.getParam("lidar_vertical_fov_rad", lidar_vertical_fov_rad_);
 
-  nodeHandle_.param<std::string>("slice_visualization_attachment_frame_id", slice_visualization_attachment_frame_id_, "test");
+  nodeHandle_.getParam("slice_visualization_attachment_frame_id", slice_visualization_attachment_frame_id_);
 
-  nodeHandle_.param<float>("slice_visualization_side_length_", slice_visualization_side_length_, 0.05f);
+  nodeHandle_.getParam("slice_visualization_side_length_", slice_visualization_side_length_);
 
-  nodeHandle_.param<float>("max_depth_update_hz", max_depth_update_hz_, 0.05f);
-  nodeHandle_.param<float>("max_color_update_hz", max_color_update_hz_, 0.05f);
-  nodeHandle_.param<float>("max_lidar_update_hz", max_lidar_update_hz_, 0.05f);
+  nodeHandle_.getParam("max_depth_update_hz", max_depth_update_hz_);
+  nodeHandle_.getParam("max_color_update_hz", max_color_update_hz_);
+  nodeHandle_.getParam("max_lidar_update_hz", max_lidar_update_hz_);
 
-  nodeHandle_.param<float>("mesh_update_rate_hz", mesh_update_rate_hz_, 0.05f);
-  nodeHandle_.param<float>("esdf_update_rate_hz", esdf_update_rate_hz_, 0.05f);
-  nodeHandle_.param<float>("occupancy_publication_rate_hz", occupancy_publication_rate_hz_, 0.05f);
-  nodeHandle_.param<float>("max_poll_rate_hz", max_poll_rate_hz_, 0.05f);
+  nodeHandle_.getParam("mesh_update_rate_hz", mesh_update_rate_hz_);
+  nodeHandle_.getParam("esdf_update_rate_hz", esdf_update_rate_hz_);
+  nodeHandle_.getParam("occupancy_publication_rate_hz", occupancy_publication_rate_hz_);
+  nodeHandle_.getParam("max_poll_rate_hz", max_poll_rate_hz_);
 
-  nodeHandle_.param<int>("maximum_sensor_message_queue_length", maximum_sensor_message_queue_length_, 10);
+  nodeHandle_.getParam("maximum_sensor_message_queue_length", maximum_sensor_message_queue_length_);
 
-  nodeHandle_.param<std::string>("depth_qos", depth_qos_str_, "test");
-  nodeHandle_.param<std::string>("color_qos", color_qos_str_, "test");
+  nodeHandle_.getParam("depth_qos", depth_qos_str_);
+  nodeHandle_.getParam("color_qos", color_qos_str_);
 
-  nodeHandle_.param<float>("map_clearing_radius_m", map_clearing_radius_m_, 0.05f);
+  nodeHandle_.getParam("map_clearing_radius_m", map_clearing_radius_m_);
 
-  nodeHandle_.param<std::string>("map_clearing_frame_id", map_clearing_frame_id_, "test");
+  nodeHandle_.getParam("map_clearing_frame_id", map_clearing_frame_id_);
 
-  nodeHandle_.param<float>("clear_outside_radius_rate_hz", clear_outside_radius_rate_hz_, 0.05f);
+  nodeHandle_.getParam("clear_outside_radius_rate_hz", clear_outside_radius_rate_hz_);
 }
 
 void NvbloxNode::subscribeToTopics()
@@ -152,8 +152,8 @@ void NvbloxNode::subscribeToTopics()
   if (use_depth_) {
     // Subscribe to synchronized depth + cam_info topics
 
-    depth_sub_.subscribe(nodeHandle_, "depth/image", 20);
-    depth_camera_info_sub_.subscribe(nodeHandle_, "depth/camera_info", 20);
+    depth_sub_.subscribe(nodeHandle_, "/depth/image", 20);
+    depth_camera_info_sub_.subscribe(nodeHandle_, "/depth/camera_info", 20);
 
     timesync_depth_.reset(
       new message_filters::Synchronizer<time_policy_t>(
@@ -163,8 +163,8 @@ void NvbloxNode::subscribeToTopics()
 
   if (use_color_) {
     // Subscribe to synchronized color + cam_info topics
-    color_sub_.subscribe(nodeHandle_, "color/image", 20);
-    color_camera_info_sub_.subscribe(nodeHandle_, "color/camera_info", 20);
+    color_sub_.subscribe(nodeHandle_, "/color/image", 20);
+    color_camera_info_sub_.subscribe(nodeHandle_, "/color/camera_info", 20);
 
     timesync_color_.reset(
       new message_filters::Synchronizer<time_policy_t>(
@@ -178,12 +178,12 @@ void NvbloxNode::subscribeToTopics()
 
   if (use_lidar_) {
     // Subscribe to pointclouds.
-    pointcloud_sub_ = nodeHandle_.subscribe("pointcloud", 10, &NvbloxNode::pointcloudCallback, this);
+    pointcloud_sub_ = nodeHandle_.subscribe("/pointcloud", 10, &NvbloxNode::pointcloudCallback, this);
   }
 
   // Subscribe to transforms.
-  transform_sub_ = nodeHandle_.subscribe("transform", 10, &NvbloxNode::transformCallback, this);
-  pose_sub_ = nodeHandle_.subscribe("pose", 10, &NvbloxNode::poseCallback, this);
+  transform_sub_ = nodeHandle_.subscribe("/transform", 10, &NvbloxNode::transformCallback, this);
+  pose_sub_ = nodeHandle_.subscribe("/pose", 10, &NvbloxNode::poseCallback, this);
 }
 
 void NvbloxNode::advertiseTopics()
@@ -245,6 +245,7 @@ void NvbloxNode::depthImageCallback(
   const sensor_msgs::ImageConstPtr & depth_img_ptr,
   const sensor_msgs::CameraInfo::ConstPtr & camera_info_msg)
 {
+  std::cout << "Received synced depth apir" << std::endl;
   /*
   printMessageArrivalStatistics(
     *depth_img_ptr, "Depth Statistics",
@@ -270,6 +271,11 @@ void NvbloxNode::colorImageCallback(
 void NvbloxNode::pointcloudCallback(
   const sensor_msgs::PointCloud2::ConstPtr pointcloud)
 {
+
+  ROS_ERROR_STREAM("Lidar height: " << pointcloud->height);
+  ROS_ERROR_STREAM("Lidar width: " << pointcloud->width);
+  
+  
   /*
   printMessageArrivalStatistics(
     *pointcloud, "Pointcloud Statistics",
@@ -287,6 +293,8 @@ void NvbloxNode::processDepthQueue(const ros::TimerEvent& /*event*/)
   auto message_ready = [this](const ImageInfoMsgPair & msg) {
       return this->canTransform(msg.first->header);
     };
+
+  //ROS_ERROR_STREAM("Processing depth queue");
 
   processMessageQueue<ImageInfoMsgPair>(
     &depth_image_queue_,    // NOLINT
@@ -516,6 +524,7 @@ bool NvbloxNode::processDepthImage(
   sensor_msgs::CameraInfo::ConstPtr> &
   depth_camera_pair)
 {
+  ROS_ERROR("depth processing started");
   timing::Timer ros_depth_timer("ros/depth");
   timing::Timer transform_timer("ros/depth/transform");
 
@@ -541,6 +550,7 @@ bool NvbloxNode::processDepthImage(
   if (!transformer_.lookupTransformToGlobalFrame(
       target_frame, depth_img_ptr->header.stamp, &T_L_C))
   {
+    ROS_ERROR("COUDLNT TRANSFORM TO GLOBAL FRAME.");
     return false;
   }
   transform_timer.Stop();
@@ -556,9 +566,12 @@ bool NvbloxNode::processDepthImage(
   }
   conversions_timer.Stop();
 
+  std::cout << "depth image size: " << depth_image_.width() << " " << depth_image_.height() << std::endl;
+
   // Integrate
   timing::Timer integration_timer("ros/depth/integrate");
   mapper_->integrateDepth(depth_image_, T_L_C, camera);
+  ROS_ERROR("depth integration done.");
   integration_timer.Stop();
   return true;
 }

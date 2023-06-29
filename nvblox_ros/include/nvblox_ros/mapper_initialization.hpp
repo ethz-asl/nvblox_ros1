@@ -28,9 +28,9 @@
 
 namespace nvblox
 {
-
+/*
 void declareMapperParameters(const std::string & mapper_name, ros::NodeHandle& nodeHandle);
-
+*/
 template<typename T>
 void set_mapper_parameter(
   const std::string & mapper_name,

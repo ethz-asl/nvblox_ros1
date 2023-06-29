@@ -31,7 +31,7 @@ void inline declareParameterWithoutDefault(
   ros::NodeHandle& nodeHandle)
 {
   try {
-    // TODO figure out how to replicate this
+    // TODO figure out how to replicate this in ROS1
     //nodeHandle_.param<ParameterType>(name, is_occupancy, false);
 
   } catch (ros::Exception& e)

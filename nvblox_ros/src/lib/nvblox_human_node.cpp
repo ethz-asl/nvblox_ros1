@@ -57,8 +57,9 @@ NvbloxHumanNode::NvbloxHumanNode(ros::NodeHandle& nodeHandle)
 
 void NvbloxHumanNode::getParameters()
 {
-  nodeHandle_.param<float>("human_occupancy_decay_rate_hz", human_occupancy_decay_rate_hz_, 0.05f);
-  nodeHandle_.param<float>("human_esdf_update_rate_hz_", human_esdf_update_rate_hz_, 0.05f);
+
+  nodeHandle_.getParam("human_occupancy_decay_rate_hz", human_occupancy_decay_rate_hz_);
+  nodeHandle_.getParam("human_esdf_update_rate_hz_", human_esdf_update_rate_hz_);
 
 }
 

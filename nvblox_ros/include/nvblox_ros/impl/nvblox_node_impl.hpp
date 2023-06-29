@@ -90,7 +90,7 @@ void NvbloxNode::processMessageQueue(
   }
 
   // nvblox statistics
-  ROS_INFO_STREAM("Timing statistics: \n" << nvblox::timing::Timing::Print());
+  //ROS_INFO_STREAM("Timing statistics: \n" << nvblox::timing::Timing::Print());
 }
 
 template<typename MessageType>

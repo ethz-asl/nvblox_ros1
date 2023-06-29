@@ -1,9 +1,10 @@
-use_helper_frame: true # CRITICAL: In the current setup, cam4_sensor_frame_helper should be used.
 global_frame: map
 pose_frame: base
-memory_checking_period: 5 # seconds
 max_meshing_height: 4 # meters
-memory_purge_threshold: 1000 # in MB,
+is_realsense_data: false
+compute_mesh: false
+compute_esdf: false
+
 output_dir: "" # By default saves to "home/<username>/maps" folder
 voxel_size: 0.08 #0.05
 slice_height: 0.75
