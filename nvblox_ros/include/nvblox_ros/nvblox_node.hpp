@@ -228,8 +228,8 @@ class NvbloxNode {
   bool is_realsense_data_ = true;
 
   // Toggle parameters
-  bool use_depth_ = true;
-  bool use_lidar_ = false;
+  bool use_depth_ = false;
+  bool use_lidar_ = true;
   bool use_color_ = false;
   bool compute_esdf_ = true;
   bool compute_mesh_ = true;

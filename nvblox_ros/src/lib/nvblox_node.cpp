@@ -245,7 +245,7 @@ void NvbloxNode::depthImageCallback(
   const sensor_msgs::ImageConstPtr & depth_img_ptr,
   const sensor_msgs::CameraInfo::ConstPtr & camera_info_msg)
 {
-  std::cout << "Received synced depth apir" << std::endl;
+
   /*
   printMessageArrivalStatistics(
     *depth_img_ptr, "Depth Statistics",
@@ -270,12 +270,7 @@ void NvbloxNode::colorImageCallback(
 
 void NvbloxNode::pointcloudCallback(
   const sensor_msgs::PointCloud2::ConstPtr pointcloud)
-{
-
-  ROS_ERROR_STREAM("Lidar height: " << pointcloud->height);
-  ROS_ERROR_STREAM("Lidar width: " << pointcloud->width);
-  
-  
+{  
   /*
   printMessageArrivalStatistics(
     *pointcloud, "Pointcloud Statistics",
@@ -293,8 +288,6 @@ void NvbloxNode::processDepthQueue(const ros::TimerEvent& /*event*/)
   auto message_ready = [this](const ImageInfoMsgPair & msg) {
       return this->canTransform(msg.first->header);
     };
-
-  //ROS_ERROR_STREAM("Processing depth queue");
 
   processMessageQueue<ImageInfoMsgPair>(
     &depth_image_queue_,    // NOLINT
@@ -524,7 +517,7 @@ bool NvbloxNode::processDepthImage(
   sensor_msgs::CameraInfo::ConstPtr> &
   depth_camera_pair)
 {
-  ROS_ERROR("depth processing started");
+  ROS_DEBUG("Depth Image processing has started");
   timing::Timer ros_depth_timer("ros/depth");
   timing::Timer transform_timer("ros/depth/transform");
 
@@ -550,7 +543,8 @@ bool NvbloxNode::processDepthImage(
   if (!transformer_.lookupTransformToGlobalFrame(
       target_frame, depth_img_ptr->header.stamp, &T_L_C))
   {
-    ROS_ERROR("COUDLNT TRANSFORM TO GLOBAL FRAME.");
+    ROS_ERROR("Could not get transform from %s to %s",
+      target_frame.c_str(), global_frame_.c_str());
     return false;
   }
   transform_timer.Stop();
@@ -566,12 +560,10 @@ bool NvbloxNode::processDepthImage(
   }
   conversions_timer.Stop();
 
-  std::cout << "depth image size: " << depth_image_.width() << " " << depth_image_.height() << std::endl;
-
   // Integrate
   timing::Timer integration_timer("ros/depth/integrate");
   mapper_->integrateDepth(depth_image_, T_L_C, camera);
-  ROS_ERROR("depth integration done.");
+  ROS_DEBUG("Depth Camera based depth integration is done.");
   integration_timer.Stop();
   return true;
 }
