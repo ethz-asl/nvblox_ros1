@@ -4,11 +4,11 @@ Please try to update this in the PR where the appropriate changes are made. :)
 - [x] Example finished task.
 
 ## Porting ROS2 -> ROS1
-- [ ] nvblox_msgs
-- [ ] nvblox_ros
-  - [ ] nvblox_node_main
-  - [ ] nvblox_human_node_main (low priority)
-- [ ] nvblox_rviz_plugin
+- [x] nvblox_msgs
+- [x] nvblox_ros
+  - [x] nvblox_node_main
+  - [x] nvblox_human_node_main (low priority)
+- [x] nvblox_rviz_plugin
 
 ## General
 - [ ] Run clang-format with standard Google C++ on everything (should be done after code compiles) or diffs will be hard.
@@ -20,6 +20,6 @@ Please try to update this in the PR where the appropriate changes are made. :)
 - [ ] Update/remove docs
 
 ## Testing
-- [ ] Realsense Bags
+- [x] Realsense Bags
 - [ ] LIDAR Bags
 - [ ] Jetson
