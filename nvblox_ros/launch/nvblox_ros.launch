@@ -12,7 +12,7 @@
   <!--<node type="rviz" name="rviz" pkg="rviz" args="-d $(find nvblox_ros)/rviz/rviz.rviz"/> -->
 
   <!-- Launch loop_detector_manager_ros node. --> 
-  <node pkg="nvblox_ros" type="nvblox_node" name="$(arg node_name)" respawn="true" output="$(arg output)" >
+  <node pkg="nvblox_ros" type="nvblox_node" name="$(arg node_name)" respawn="false" output="$(arg output)" >
     <rosparam command="load" file="$(arg default_param_file)"/> 
 
     <param name="use_sim_time"       value="$(arg use_sim_time)"/>

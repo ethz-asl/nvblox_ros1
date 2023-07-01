@@ -61,7 +61,7 @@ class NvbloxNode {
   virtual ~NvbloxNode() = default;
 
   // Setup. These are called by the constructor.
-  void getParameters();
+  bool getParameters();
   void subscribeToTopics();
   void advertiseTopics();
   void advertiseServices();
@@ -219,6 +219,16 @@ class NvbloxNode {
   ros::Timer clear_outside_radius_timer_;
 
   // ROS & nvblox settings
+
+  // Topic Names
+  std::string depth_image_topic_name_ = "null";
+  std::string depth_image_camera_info_topic_name_ = "null";
+
+  std::string color_image_topic_name_ = "null";
+  std::string color_image_camera_info_topic_name_ = "null";
+
+  std::string pointcloud_topic_name_ = "null";
+
   float voxel_size_ = 0.05f;
   bool esdf_2d_ = true;
   bool esdf_distance_slice_ = true;
@@ -237,7 +247,8 @@ class NvbloxNode {
   // LIDAR settings, defaults for Velodyne VLP16
   int lidar_width_ = 1800;
   int lidar_height_ = 16;
-  float lidar_vertical_fov_rad_ = 30.0 * M_PI / 180.0;
+  const float deg_to_rad = M_PI / 180.0;
+  float lidar_vertical_fov_deg_ = 30.0;
 
   // Used for ESDF slicing. Everything between min and max height will be
   // compressed to a single 2D level (if esdf_2d_ enabled), output at
@@ -274,10 +285,6 @@ class NvbloxNode {
   float map_clearing_radius_m_ = -1.0f;
   std::string map_clearing_frame_id_ = "lidar";
   float clear_outside_radius_rate_hz_ = 1.0f;
-
-  // The QoS settings for the image input topics
-  std::string depth_qos_str_ = "SYSTEM_DEFAULT";
-  std::string color_qos_str_ = "SYSTEM_DEFAULT";
 
   // Mapper
   // Holds the map layers and their associated integrators

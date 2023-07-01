@@ -38,7 +38,7 @@ void set_mapper_parameter(
   std::function<void(T)> parameter_setter,
   ros::NodeHandle& nodeHandle);
 
-void initializeMapper(const std::string & mapper_name, Mapper * mapper_ptr, ros::NodeHandle& nodeHandle);
+bool initializeMapper(const std::string& mapper_name, Mapper * mapper_ptr, ros::NodeHandle& nodeHandle);
 
 }  // namespace nvblox
 
