@@ -9,26 +9,10 @@ use_static_occupancy_layer: false
 voxel_size: 0.05
 
 #The name of the TF frame to be used as the global frame.
-global_frame: "odom"
+global_frame: "map"
 
 #Only used if `use_topic_transforms` is set to true. Pose and transform messages will be interpreted as being in this pose frame, and the remaining transform to the sensor frame will be looked up on the TF tree.
 pose_frame: "base_link"
-
-# Depth Image Topic Name
-depth_image_topic_name: "/depth/image"
-
-# Depth Image Camera Info Topic Name
-depth_image_camera_info_topic_name: "/depth/camera_info"
-
-# Color Image Topic Name
-color_image_topic_name: "/color/image"
-
-# Color Image Camera Info Topic Name
-color_image_camera_info_topic_name: "/color/camera_info"
-
-#LiDAR Point cloud Topic Name
-pointcloud_topic_name: "/pointcloud"
-
 
 # If the depth data is originating from Realsense Depth Cameras.
 is_realsense_data: false

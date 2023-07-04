@@ -153,7 +153,7 @@ bool NvbloxNode::getParameters() {
 }
 
 void NvbloxNode::subscribeToTopics() {
-  ROS_INFO_STREAM("NvbloxNode::subscribeToTopics()");
+  ROS_INFO_STREAM("Subscribing to topics.");
   constexpr int kQueueSize = 10;
 
   if (!use_depth_ && !use_lidar_) {
@@ -164,10 +164,8 @@ void NvbloxNode::subscribeToTopics() {
 
   if (use_depth_) {
     // Subscribe to synchronized depth + cam_info topics
-
-    depth_sub_.subscribe(nh_, depth_image_topic_name_, 20);
-    depth_camera_info_sub_.subscribe(nh_, depth_image_camera_info_topic_name_,
-                                     20);
+    depth_sub_.subscribe(nh_, "depth/image", 20);
+    depth_camera_info_sub_.subscribe(nh_, "depth/camera_info", 20);
 
     timesync_depth_.reset(new message_filters::Synchronizer<time_policy_t>(
         time_policy_t(kQueueSize), depth_sub_, depth_camera_info_sub_));
@@ -178,9 +176,8 @@ void NvbloxNode::subscribeToTopics() {
 
   if (use_color_) {
     // Subscribe to synchronized color + cam_info topics
-    color_sub_.subscribe(nh_, color_image_topic_name_, 20);
-    color_camera_info_sub_.subscribe(nh_, color_image_camera_info_topic_name_,
-                                     20);
+    color_sub_.subscribe(nh_, "color/image", 20);
+    color_camera_info_sub_.subscribe(nh_, "color/camera_info", 20);
 
     timesync_color_.reset(new message_filters::Synchronizer<time_policy_t>(
         time_policy_t(kQueueSize), color_sub_, color_camera_info_sub_));
@@ -191,14 +188,14 @@ void NvbloxNode::subscribeToTopics() {
 
   if (use_lidar_) {
     // Subscribe to pointclouds.
-    pointcloud_sub_ = nh_.subscribe(pointcloud_topic_name_, 10,
-                                    &NvbloxNode::pointcloudCallback, this);
+    pointcloud_sub_ =
+        nh_.subscribe("pointcloud", 10, &NvbloxNode::pointcloudCallback, this);
   }
 
   // Subscribe to transforms.
   transform_sub_ =
-      nh_.subscribe("/transform", 10, &NvbloxNode::transformCallback, this);
-  pose_sub_ = nh_.subscribe("/pose", 10, &NvbloxNode::poseCallback, this);
+      nh_.subscribe("transform", 10, &NvbloxNode::transformCallback, this);
+  pose_sub_ = nh_.subscribe("pose", 10, &NvbloxNode::poseCallback, this);
 }
 
 void NvbloxNode::advertiseTopics() {
