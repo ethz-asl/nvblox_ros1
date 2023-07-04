@@ -29,8 +29,8 @@ Transformer::Transformer(ros::NodeHandle& nodeHandle)
 : nodeHandle_(nodeHandle)
 {
   // Get params like "use_tf_transforms".
-  nodeHandle_.param<bool>("use_tf_transforms", use_tf_transforms_, false);
-  nodeHandle_.param<bool>("use_topic_transforms", use_topic_transforms_, false);
+  nodeHandle_.getParam("use_tf_transforms", use_tf_transforms_);
+  nodeHandle_.getParam("use_topic_transforms", use_topic_transforms_);
 
   // Init the transform listeners if we ARE using TF at all.
   if (use_tf_transforms_) {
