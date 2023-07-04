@@ -1,30 +1,6 @@
 # Parameters
 
-This page contains all parameters exposed to ROS 2.
-For the provided examples in the `nvblox_example_bringup` package, parameters
-are set using YAML configuration files under `nvblox_examples/nvblox_examples_bringup/config`.
-
-The base parameters are set in `nvblox_base.yaml` and there exist multiple specialization files that are overwriting parameters from the base file depending on which example is launched.
-
-File tree:
-```bash
-config
-├── nvblox
-    ├── nvblox_base.yaml
-    └── specializations
-        ├── nvblox_humans.yaml
-        ├── nvblox_isaac_sim.yaml
-        └── nvblox_realsense.yaml
-```
-
-Loaded specializations for each example:
-| Launch file                        | Specializations                               |
-| ---------------------------------- | --------------------------------------------- |
-| isaac_sim_example.launch.py        | `nvblox_isaac_sim.yaml`                       |
-| isaac_sim_humans_example.launch.py | `nvblox_isaac_sim.yaml`, `nvblox_humans.yaml` |
-| realsense_example.launch.py        | `nvblox_realsense.yaml`                       |
-| realsense_humans_example.launch.py | `nvblox_realsense.yaml`,`nvblox_humans.yaml`  |
-
+This page contains all parameters exposed to ROS 1.
 ## General Parameters
 
 | ROS Parameter                             | Type     | Default                   | Description                                                                                                                                                                                                        |
@@ -57,9 +33,7 @@ Loaded specializations for each example:
 | `maximum_sensor_message_queue_length`     | `int`    | `30`                      | How many messages to store in the sensor messages queues (depth, color, lidar) before deleting oldest messages.                                                                                                    |
 | `map_clearing_radius_m`                   | `float`  | `-1.0`                    | Radius around the `map_clearing_frame_id` outside which we clear the map. Note that values <= 0.0 indicate that no clearing is performed.                                                                          |
 | `map_clearing_frame_id`                   | `string` | `base_link`               | The name of the TF frame around which we clear the map.                                                                                                                                                            |
-| `clear_outside_radius_rate_hz`            | `float`  | `1.0`                     | The rate (in Hz) at wich we clear the map outside of the `map_clearing_radius_m`.                                                                                                                                  |
-| `depth_qos`                               | `string` | `SYSTEM_DEFAULT`          | ROS 2 QoS string for the depth subscription.                                                                                                                                                                       |
-| `color_qos`                               | `string` | `SYSTEM_DEFAULT`          | ROS 2 QoS string for the color subscription.                                                                                                                                                                       |
+| `clear_outside_radius_rate_hz`            | `float`  | `1.0`                     | The rate (in Hz) at wich we clear the map outside of the                                                                                                                                  |
 | `pose_frame`                              | `float`  | `base_link`               | Only used if `use_topic_transforms` is set to true. Pose and transform messages will be interpreted as being in this pose frame, and the remaining transform to the sensor frame will be looked up on the TF tree. |
 | `slice_visualization_attachment_frame_id` | `string` | `base_link`               | Frame to which the map slice bounds visualization is centered on the xy-plane.                                                                                                                                     |
 | `slice_visualization_side_length`         | `float`  | `10.0`                    | Side length of the map slice bounds visualization plane.                                                                                                                                                           |
