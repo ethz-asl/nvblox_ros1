@@ -29,9 +29,9 @@
 
 namespace nvblox {
 
-NvbloxHumanNode::NvbloxHumanNode(ros::NodeHandle& nh)
-    : NvbloxNode(nh),
-      nh_(nh),
+NvbloxHumanNode::NvbloxHumanNode(ros::NodeHandle& nh,
+                                 ros::NodeHandle& nh_private)
+    : NvbloxNode(nh, nh_private),
       human_pointcloud_C_device_(MemoryType::kDevice),
       human_pointcloud_L_device_(MemoryType::kDevice) {
   ROS_INFO_STREAM("NvbloxHumanNode::NvbloxHumanNode()");
@@ -139,33 +139,37 @@ void NvbloxHumanNode::subscribeToTopics() {
 
 void NvbloxHumanNode::advertiseTopics() {
   // Add some stuff
-  human_pointcloud_publisher_ =
-      nh_.advertise<sensor_msgs::PointCloud2>("human_pointcloud", 1, false);
-  human_voxels_publisher_ =
-      nh_.advertise<visualization_msgs::Marker>("human_voxels", 1, false);
-  human_occupancy_publisher_ =
-      nh_.advertise<sensor_msgs::PointCloud2>("human_occupancy", 1, false);
-  human_esdf_pointcloud_publisher_ = nh_.advertise<sensor_msgs::PointCloud2>(
-      "human_esdf_pointcloud", 1, false);
-  combined_esdf_pointcloud_publisher_ = nh_.advertise<sensor_msgs::PointCloud2>(
-      "combined_esdf_pointcloud", 1, false);
+  human_pointcloud_publisher_ = nh_private_.advertise<sensor_msgs::PointCloud2>(
+      "human_pointcloud", 1, false);
+  human_voxels_publisher_ = nh_private_.advertise<visualization_msgs::Marker>(
+      "human_voxels", 1, false);
+  human_occupancy_publisher_ = nh_private_.advertise<sensor_msgs::PointCloud2>(
+      "human_occupancy", 1, false);
+  human_esdf_pointcloud_publisher_ =
+      nh_private_.advertise<sensor_msgs::PointCloud2>("human_esdf_pointcloud",
+                                                      1, false);
+  combined_esdf_pointcloud_publisher_ =
+      nh_private_.advertise<sensor_msgs::PointCloud2>(
+          "combined_esdf_pointcloud", 1, false);
   human_map_slice_publisher_ =
-      nh_.advertise<nvblox_msgs::DistanceMapSlice>("human_map_slice", 1, false);
-  combined_map_slice_publisher_ = nh_.advertise<nvblox_msgs::DistanceMapSlice>(
-      "combined_map_slice", 1, false);
-  depth_frame_overlay_publisher_ =
-      nh_.advertise<sensor_msgs::Image>("depth_frame_overlay", 1, false);
-  color_frame_overlay_publisher_ =
-      nh_.advertise<sensor_msgs::Image>("color_frame_overlay", 1, false);
+      nh_private_.advertise<nvblox_msgs::DistanceMapSlice>("human_map_slice", 1,
+                                                           false);
+  combined_map_slice_publisher_ =
+      nh_private_.advertise<nvblox_msgs::DistanceMapSlice>("combined_map_slice",
+                                                           1, false);
+  depth_frame_overlay_publisher_ = nh_private_.advertise<sensor_msgs::Image>(
+      "depth_frame_overlay", 1, false);
+  color_frame_overlay_publisher_ = nh_private_.advertise<sensor_msgs::Image>(
+      "color_frame_overlay", 1, false);
 }
 
 void NvbloxHumanNode::setupTimers() {
-  human_occupancy_decay_timer_ = nh_.createWallTimer(
+  human_occupancy_decay_timer_ = nh_private_.createWallTimer(
       ros::WallDuration(1.0 / human_occupancy_decay_rate_hz_),
       &NvbloxHumanNode::decayHumanOccupancy, this);
-  human_esdf_processing_timer_ =
-      nh_.createWallTimer(ros::WallDuration(1.0 / human_esdf_update_rate_hz_),
-                          &NvbloxHumanNode::processHumanEsdf, this);
+  human_esdf_processing_timer_ = nh_private_.createWallTimer(
+      ros::WallDuration(1.0 / human_esdf_update_rate_hz_),
+      &NvbloxHumanNode::processHumanEsdf, this);
 }
 
 void NvbloxHumanNode::depthPlusMaskImageCallback(

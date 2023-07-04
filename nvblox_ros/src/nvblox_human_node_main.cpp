@@ -31,14 +31,13 @@ int main(int argc, char* argv[]) {
   FLAGS_alsologtostderr = true;
   google::InstallFailureSignalHandler();
   ros::init(argc, argv, "nvblox_human_node");
-  ros::NodeHandle nh("~");
+  ros::NodeHandle nh, nh_private("~");
 
   // Warmup CUDA so it doesn't affect our timings *as* much for the first
   // CUDA call.
   nvblox::warmupCuda();
 
-  // std::shared_ptr<nvblox::NvbloxNode> node(new nvblox::NvbloxNode());
-  nvblox::NvbloxNode NvbloxNode(nh);
+  nvblox::NvbloxNode NvbloxNode(nh, nh_private);
 
   ros::MultiThreadedSpinner spinner(4);
   spinner.spin();

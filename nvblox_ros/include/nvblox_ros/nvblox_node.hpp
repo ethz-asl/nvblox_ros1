@@ -56,7 +56,7 @@ namespace nvblox {
 
 class NvbloxNode {
  public:
-  explicit NvbloxNode(ros::NodeHandle& nh);
+  explicit NvbloxNode(ros::NodeHandle& nh, ros::NodeHandle& nh_private);
   virtual ~NvbloxNode() = default;
 
   // Setup. These are called by the constructor.
@@ -179,6 +179,7 @@ class NvbloxNode {
 
   // Ros handle
   ros::NodeHandle nh_;
+  ros::NodeHandle nh_private_;
 
   // Pointcloud sub.
   ros::Subscriber pointcloud_sub_;

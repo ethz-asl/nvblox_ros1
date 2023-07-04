@@ -37,7 +37,7 @@ namespace nvblox {
 
 class NvbloxHumanNode : public NvbloxNode {
  public:
-  explicit NvbloxHumanNode(ros::NodeHandle& nh);
+  explicit NvbloxHumanNode(ros::NodeHandle& nh, ros::NodeHandle& nh_private);
   virtual ~NvbloxHumanNode() = default;
 
   // Setup. These are called by the constructor.
