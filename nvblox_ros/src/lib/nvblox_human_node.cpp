@@ -24,21 +24,20 @@
 #include <string>
 #include <vector>
 
-#include <geometry_msgs/msg/point.hpp>
-#include <visualization_msgs/msg/marker.hpp>
-
-#include <nvblox_ros_common/qos.hpp>
+#include <geometry_msgs/Point.h>
+#include <visualization_msgs/Marker.h>
 
 
 namespace nvblox
 {
 
-NvbloxHumanNode::NvbloxHumanNode(const rclcpp::NodeOptions & options)
-: NvbloxNode(options, "nvblox_human_node"),
+NvbloxHumanNode::NvbloxHumanNode(ros::NodeHandle& nodeHandle)
+: NvbloxNode(nodeHandle),
+  nodeHandle_(nodeHandle),
   human_pointcloud_C_device_(MemoryType::kDevice),
   human_pointcloud_L_device_(MemoryType::kDevice)
 {
-  RCLCPP_INFO_STREAM(get_logger(), "NvbloxHumanNode::NvbloxHumanNode()");
+  ROS_INFO_STREAM("NvbloxHumanNode::NvbloxHumanNode()");
 
   // Get parameters specific to the human node.
   getParameters();
@@ -58,10 +57,10 @@ NvbloxHumanNode::NvbloxHumanNode(const rclcpp::NodeOptions & options)
 
 void NvbloxHumanNode::getParameters()
 {
-  human_occupancy_decay_rate_hz_ = declare_parameter<float>(
-    "human_occupancy_decay_rate_hz", human_occupancy_decay_rate_hz_);
-  human_esdf_update_rate_hz_ = declare_parameter<float>(
-    "human_esdf_update_rate_hz", human_esdf_update_rate_hz_);
+  // TODO(TT) how to handle this node?
+  nodeHandle_.getParam("human_occupancy_decay_rate_hz", human_occupancy_decay_rate_hz_);
+  nodeHandle_.getParam("human_esdf_update_rate_hz_", human_esdf_update_rate_hz_);
+
 }
 
 void NvbloxHumanNode::initializeMultiMapper()
@@ -81,7 +80,7 @@ void NvbloxHumanNode::initializeMultiMapper()
   // calling initializeMapper() (again) (it its also called in the base
   // constructor, on the now-deleted Mapper).
   mapper_ = multi_mapper_.get()->unmasked_mapper();
-  initializeMapper("mapper", mapper_.get(), this);
+  initializeMapper("mapper", mapper_.get(), nodeHandle_);
   // Set to an invalid depth to ignore human pixels in the unmasked mapper
   // during integration.
   multi_mapper_->setDepthUnmaskedImageInvalidPixel(-1.f);
@@ -90,8 +89,8 @@ void NvbloxHumanNode::initializeMultiMapper()
   const std::string mapper_name = "human_mapper";
   human_mapper_ = multi_mapper_.get()->masked_mapper();
   // Human mapper params have not been declared yet
-  declareMapperParameters(mapper_name, this);
-  initializeMapper(mapper_name, human_mapper_.get(), this);
+  //declareMapperParameters(mapper_name, this);
+  initializeMapper(mapper_name, human_mapper_.get(), nodeHandle_);
   // Set to a distance bigger than the max. integration distance to not include
   // non human pixels on the human mapper, but clear along the projection.
   // TODO(remosteiner): Think of a better way to do this.
@@ -102,7 +101,7 @@ void NvbloxHumanNode::initializeMultiMapper()
 
 void NvbloxHumanNode::subscribeToTopics()
 {
-  RCLCPP_INFO_STREAM(get_logger(), "NvbloxHumanNode::subscribeToTopics()");
+  ROS_INFO_STREAM("NvbloxHumanNode::subscribeToTopics()");
 
   // Increased queue size compared to the NvbloxNode,
   // because of bigger delay comming from segmentation.
@@ -113,11 +112,8 @@ void NvbloxHumanNode::subscribeToTopics()
   NvbloxNode::timesync_depth_.reset();
   NvbloxNode::timesync_color_.reset();
 
-  // Subscribe to segmentation masks
-  segmentation_mask_sub_.subscribe(
-    this, "mask/image",
-    parseQosString(color_qos_str_));
-  segmentation_camera_info_sub_.subscribe(this, "mask/camera_info");
+  segmentation_mask_sub_.subscribe(nodeHandle_, "mask/image", 20);
+  segmentation_camera_info_sub_.subscribe(nodeHandle_, "mask/camera_info", 20);
 
   if (use_depth_) {
     // Unsubscribe from the depth topic in nvblox_node
@@ -151,52 +147,33 @@ void NvbloxHumanNode::subscribeToTopics()
 void NvbloxHumanNode::advertiseTopics()
 {
   // Add some stuff
-  human_pointcloud_publisher_ =
-    create_publisher<sensor_msgs::msg::PointCloud2>("~/human_pointcloud", 1);
-  human_voxels_publisher_ =
-    create_publisher<visualization_msgs::msg::Marker>("~/human_voxels", 1);
-  human_occupancy_publisher_ =
-    create_publisher<sensor_msgs::msg::PointCloud2>("~/human_occupancy", 1);
-  human_esdf_pointcloud_publisher_ =
-    create_publisher<sensor_msgs::msg::PointCloud2>(
-    "~/human_esdf_pointcloud",
-    1);
-  combined_esdf_pointcloud_publisher_ =
-    create_publisher<sensor_msgs::msg::PointCloud2>(
-    "~/combined_esdf_pointcloud", 1);
-  human_map_slice_publisher_ =
-    create_publisher<nvblox_msgs::msg::DistanceMapSlice>(
-    "~/human_map_slice",
-    1);
-  combined_map_slice_publisher_ =
-    create_publisher<nvblox_msgs::msg::DistanceMapSlice>(
-    "~/combined_map_slice", 1);
-  depth_frame_overlay_publisher_ =
-    create_publisher<sensor_msgs::msg::Image>("~/depth_frame_overlay", 1);
-  color_frame_overlay_publisher_ =
-    create_publisher<sensor_msgs::msg::Image>("~/color_frame_overlay", 1);
+  human_pointcloud_publisher_ = nodeHandle_.advertise<sensor_msgs::PointCloud2>("human_pointcloud",1,false);
+  human_voxels_publisher_ = nodeHandle_.advertise<visualization_msgs::Marker>("human_voxels",1,false);
+  human_occupancy_publisher_ = nodeHandle_.advertise<sensor_msgs::PointCloud2>("human_occupancy",1,false);
+  human_esdf_pointcloud_publisher_ = nodeHandle_.advertise<sensor_msgs::PointCloud2>("human_esdf_pointcloud",1,false);
+  combined_esdf_pointcloud_publisher_ = nodeHandle_.advertise<sensor_msgs::PointCloud2>("combined_esdf_pointcloud",1,false);
+  human_map_slice_publisher_ = nodeHandle_.advertise<nvblox_msgs::DistanceMapSlice>("human_map_slice",1,false);
+  combined_map_slice_publisher_ = nodeHandle_.advertise<nvblox_msgs::DistanceMapSlice>("combined_map_slice",1,false);
+  depth_frame_overlay_publisher_ = nodeHandle_.advertise<sensor_msgs::Image>("depth_frame_overlay",1,false);
+  color_frame_overlay_publisher_ = nodeHandle_.advertise<sensor_msgs::Image>("color_frame_overlay",1,false);
 }
 
 void NvbloxHumanNode::setupTimers()
 {
-  human_occupancy_decay_timer_ = create_wall_timer(
-    std::chrono::duration<double>(1.0 / human_occupancy_decay_rate_hz_),
-    std::bind(&NvbloxHumanNode::decayHumanOccupancy, this),
-    group_processing_);
-  human_esdf_processing_timer_ = create_wall_timer(
-    std::chrono::duration<double>(1.0 / human_esdf_update_rate_hz_),
-    std::bind(&NvbloxHumanNode::processHumanEsdf, this), group_processing_);
+  human_occupancy_decay_timer_= nodeHandle_.createWallTimer(ros::WallDuration(1.0 / human_occupancy_decay_rate_hz_), &NvbloxHumanNode::decayHumanOccupancy, this);
+  human_esdf_processing_timer_= nodeHandle_.createWallTimer(ros::WallDuration(1.0 / human_esdf_update_rate_hz_), &NvbloxHumanNode::processHumanEsdf, this);
 }
 
 void NvbloxHumanNode::depthPlusMaskImageCallback(
-  const sensor_msgs::msg::Image::ConstSharedPtr & depth_img_ptr,
-  const sensor_msgs::msg::CameraInfo::ConstSharedPtr & camera_info_msg,
-  const sensor_msgs::msg::Image::ConstSharedPtr & mask_img_ptr,
-  const sensor_msgs::msg::CameraInfo::ConstSharedPtr & mask_camera_info_msg)
+  const sensor_msgs::ImageConstPtr & depth_img_ptr,
+  const sensor_msgs::CameraInfo::ConstPtr & camera_info_msg,
+  const sensor_msgs::ImageConstPtr & mask_img_ptr,
+  const sensor_msgs::CameraInfo::ConstPtr & mask_camera_info_msg)
 {
+  /*
   printMessageArrivalStatistics(
     *depth_img_ptr, "Depth plus Mask Statistics",
-    &depth_frame_statistics_);
+    &depth_frame_statistics_);*/
   pushMessageOntoQueue<ImageSegmentationMaskMsgTuple>(
     std::make_tuple(
       depth_img_ptr, camera_info_msg, mask_img_ptr,
@@ -205,14 +182,15 @@ void NvbloxHumanNode::depthPlusMaskImageCallback(
 }
 
 void NvbloxHumanNode::colorPlusMaskImageCallback(
-  const sensor_msgs::msg::Image::ConstSharedPtr & color_img_ptr,
-  const sensor_msgs::msg::CameraInfo::ConstSharedPtr & camera_info_msg,
-  const sensor_msgs::msg::Image::ConstSharedPtr & mask_img_ptr,
-  const sensor_msgs::msg::CameraInfo::ConstSharedPtr & mask_camera_info_msg)
+  const sensor_msgs::ImageConstPtr & color_img_ptr,
+  const sensor_msgs::CameraInfo::ConstPtr & camera_info_msg,
+  const sensor_msgs::ImageConstPtr & mask_img_ptr,
+  const sensor_msgs::CameraInfo::ConstPtr & mask_camera_info_msg)
 {
+  /*
   printMessageArrivalStatistics(
     *color_img_ptr, "Color plus Mask Statistics",
-    &rgb_frame_statistics_);
+    &rgb_frame_statistics_);*/
   pushMessageOntoQueue<ImageSegmentationMaskMsgTuple>(
     std::make_tuple(
       color_img_ptr, camera_info_msg, mask_img_ptr,
@@ -220,7 +198,7 @@ void NvbloxHumanNode::colorPlusMaskImageCallback(
     &color_mask_image_queue_, &color_mask_queue_mutex_);
 }
 
-void NvbloxHumanNode::processDepthQueue()
+void NvbloxHumanNode::processDepthQueue(const ros::TimerEvent& /*event*/)
 {
   auto message_ready = [this](const ImageSegmentationMaskMsgTuple & msg) {
       return this->canTransform(std::get<0>(msg)->header) &&
@@ -240,7 +218,7 @@ void NvbloxHumanNode::processDepthQueue()
     &depth_mask_queue_mutex_);
 }
 
-void NvbloxHumanNode::processColorQueue()
+void NvbloxHumanNode::processColorQueue(const ros::TimerEvent& /*event*/)
 {
   auto message_ready = [this](const ImageSegmentationMaskMsgTuple & msg) {
       return this->canTransform(std::get<0>(msg)->header) &&
@@ -268,13 +246,13 @@ bool NvbloxHumanNode::processDepthImage(
   timing::Timer transform_timer("ros/depth/transform");
 
   // Message parts
-  const sensor_msgs::msg::Image::ConstSharedPtr & depth_img_ptr =
+  const sensor_msgs::ImageConstPtr & depth_img_ptr =
     std::get<0>(depth_mask_msg);
-  const sensor_msgs::msg::CameraInfo::ConstSharedPtr & depth_camera_info_msg =
+  const sensor_msgs::CameraInfo::ConstPtr & depth_camera_info_msg =
     std::get<1>(depth_mask_msg);
-  const sensor_msgs::msg::Image::ConstSharedPtr & mask_img_ptr =
+  const sensor_msgs::ImageConstPtr & mask_img_ptr =
     std::get<2>(depth_mask_msg);
-  const sensor_msgs::msg::CameraInfo::ConstSharedPtr & mask_camera_info_msg =
+  const sensor_msgs::CameraInfo::ConstPtr & mask_camera_info_msg =
     std::get<3>(depth_mask_msg);
 
   // Check that we're not updating more quickly than we should.
@@ -319,7 +297,7 @@ bool NvbloxHumanNode::processDepthImage(
   if (!conversions::depthImageFromImageMessage(depth_img_ptr, &depth_image_) ||
     !conversions::monoImageFromImageMessage(mask_img_ptr, &mask_image_))
   {
-    RCLCPP_ERROR(get_logger(), "Failed to transform depth or mask image.");
+    ROS_ERROR("Failed to transform depth or mask image.");
     return false;
   }
   conversions_timer.Stop();
@@ -332,14 +310,14 @@ bool NvbloxHumanNode::processDepthImage(
   integration_timer.Stop();
 
   timing::Timer overlay_timer("ros/depth/output/human_overlay");
-  if (depth_frame_overlay_publisher_->get_subscription_count() > 0) {
-    sensor_msgs::msg::Image img_msg;
+  if (depth_frame_overlay_publisher_.getNumSubscribers() > 0) {
+    sensor_msgs::Image img_msg;
     const ColorImage & depth_overlay =
       multi_mapper_->getLastDepthFrameMaskOverlay();
     conversions::imageMessageFromColorImage(
       depth_overlay, depth_img_frame,
       &img_msg);
-    depth_frame_overlay_publisher_->publish(img_msg);
+    depth_frame_overlay_publisher_.publish(img_msg);
   }
 
   return true;
@@ -353,13 +331,13 @@ bool NvbloxHumanNode::processColorImage(
   timing::Timer transform_timer("ros/color/transform");
 
   // Message parts
-  const sensor_msgs::msg::Image::ConstSharedPtr & color_img_ptr =
+  const sensor_msgs::ImageConstPtr & color_img_ptr =
     std::get<0>(color_mask_msg);
-  const sensor_msgs::msg::CameraInfo::ConstSharedPtr & camera_info_msg =
+  const sensor_msgs::CameraInfo::ConstPtr & camera_info_msg =
     std::get<1>(color_mask_msg);
-  const sensor_msgs::msg::Image::ConstSharedPtr & mask_img_ptr =
+  const sensor_msgs::ImageConstPtr & mask_img_ptr =
     std::get<2>(color_mask_msg);
-  const sensor_msgs::msg::CameraInfo::ConstSharedPtr & mask_camera_info_msg =
+  const sensor_msgs::CameraInfo::ConstPtr & mask_camera_info_msg =
     std::get<3>(color_mask_msg);
 
   // Check that we're not updating more quickly than we should.
@@ -394,9 +372,7 @@ bool NvbloxHumanNode::processColorImage(
   const Camera mask_camera =
     conversions::cameraFromMessage(*mask_camera_info_msg);
   if (!camerasAreEquivalent(color_camera, mask_camera, T_L_C, T_L_C_mask)) {
-    RCLCPP_ERROR(
-      get_logger(),
-      "Color and mask image are not coming from the same camera or frame.");
+    ROS_ERROR("Color and mask image are not coming from the same camera or frame.");
     return false;
   }
 
@@ -404,7 +380,7 @@ bool NvbloxHumanNode::processColorImage(
   if (!conversions::colorImageFromImageMessage(color_img_ptr, &color_image_) ||
     !conversions::monoImageFromImageMessage(mask_img_ptr, &mask_image_))
   {
-    RCLCPP_ERROR(get_logger(), "Failed to transform color or mask image.");
+    ROS_ERROR("Failed to transform color or mask image.");
     return false;
   }
   conversions_timer.Stop();
@@ -415,25 +391,25 @@ bool NvbloxHumanNode::processColorImage(
   integration_timer.Stop();
 
   timing::Timer overlay_timer("ros/color/output/human_overlay");
-  if (color_frame_overlay_publisher_->get_subscription_count() > 0) {
-    sensor_msgs::msg::Image img_msg;
+  if (color_frame_overlay_publisher_.getNumSubscribers() > 0) {
+    sensor_msgs::Image img_msg;
     const ColorImage & color_overlay =
       multi_mapper_->getLastColorFrameMaskOverlay();
     conversions::imageMessageFromColorImage(
       color_overlay, color_img_frame,
       &img_msg);
-    color_frame_overlay_publisher_->publish(img_msg);
+    color_frame_overlay_publisher_.publish(img_msg);
   }
 
   return true;
 }
 
-void NvbloxHumanNode::processHumanEsdf()
+void NvbloxHumanNode::processHumanEsdf(const ros::WallTimerEvent& /*event*/)
 {
   timing::Timer ros_total_timer("ros/total");
   timing::Timer ros_human_total_timer("ros/humans");
 
-  if (last_depth_update_time_.seconds() <= 0.f) {
+  if (last_depth_update_time_.toSec() <= 0.f) {
     return;  // no data yet.
   }
   publishHumanDebugOutput();
@@ -457,8 +433,8 @@ void NvbloxHumanNode::processHumanEsdf()
 
   // Check if anyone wants any human slice
   if (esdf_distance_slice_ &&
-    (human_esdf_pointcloud_publisher_->get_subscription_count() > 0) ||
-    (human_map_slice_publisher_->get_subscription_count() > 0))
+    (human_esdf_pointcloud_publisher_.getNumSubscribers() > 0) ||
+    (human_map_slice_publisher_.getNumSubscribers() > 0))
   {
     // Get the slice as an image
     timing::Timer esdf_slice_compute_timer("ros/humans/esdf/output/compute");
@@ -469,35 +445,35 @@ void NvbloxHumanNode::processHumanEsdf()
     esdf_slice_compute_timer.Stop();
 
     // Human slice pointcloud (for visualization)
-    if (human_esdf_pointcloud_publisher_->get_subscription_count() > 0) {
+    if (human_esdf_pointcloud_publisher_.getNumSubscribers() > 0) {
       timing::Timer esdf_output_human_pointcloud_timer("ros/humans/esdf/output/pointcloud");
-      sensor_msgs::msg::PointCloud2 pointcloud_msg;
+      sensor_msgs::PointCloud2 pointcloud_msg;
       esdf_slice_converter_.sliceImageToPointcloud(
         map_slice_image, aabb, esdf_slice_height_,
         human_mapper_->esdf_layer().voxel_size(), &pointcloud_msg);
       pointcloud_msg.header.frame_id = global_frame_;
-      pointcloud_msg.header.stamp = get_clock()->now();
-      human_esdf_pointcloud_publisher_->publish(pointcloud_msg);
+      pointcloud_msg.header.stamp = ros::Time::now();
+      human_esdf_pointcloud_publisher_.publish(pointcloud_msg);
     }
 
     // Human slice (for navigation)
-    if (human_map_slice_publisher_->get_subscription_count() > 0) {
+    if (human_map_slice_publisher_.getNumSubscribers() > 0) {
       timing::Timer esdf_output_human_slice_timer("ros/humans/esdf/output/slice");
-      nvblox_msgs::msg::DistanceMapSlice map_slice_msg;
+      nvblox_msgs::DistanceMapSlice map_slice_msg;
       esdf_slice_converter_.distanceMapSliceImageToMsg(
         map_slice_image, aabb, esdf_slice_height_,
         human_mapper_->voxel_size_m(), &map_slice_msg);
       map_slice_msg.header.frame_id = global_frame_;
-      map_slice_msg.header.stamp = get_clock()->now();
-      human_map_slice_publisher_->publish(map_slice_msg);
+      map_slice_msg.header.stamp = ros::Time::now();
+      human_map_slice_publisher_.publish(map_slice_msg);
     }
   }
 
   // Check if anyone wants any human+statics slice
   if (esdf_distance_slice_ &&
-    (combined_esdf_pointcloud_publisher_->get_subscription_count() >
+    (combined_esdf_pointcloud_publisher_.getNumSubscribers() >
     0) ||
-    (combined_map_slice_publisher_->get_subscription_count() > 0))
+    (combined_map_slice_publisher_.getNumSubscribers() > 0))
   {
     // Combined slice
     timing::Timer esdf_slice_compute_timer("ros/humans/esdf/output/combined/compute");
@@ -509,42 +485,42 @@ void NvbloxHumanNode::processHumanEsdf()
     esdf_slice_compute_timer.Stop();
 
     // Human+Static slice pointcloud (for visualization)
-    if (combined_esdf_pointcloud_publisher_->get_subscription_count() > 0) {
+    if (combined_esdf_pointcloud_publisher_.getNumSubscribers() > 0) {
       timing::Timer esdf_output_human_pointcloud_timer(
         "ros/humans/esdf/output/combined/pointcloud");
-      sensor_msgs::msg::PointCloud2 pointcloud_msg;
+      sensor_msgs::PointCloud2 pointcloud_msg;
       esdf_slice_converter_.sliceImageToPointcloud(
         combined_slice_image, combined_aabb, esdf_slice_height_,
         human_mapper_->esdf_layer().voxel_size(), &pointcloud_msg);
       pointcloud_msg.header.frame_id = global_frame_;
-      pointcloud_msg.header.stamp = get_clock()->now();
-      combined_esdf_pointcloud_publisher_->publish(pointcloud_msg);
+      pointcloud_msg.header.stamp = ros::Time::now();
+      combined_esdf_pointcloud_publisher_.publish(pointcloud_msg);
     }
 
     // Human+Static slice (for navigation)
-    if (combined_map_slice_publisher_->get_subscription_count() > 0) {
+    if (combined_map_slice_publisher_.getNumSubscribers() > 0) {
       timing::Timer esdf_output_human_slice_timer("ros/humans/esdf/output/combined/slice");
-      nvblox_msgs::msg::DistanceMapSlice map_slice_msg;
+      nvblox_msgs::DistanceMapSlice map_slice_msg;
       esdf_slice_converter_.distanceMapSliceImageToMsg(
         combined_slice_image, combined_aabb, esdf_slice_height_,
         human_mapper_->voxel_size_m(), &map_slice_msg);
       map_slice_msg.header.frame_id = global_frame_;
-      map_slice_msg.header.stamp = get_clock()->now();
-      human_map_slice_publisher_->publish(map_slice_msg);
+      map_slice_msg.header.stamp = ros::Time::now();
+      human_map_slice_publisher_.publish(map_slice_msg);
     }
   }
   esdf_output_timer.Stop();
 }
 
-void NvbloxHumanNode::decayHumanOccupancy() {human_mapper_->decayOccupancy();}
+void NvbloxHumanNode::decayHumanOccupancy(const ros::WallTimerEvent& /*event*/) {human_mapper_->decayOccupancy();}
 
 void NvbloxHumanNode::publishHumanDebugOutput()
 {
   timing::Timer ros_human_debug_timer("ros/humans/output/debug");
 
   // Get a human pointcloud
-  if (human_pointcloud_publisher_->get_subscription_count() +
-    human_voxels_publisher_->get_subscription_count() >
+  if (human_pointcloud_publisher_.getNumSubscribers() +
+    human_voxels_publisher_.getNumSubscribers() >
     0)
   {
     // Grab the human only image.
@@ -560,47 +536,43 @@ void NvbloxHumanNode::publishHumanDebugOutput()
   }
 
   // Publish the human pointcloud
-  if (human_pointcloud_publisher_->get_subscription_count() > 0) {
+  if (human_pointcloud_publisher_.getNumSubscribers() > 0) {
     // Back-project human depth image to pointcloud and publish.
-    sensor_msgs::msg::PointCloud2 pointcloud_msg;
+    sensor_msgs::PointCloud2 pointcloud_msg;
     pointcloud_converter_.pointcloudMsgFromPointcloud(
       human_pointcloud_L_device_,
       &pointcloud_msg);
     pointcloud_msg.header.frame_id = global_frame_;
-    pointcloud_msg.header.stamp = get_clock()->now();
-    human_pointcloud_publisher_->publish(pointcloud_msg);
+    pointcloud_msg.header.stamp = ros::Time::now();
+    human_pointcloud_publisher_.publish(pointcloud_msg);
   }
 
   // Publish human voxels
-  if (human_voxels_publisher_->get_subscription_count() > 0) {
+  if (human_voxels_publisher_.getNumSubscribers() > 0) {
     // Human voxels from points (in the layer frame)
     image_back_projector_.pointcloudToVoxelCentersOnGPU(
       human_pointcloud_L_device_, voxel_size_,
       &human_voxel_centers_L_device_);
     // Publish
-    visualization_msgs::msg::Marker marker_msg;
+    visualization_msgs::Marker marker_msg;
     pointcloud_converter_.pointsToCubesMarkerMsg(
       human_voxel_centers_L_device_.points().toVector(), voxel_size_,
       Color::Red(), &marker_msg);
     marker_msg.header.frame_id = global_frame_;
-    marker_msg.header.stamp = get_clock()->now();
-    human_voxels_publisher_->publish(marker_msg);
+    marker_msg.header.stamp = ros::Time::now();
+    human_voxels_publisher_.publish(marker_msg);
   }
 
   // Publish the human occupancy layer
-  if (human_occupancy_publisher_->get_subscription_count() > 0) {
-    sensor_msgs::msg::PointCloud2 pointcloud_msg;
+  if (human_occupancy_publisher_.getNumSubscribers() > 0) {
+    sensor_msgs::PointCloud2 pointcloud_msg;
     layer_converter_.pointcloudMsgFromLayer(
       human_mapper_->occupancy_layer(),
       &pointcloud_msg);
     pointcloud_msg.header.frame_id = global_frame_;
-    pointcloud_msg.header.stamp = get_clock()->now();
-    human_occupancy_publisher_->publish(pointcloud_msg);
+    pointcloud_msg.header.stamp = ros::Time::now();
+    human_occupancy_publisher_.publish(pointcloud_msg);
   }
 }
 
 }  // namespace nvblox
-
-// Register the node as a component
-#include "rclcpp_components/register_node_macro.hpp"
-RCLCPP_COMPONENTS_REGISTER_NODE(nvblox::NvbloxHumanNode)

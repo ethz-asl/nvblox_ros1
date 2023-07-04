@@ -25,19 +25,16 @@
 namespace nvblox
 {
 
-Transformer::Transformer(rclcpp::Node * node)
-: node_(node)
+Transformer::Transformer(ros::NodeHandle& nodeHandle)
+: nodeHandle_(nodeHandle)
 {
   // Get params like "use_tf_transforms".
-  use_tf_transforms_ =
-    node->declare_parameter<bool>("use_tf_transforms", use_tf_transforms_);
-  use_topic_transforms_ = node->declare_parameter<bool>(
-    "use_topic_transforms",
-    use_topic_transforms_);
+  nodeHandle_.getParam("use_tf_transforms", use_tf_transforms_);
+  nodeHandle_.getParam("use_topic_transforms", use_topic_transforms_);
 
   // Init the transform listeners if we ARE using TF at all.
   if (use_tf_transforms_) {
-    tf_buffer_ = std::make_unique<tf2_ros::Buffer>(node->get_clock());
+    tf_buffer_ = std::make_unique<tf2_ros::Buffer>();
     transform_listener_ =
       std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
   }
@@ -45,13 +42,12 @@ Transformer::Transformer(rclcpp::Node * node)
 
 bool Transformer::lookupTransformToGlobalFrame(
   const std::string & sensor_frame,
-  const rclcpp::Time & timestamp,
+  const ros::Time & timestamp,
   Transform * transform)
 {
   if (!use_tf_transforms_ && !use_topic_transforms_) {
     // ERROR HERE, literally can't do anything.
-    RCLCPP_ERROR(
-      node_->get_logger(),
+    ROS_ERROR(
       "Not using TF OR topic transforms, what do you want us to use?");
     return false;
   }
@@ -87,45 +83,40 @@ bool Transformer::lookupTransformToGlobalFrame(
 }
 
 void Transformer::transformCallback(
-  const geometry_msgs::msg::TransformStamped::ConstSharedPtr transform_msg)
+  const geometry_msgs::TransformStampedConstPtr& transform_msg)
 {
-  rclcpp::Time timestamp = transform_msg->header.stamp;
-  transform_queue_[timestamp.nanoseconds()] =
+  ros::Time timestamp = transform_msg->header.stamp;
+  transform_queue_[timestamp.toNSec()] =
     transformToEigen(transform_msg->transform);
 }
 
 void Transformer::poseCallback(
-  const geometry_msgs::msg::PoseStamped::ConstSharedPtr transform_msg)
+  const geometry_msgs::PoseStampedConstPtr& transform_msg)
 {
-  rclcpp::Time timestamp = transform_msg->header.stamp;
-  transform_queue_[timestamp.nanoseconds()] = poseToEigen(transform_msg->pose);
+  ros::Time timestamp = transform_msg->header.stamp;
+  transform_queue_[timestamp.toNSec()] = poseToEigen(transform_msg->pose);
 }
 
 bool Transformer::lookupTransformTf(
   const std::string & from_frame,
   const std::string & to_frame,
-  const rclcpp::Time & timestamp,
+  const ros::Time & timestamp,
   Transform * transform)
 {
-  geometry_msgs::msg::TransformStamped T_L_C_msg;
+  geometry_msgs::TransformStamped T_L_C_msg;
   try {
     std::string error_string;
-    if (tf_buffer_->canTransform(
-        from_frame, to_frame, timestamp,
-        rclcpp::Duration::from_nanoseconds(0), &error_string))
+    if (tf_buffer_->canTransform(from_frame, to_frame, timestamp, ros::Duration(0.1)))
     {
       T_L_C_msg = tf_buffer_->lookupTransform(from_frame, to_frame, timestamp);
     } else {
-      RCLCPP_DEBUG_STREAM(
-        node_->get_logger(),
+      ROS_DEBUG_STREAM(
         "Cant transform: from:" << from_frame << " to " << to_frame << ". Error string: " <<
           error_string);
       return false;
     }
   } catch (tf2::TransformException & e) {
-    RCLCPP_DEBUG_STREAM(
-      node_->get_logger(),
-      "Cant transform: from:" << from_frame << " to " << to_frame << ". Error: " << e.what());
+    ROS_DEBUG_STREAM("Cant transform: from:" << from_frame << " to " << to_frame << ". Error: " << e.what());
     return false;
   }
 
@@ -134,11 +125,11 @@ bool Transformer::lookupTransformTf(
 }
 
 bool Transformer::lookupTransformQueue(
-  const rclcpp::Time & timestamp,
+  const ros::Time & timestamp,
   Transform * transform)
 {
   // Get latest transform
-  if (timestamp == rclcpp::Time(0)) {
+  if (timestamp == ros::Time(0)) {
     if (transform_queue_.empty()) {
       return false;
     }
@@ -147,7 +138,7 @@ bool Transformer::lookupTransformQueue(
     return true;
   } else {
     // Get closest transform
-    uint64_t timestamp_ns = timestamp.nanoseconds();
+    uint64_t timestamp_ns = timestamp.toNSec();
 
     auto closest_match = transform_queue_.lower_bound(timestamp_ns);
     if (closest_match == transform_queue_.end()) {
@@ -180,14 +171,11 @@ bool Transformer::lookupSensorTransform(
       return false;
     }
     bool success = lookupTransformTf(
-      pose_frame_, sensor_frame,
-      node_->get_clock()->now(), transform);
+      pose_frame_, sensor_frame, ros::Time::now(), transform);
     if (success) {
       sensor_transforms_[sensor_frame] = *transform;
     } else {
-      RCLCPP_INFO(
-        node_->get_logger(),
-        "Could not look up transform to sensor.");
+      ROS_INFO("Could not look up transform to sensor.");
     }
     return success;
   } else {
@@ -197,7 +185,7 @@ bool Transformer::lookupSensorTransform(
 }
 
 Transform Transformer::transformToEigen(
-  const geometry_msgs::msg::Transform & msg) const
+  const geometry_msgs::Transform & msg) const
 {
   return Transform(
     Eigen::Translation3f(
@@ -208,7 +196,7 @@ Transform Transformer::transformToEigen(
       msg.rotation.y, msg.rotation.z));
 }
 
-Transform Transformer::poseToEigen(const geometry_msgs::msg::Pose & msg) const
+Transform Transformer::poseToEigen(const geometry_msgs::Pose & msg) const
 {
   return Transform(
     Eigen::Translation3d(msg.position.x, msg.position.y, msg.position.z) *
