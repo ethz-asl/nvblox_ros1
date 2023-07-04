@@ -38,7 +38,7 @@ namespace nvblox {
 /// ROS parameter server, depending on settings loaded from ROS params.
 class Transformer {
  public:
-  explicit Transformer(ros::NodeHandle& nodeHandle);
+  explicit Transformer(ros::NodeHandle& nh);
 
   /// @brief Looks up the transform between the frame with the passed name and
   /// the global frame
@@ -84,7 +84,7 @@ class Transformer {
   Transform poseToEigen(const geometry_msgs::Pose& pose) const;
 
   /// ROS State
-  ros::NodeHandle nodeHandle_;
+  ros::NodeHandle nh_;
   std::shared_ptr<tf2_ros::TransformListener> transform_listener_;
   std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
 

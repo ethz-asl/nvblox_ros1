@@ -18,13 +18,6 @@
 #ifndef NVBLOX_ROS__NVBLOX_NODE_HPP_
 #define NVBLOX_ROS__NVBLOX_NODE_HPP_
 
-#include <nvblox/nvblox.h>
-
-#include <message_filters/subscriber.h>
-#include <message_filters/sync_policies/approximate_time.h>
-#include <message_filters/sync_policies/exact_time.h>
-#include <message_filters/synchronizer.h>
-
 #include <chrono>
 #include <deque>
 #include <functional>
@@ -33,6 +26,12 @@
 #include <string>
 #include <utility>
 
+#include <nvblox/nvblox.h>
+
+#include <message_filters/subscriber.h>
+#include <message_filters/sync_policies/approximate_time.h>
+#include <message_filters/sync_policies/exact_time.h>
+#include <message_filters/synchronizer.h>
 #include <nvblox_msgs/FilePath.h>
 #include <ros/node_handle.h>
 #include <ros/publisher.h>
@@ -57,7 +56,7 @@ namespace nvblox {
 
 class NvbloxNode {
  public:
-  explicit NvbloxNode(ros::NodeHandle& nodeHandle);
+  explicit NvbloxNode(ros::NodeHandle& nh);
   virtual ~NvbloxNode() = default;
 
   // Setup. These are called by the constructor.
@@ -126,12 +125,6 @@ class NvbloxNode {
   void pushMessageOntoQueue(MessageType message,
                             std::deque<MessageType>* queue_ptr,
                             std::mutex* queue_mutex_ptr);
-  /*
-  template<typename MessageType>
-  void printMessageArrivalStatistics(
-    const MessageType & message, const std::string & output_prefix,
-    libstatistics_collector::topic_statistics_collector::
-    ReceivedMessagePeriodCollector<MessageType> * statistics_collector);*/
 
   // Used internally to unify processing of queues that process a message and a
   // matching transform.
@@ -185,7 +178,7 @@ class NvbloxNode {
   message_filters::Subscriber<sensor_msgs::CameraInfo> color_camera_info_sub_;
 
   // Ros handle
-  ros::NodeHandle nodeHandle_;
+  ros::NodeHandle nh_;
 
   // Pointcloud sub.
   ros::Subscriber pointcloud_sub_;
@@ -298,19 +291,6 @@ class NvbloxNode {
   ColorImage color_image_;
   DepthImage depth_image_;
   DepthImage pointcloud_image_;
-
-  /*
-  // Message statistics (useful for debugging)
-  libstatistics_collector::topic_statistics_collector::
-  ReceivedMessagePeriodCollector<sensor_msgs::Image>
-  depth_frame_statistics_;
-  libstatistics_collector::topic_statistics_collector::
-  ReceivedMessagePeriodCollector<sensor_msgs::Image>
-  rgb_frame_statistics_;
-  libstatistics_collector::topic_statistics_collector::
-  ReceivedMessagePeriodCollector<sensor_msgs::PointCloud2>
-  pointcloud_frame_statistics_;
-  */
 
   // State for integrators running at various speeds.
   ros::Time last_depth_update_time_;

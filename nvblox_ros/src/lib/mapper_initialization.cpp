@@ -15,11 +15,11 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#include "nvblox_ros/mapper_initialization.hpp"
+#include <string>
 
 #include <nvblox/integrators/weighting_function.h>
 
-#include <string>
+#include "nvblox_ros/mapper_initialization.hpp"
 
 namespace nvblox {
 
@@ -41,59 +41,7 @@ WeightingFunctionType weighting_function_type_from_string(
     return kDefaultWeightingFunctionType;
   }
 }
-/*
-void declareMapperParameters(const std::string& mapper_name,
-                           ros::NodeHandle& nh) {
-// Declare parameters
-// NOTE(alexmillane): We have to use the insane syntax in
-// declareParameterWithoutDefault() order to avoid passing a default value to
-// declare_parameter(). The problem with using a default value is that when we
-// later call node->get_parameter() in initialize_mapper(), it will always
-// return true, even if the user has not set the parameter. To me this appears
-// like a bug in ROS 2. After hours of trying, the insane combination of
-// syntaxes in this function and initialize_mapper() was the only this I found
-// that worked. UPDATE(helzor): Apparently this issue is fixed in later ROS 2
-// versions.
 
-declareParameterWithoutDefault<float>(
-  mapper_name + ".projective_integrator_max_integration_distance_m", node);
-declareParameterWithoutDefault<float>(
-  mapper_name + ".lidar_projective_integrator_max_integration_distance_m",
-  node);
-declareParameterWithoutDefault<float>(
-  mapper_name + ".projective_integrator_truncation_distance_vox", node);
-declareParameterWithoutDefault<float>(
-  mapper_name + ".tsdf_integrator_max_weight", node);
-declareParameterWithoutDefault<float>(
-  mapper_name + ".free_region_occupancy_probability", node);
-declareParameterWithoutDefault<float>(
-  mapper_name + ".occupied_region_occupancy_probability", node);
-declareParameterWithoutDefault<float>(
-  mapper_name + ".unobserved_region_occupancy_probability", node);
-declareParameterWithoutDefault<float>(
-  mapper_name + ".occupied_region_half_width_m", node);
-declareParameterWithoutDefault<float>(
-  mapper_name + ".free_region_decay_probability", node);
-declareParameterWithoutDefault<float>(
-  mapper_name + ".occupied_region_decay_probability", node);
-declareParameterWithoutDefault<float>(
-  mapper_name + ".mesh_integrator_min_weight", node);
-declareParameterWithoutDefault<bool>(
-  mapper_name + ".mesh_integrator_weld_vertices", node);
-declareParameterWithoutDefault<float>(
-  mapper_name + ".color_integrator_max_integration_distance_m", node);
-declareParameterWithoutDefault<float>(
-  mapper_name + ".esdf_integrator_min_weight", node);
-declareParameterWithoutDefault<float>(
-  mapper_name + ".esdf_integrator_max_site_distance_vox", node);
-declareParameterWithoutDefault<float>(
-  mapper_name + ".esdf_integrator_max_distance_m", node);
-declareParameterWithoutDefault<std::string>(
-  mapper_name + ".weighting_mode",
-  node);
-
-}
-*/
 bool initializeMapper(const std::string& mapper_name, Mapper* mapper_ptr,
                       ros::NodeHandle& nh) {
   ROS_INFO_STREAM("Initialize Mapper:");

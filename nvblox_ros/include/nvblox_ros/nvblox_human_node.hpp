@@ -37,7 +37,7 @@ namespace nvblox {
 
 class NvbloxHumanNode : public NvbloxNode {
  public:
-  explicit NvbloxHumanNode(ros::NodeHandle& nodeHandle);
+  explicit NvbloxHumanNode(ros::NodeHandle& nh);
   virtual ~NvbloxHumanNode() = default;
 
   // Setup. These are called by the constructor.
@@ -107,7 +107,7 @@ class NvbloxHumanNode : public NvbloxNode {
   message_filters::Subscriber<sensor_msgs::CameraInfo>
       segmentation_camera_info_sub_;
 
-  ros::NodeHandle nodeHandle_;
+  ros::NodeHandle nh_;
 
   // Publishers
   ros::Publisher human_pointcloud_publisher_;
