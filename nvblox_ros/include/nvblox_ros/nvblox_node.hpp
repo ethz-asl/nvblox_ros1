@@ -61,7 +61,7 @@ class NvbloxNode {
   virtual ~NvbloxNode() = default;
 
   // Setup. These are called by the constructor.
-  void getParameters();
+  bool getParameters();
   void subscribeToTopics();
   void advertiseTopics();
   void advertiseServices();
@@ -219,25 +219,36 @@ class NvbloxNode {
   ros::Timer clear_outside_radius_timer_;
 
   // ROS & nvblox settings
+
+  // Topic Names
+  std::string depth_image_topic_name_ = "null";
+  std::string depth_image_camera_info_topic_name_ = "null";
+
+  std::string color_image_topic_name_ = "null";
+  std::string color_image_camera_info_topic_name_ = "null";
+
+  std::string pointcloud_topic_name_ = "null";
+
   float voxel_size_ = 0.05f;
   bool esdf_2d_ = true;
   bool esdf_distance_slice_ = true;
   float esdf_slice_height_ = 1.0f;
   ProjectiveLayerType static_projective_layer_type_ =
       ProjectiveLayerType::kTsdf;
-  bool is_realsense_data_ = false;
+  bool is_realsense_data_ = true;
 
   // Toggle parameters
-  bool use_depth_ = true;
+  bool use_depth_ = false;
   bool use_lidar_ = true;
-  bool use_color_ = true;
+  bool use_color_ = false;
   bool compute_esdf_ = true;
   bool compute_mesh_ = true;
 
   // LIDAR settings, defaults for Velodyne VLP16
   int lidar_width_ = 1800;
   int lidar_height_ = 16;
-  float lidar_vertical_fov_rad_ = 30.0 * M_PI / 180.0;
+  const float deg_to_rad = M_PI / 180.0;
+  float lidar_vertical_fov_deg_ = 30.0;
 
   // Used for ESDF slicing. Everything between min and max height will be
   // compressed to a single 2D level (if esdf_2d_ enabled), output at
@@ -246,13 +257,13 @@ class NvbloxNode {
   float esdf_2d_max_height_ = 1.0f;
 
   // Slice visualization params
-  std::string slice_visualization_attachment_frame_id_ = "base_link";
+  std::string slice_visualization_attachment_frame_id_ = "lidar";
   float slice_visualization_side_length_ = 10.0f;
 
   // ROS settings & update throttles
-  std::string global_frame_ = "odom";
+  std::string global_frame_ = "map";
   /// Pose frame to use if using transform topics.
-  std::string pose_frame_ = "base_link";
+  std::string pose_frame_ = "lidar";
   float max_depth_update_hz_ = 10.0f;
   float max_color_update_hz_ = 5.0f;
   float max_lidar_update_hz_ = 10.0f;
@@ -272,12 +283,8 @@ class NvbloxNode {
   /// Map clearing params
   /// Note that values <=0.0 indicate that no clearing is performed.
   float map_clearing_radius_m_ = -1.0f;
-  std::string map_clearing_frame_id_ = "base_link";
+  std::string map_clearing_frame_id_ = "lidar";
   float clear_outside_radius_rate_hz_ = 1.0f;
-
-  // The QoS settings for the image input topics
-  std::string depth_qos_str_ = "SYSTEM_DEFAULT";
-  std::string color_qos_str_ = "SYSTEM_DEFAULT";
 
   // Mapper
   // Holds the map layers and their associated integrators
@@ -335,5 +342,7 @@ class NvbloxNode {
 };
 
 }  // namespace nvblox
+
+#include "nvblox_ros/impl/nvblox_node_impl.hpp"
 
 #endif  // NVBLOX_ROS__NVBLOX_NODE_HPP_

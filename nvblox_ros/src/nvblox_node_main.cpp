@@ -41,6 +41,7 @@ int main(int argc, char * argv[])
   //std::shared_ptr<nvblox::NvbloxNode> node(new nvblox::NvbloxNode());
   nvblox::NvbloxNode NvbloxNode(nh);
 
+  // TODO(TT) Make sure to check the number of subscribers to the topics.
   ros::MultiThreadedSpinner spinner(4);
   spinner.spin();
 

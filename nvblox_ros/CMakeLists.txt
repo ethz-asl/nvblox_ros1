@@ -16,7 +16,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 cmake_minimum_required(VERSION 3.20)
-set(CMAKE_CUDA_COMPILER /usr/local/cuda/bin/nvcc)
+include(ExternalProject)
+
 project(nvblox_ros LANGUAGES CXX CUDA)
 add_compile_options(-Wall -Wextra -Wpedantic -O3)
 
@@ -48,10 +49,12 @@ if(NOT WIN32)
   set(Magenta     "${Esc}[35m")
 endif()
 
-message("${Magenta}INFO: ${CMAKE_MODULE_PATH}.${ColourReset}")
-message("${Magenta}INFO: ${CMAKE_PREFIX_PATH}.${ColourReset}")
-message("${Magenta}INFO: ${CMAKE_FIND_ROOT_PATH}.${ColourReset}")
-message("${Magenta}INFO: ${CMAKE_INCLUDE_PATH}.${ColourReset}")
+message("${Magenta}INFO: CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}.${ColourReset}")
+message("${Magenta}INFO: CMAKE_PREFIX_PATH  ${CMAKE_PREFIX_PATH}.${ColourReset}")
+message("${Magenta}INFO: CMAKE_FIND_ROOT_PATH ${CMAKE_FIND_ROOT_PATH}.${ColourReset}")
+message("${Magenta}INFO: CMAKE_INCLUDE_PATH ${CMAKE_INCLUDE_PATH}.${ColourReset}")
+message("${Magenta}INFO: CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX}.${ColourReset}")
+message("${Magenta}INFO: PROJECT_SOURCE_DIR ${PROJECT_SOURCE_DIR}.${ColourReset}")
 
 set(gflags_DIR /usr/lib/x86_64-linux-gnu/cmake/gflags)
 find_package(gflags REQUIRED PATHS /usr/lib/x86_64-linux-gnu/cmake/gflags)
@@ -98,14 +101,12 @@ catkin_package(
     tf2_ros
     tf2_eigen
     nvblox_msgs
-    nvblox
     message_filters
     visualization_msgs
 )
 
 # Process nvblox
 #set(NVBLOX_DIR /home/tutuna/nvblox_ws/src/nvblox_ros1/nvblox/nvblox)
-set(NVBLOX_DIR ../nvblox/nvblox)
 
 
 # Disable tests and experiments
@@ -115,15 +116,41 @@ set(BUILD_TESTS OFF)
 # Direct the child cmake to install eigen to the devel space.
 # Note that we put it in the include/nvblox_ros directory, which should stop it
 # colliding with other versions of eigen used by other catkin packages.
-set(NVBLOX_EIGEN_CATKIN_INCLUDE_DESTINATION "${CMAKE_INSTALL_PREFIX}")
-set(EIGEN_INCLUDE_DESTINATION "${NVBLOX_EIGEN_CATKIN_INCLUDE_DESTINATION}")
-set(STDGPU_INSTALL_DESTINATION ${CMAKE_INSTALL_PREFIX})
+#set(NVBLOX_EIGEN_CATKIN_INCLUDE_DESTINATION "${CMAKE_INSTALL_PREFIX}")
+#set(EIGEN_INCLUDE_DESTINATION "${NVBLOX_EIGEN_CATKIN_INCLUDE_DESTINATION}")
+#set(STDGPU_INSTALL_DESTINATION ${CMAKE_INSTALL_PREFIX})
 
 ##########
 # NVBLOX #
 ##########
-add_subdirectory(${NVBLOX_DIR} nvblox)
-include_directories(AFTER include ${catkin_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
+set(NVBLOX_DIR ${PROJECT_SOURCE_DIR}/../nvblox/nvblox)
+message("NVBLOX_DIR: ${NVBLOX_DIR}")
+
+set(NVBLOX_INCLUDE_DIR ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
+set(NVBLOX_BUILD_DIR ${CMAKE_BINARY_DIR}/build)
+set(NVBLOX_INCLUDE_OUTPUT_DIR ${CATKIN_DEVEL_PREFIX}/${NVBLOX_INCLUDE_DIR})
+#set(NVBLOX_BIN_DIR ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
+
+message("${Magenta}NVBLOX_INCLUDE_DIR ${NVBLOX_INCLUDE_DIR}${ColourReset}")
+
+ExternalProject_Add(nvblox
+  PREFIX nvblox
+  SOURCE_DIR ${NVBLOX_DIR}
+  UPDATE_COMMAND ""
+  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR> -DCMAKE_INSTALL_INCLUDEDIR=${NVBLOX_INCLUDE_DIR}
+  #INSTALL_COMMAND make install
+  INSTALL_DIR "${CATKIN_DEVEL_PREFIX}"
+  BINARY_DIR "${NVBLOX_BIN_DIR}"
+  #INCLUDE_DIR ""
+  #BUILD_COMMAND cmake --build .
+  #INSTALL_COMMAND ""
+)
+
+find_package(nvblox REQUIRED)
+
+# Set up correct include directories
+include_directories(AFTER include ${catkin_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS} ${NVBLOX_INCLUDE_OUTPUT_DIR})
+
 
 ########
 # CUDA #
@@ -148,18 +175,25 @@ add_library(${PROJECT_NAME}_lib SHARED
 )
 
 target_link_libraries(${PROJECT_NAME}_lib 
-  nvblox_interface
+  nvblox::nvblox_lib
+  nvblox::nvblox_eigen
   ${catkin_LIBRARIES}
   ${OpenCV_LIBRARIES})
 
-set_target_properties(${PROJECT_NAME}_lib PROPERTIES CUDA_ARCHITECTURES "62;72;75;80;86;87")
+set_target_properties(${PROJECT_NAME}_lib PROPERTIES CUDA_ARCHITECTURES "62;72;75;80;86;87") 
 
-target_include_directories(${PROJECT_NAME}_lib SYSTEM PUBLIC
-${catkin_INCLUDE_DIRS})  
 
+target_include_directories(${PROJECT_NAME}_lib PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+  ${catkin_INCLUDE_DIRS})
 target_include_directories(${PROJECT_NAME}_lib BEFORE PRIVATE
-  $<TARGET_PROPERTY:INTERFACE_INCLUDE_DIRECTORIES>)
+  $<TARGET_PROPERTY:nvblox::nvblox_eigen,INTERFACE_INCLUDE_DIRECTORIES>)
 
+
+add_dependencies(${PROJECT_NAME}_lib
+  ${catkin_EXPORTED_TARGETS}
+)
 
 ############
 # BINARIES #
@@ -182,36 +216,36 @@ add_dependencies(nvblox_human_node
   ${catkin_EXPORTED_TARGETS}
 )
 
-#get_target_property(nvblox_INCLUDES nvblox_interface INTERFACE_INCLUDE_DIRECTORIES)
-###########
-# INSTALL #
-###########
+# #get_target_property(nvblox_INCLUDES nvblox_interface INTERFACE_INCLUDE_DIRECTORIES)
+# ###########
+# # INSTALL #
+# ###########
 
-# Install includes.
-install(
-  DIRECTORY 
-  include/${PROJECT_NAME}/
-    include/
-    config
-    launch
-    rviz
-  DESTINATION 
-    include
-    #${CATKIN_PACKAGE_SHARE_DESTINATION}
-)
+# # Install includes.
+# install(
+#   DIRECTORY 
+#   include/${PROJECT_NAME}/
+#     include/
+#     config
+#     launch
+#     rviz
+#   DESTINATION 
+#     include
+#     #${CATKIN_PACKAGE_SHARE_DESTINATION}
+# )
 
-# Install the library target.
-install(
-  TARGETS ${PROJECT_NAME}_lib nvblox_lib nvblox_gpu_hash nvblox_eigen
-  EXPORT ${PROJECT_NAME}Targets
-  LIBRARY DESTINATION lib
-  ARCHIVE DESTINATION lib
-  RUNTIME DESTINATION bin
-  INCLUDES DESTINATION include
-)
+# # Install the library target.
+# install(
+#   TARGETS ${PROJECT_NAME}_lib nvblox_lib nvblox_gpu_hash nvblox_eigen
+#   EXPORT ${PROJECT_NAME}Targets
+#   LIBRARY DESTINATION lib
+#   ARCHIVE DESTINATION lib
+#   RUNTIME DESTINATION bin
+#   INCLUDES DESTINATION include
+# )
 
-# Install nodes which live in lib for some reason.
-install(
-  TARGETS nvblox_node nvblox_human_node
-  DESTINATION lib/${PROJECT_NAME}
-)
+# # Install nodes which live in lib for some reason.
+# install(
+#   TARGETS nvblox_node nvblox_human_node
+#   DESTINATION lib/${PROJECT_NAME}
+# )
