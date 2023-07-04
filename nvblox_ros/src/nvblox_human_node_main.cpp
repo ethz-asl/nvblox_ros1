@@ -26,8 +26,7 @@
 
 using namespace std::chrono_literals;
 
-int main(int argc, char * argv[])
-{
+int main(int argc, char* argv[]) {
   google::InitGoogleLogging(argv[0]);
   FLAGS_alsologtostderr = true;
   google::InstallFailureSignalHandler();
@@ -38,7 +37,7 @@ int main(int argc, char * argv[])
   // CUDA call.
   nvblox::warmupCuda();
 
-  //std::shared_ptr<nvblox::NvbloxNode> node(new nvblox::NvbloxNode());
+  // std::shared_ptr<nvblox::NvbloxNode> node(new nvblox::NvbloxNode());
   nvblox::NvbloxNode NvbloxNode(nh);
 
   ros::MultiThreadedSpinner spinner(4);
