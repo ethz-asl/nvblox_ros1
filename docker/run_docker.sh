@@ -11,17 +11,18 @@ DOCKER=nvblox
 DOCKERFILE=Dockerfile
 NAME=nvblox
 BUILD=false
+WORKSPACE=/home/$USER/nvblox_ws
 
 help()
 {
     echo "Usage: run_docker.sh 
                [ -b | --build ] [ -n | --name <docker name> ]
-               [ -h | --help  ]"
+               [ -h | --help  ] [ -w | --workspace </workspace/path> ]"
     exit 2
 }
 
-SHORT=b,n:,h
-LONG=build,name:,help
+SHORT=b,n:,w:,h
+LONG=build,name:,workspace:,help
 OPTS=$(getopt -a -n run_docker --options $SHORT --longoptions $LONG -- "$@")
 echo $OPTS
 
@@ -32,9 +33,14 @@ do
   case "$1" in
     -b | --build )
       BUILD="true"
+      shift
       ;;
     -n | --name )
       NAME="$2"
+      shift 2
+      ;;
+    -w | --workspace )
+      WORKSPACE="$2"
       shift 2
       ;;
     -h | --help)
@@ -51,8 +57,10 @@ do
   esac
 done
 
+
 if [ "$BUILD" = true ]; then
-     docker build -f $DOCKERFILE -t $DOCKER .
+    echo "Building docker: $DOCKERFILE as $DOCKER"
+    docker build -f $DOCKERFILE -t $DOCKER .
 fi
 
 XAUTH=/tmp/.docker.xauth
@@ -82,7 +90,7 @@ echo "Running docker..."
 docker run -it --rm \
     --env="DISPLAY=$DISPLAY" \
     --env="FRANKA_IP=$FRANKA_IP" \
-    --volume=/home/$USER/nvblox_ws:/root/nvblox_ws \
+    --volume=$WORKSPACE:/root/nvblox_ws \
     --volume=/home/$USER/data:/root/data \
     --volume="/tmp/.X11-unix:/tmp/.X11-unix:rw" \
     --env="XAUTHORITY=$XAUTH" \

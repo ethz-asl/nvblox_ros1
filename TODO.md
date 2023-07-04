@@ -9,6 +9,7 @@ Please try to update this in the PR where the appropriate changes are made. :)
   - [x] nvblox_node_main
   - [x] nvblox_human_node_main (low priority)
 - [x] nvblox_rviz_plugin
+- [ ] check install targets so downstream packages can depend on this
 
 ## General
 - [ ] Run clang-format with standard Google C++ on everything (should be done after code compiles) or diffs will be hard.
