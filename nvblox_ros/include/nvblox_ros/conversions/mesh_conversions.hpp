@@ -27,27 +27,22 @@
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
 
-
-namespace nvblox
-{
-namespace conversions
-{
+namespace nvblox {
+namespace conversions {
 
 // Convert a mesh to a message.
-void meshMessageFromMeshLayer(
-  const BlockLayer<MeshBlock> & mesh_layer,
-  nvblox_msgs::Mesh * mesh_msg);
+void meshMessageFromMeshLayer(const BlockLayer<MeshBlock>& mesh_layer,
+                              nvblox_msgs::Mesh* mesh_msg);
 
 void meshMessageFromMeshBlocks(
-  const BlockLayer<MeshBlock> & mesh_layer,
-  const std::vector<Index3D> & block_indices,
-  nvblox_msgs::Mesh * mesh_msg,
-  const std::vector<Index3D> & deleted_indices = std::vector<Index3D>());
+    const BlockLayer<MeshBlock>& mesh_layer,
+    const std::vector<Index3D>& block_indices, nvblox_msgs::Mesh* mesh_msg,
+    const std::vector<Index3D>& deleted_indices = std::vector<Index3D>());
 
 // Convert a mesh to a marker array.
-void markerMessageFromMeshLayer(
-  const BlockLayer<MeshBlock> & mesh_layer, const std::string & frame_id,
-  visualization_msgs::MarkerArray * marker_msg);
+void markerMessageFromMeshLayer(const BlockLayer<MeshBlock>& mesh_layer,
+                                const std::string& frame_id,
+                                visualization_msgs::MarkerArray* marker_msg);
 
 }  // namespace conversions
 }  // namespace nvblox

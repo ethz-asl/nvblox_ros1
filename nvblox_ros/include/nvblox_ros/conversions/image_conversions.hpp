@@ -20,46 +20,39 @@
 
 #include <nvblox/nvblox.h>
 
-#include <opencv2/opencv.hpp>
 #include <cv_bridge/cv_bridge.h>
+#include <opencv2/opencv.hpp>
 
 #include <string>
 
 #include <sensor_msgs/CameraInfo.h>
 #include <sensor_msgs/Image.h>
 
-namespace nvblox
-{
-namespace conversions
-{
+namespace nvblox {
+namespace conversions {
 
 // Convert camera info message to NVBlox camera object
-Camera cameraFromMessage(const sensor_msgs::CameraInfo & camera_info);
+Camera cameraFromMessage(const sensor_msgs::CameraInfo& camera_info);
 
 // Convert image to depth frame object
-bool depthImageFromImageMessage(
-  const sensor_msgs::ImageConstPtr & image_msg,
-  DepthImage * depth_frame);
+bool depthImageFromImageMessage(const sensor_msgs::ImageConstPtr& image_msg,
+                                DepthImage* depth_frame);
 
-bool colorImageFromImageMessage(
-  const sensor_msgs::ImageConstPtr & image_msg,
-  ColorImage * color_image);
+bool colorImageFromImageMessage(const sensor_msgs::ImageConstPtr& image_msg,
+                                ColorImage* color_image);
 
-bool monoImageFromImageMessage(
-  const sensor_msgs::ImageConstPtr & image_msg,
-  MonoImage * mono_image);
+bool monoImageFromImageMessage(const sensor_msgs::ImageConstPtr& image_msg,
+                               MonoImage* mono_image);
 
 // Convert depth frame to image message.
-void imageMessageFromDepthImage(
-  const DepthImage & depth_frame,
-  const std::string & frame_id,
-  sensor_msgs::Image * image_msg);
+void imageMessageFromDepthImage(const DepthImage& depth_frame,
+                                const std::string& frame_id,
+                                sensor_msgs::Image* image_msg);
 
 // Convert color frame to image message.
-void imageMessageFromColorImage(
-  const ColorImage & color_image,
-  const std::string & frame_id,
-  sensor_msgs::Image * image_msg);
+void imageMessageFromColorImage(const ColorImage& color_image,
+                                const std::string& frame_id,
+                                sensor_msgs::Image* image_msg);
 
 }  // namespace conversions
 }  // namespace nvblox

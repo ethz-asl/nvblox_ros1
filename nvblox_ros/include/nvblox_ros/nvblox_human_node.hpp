@@ -19,8 +19,8 @@
 #define NVBLOX_ROS__NVBLOX_HUMAN_NODE_HPP_
 
 #include <nvblox/mapper/multi_mapper.h>
-#include <nvblox/sensors/pointcloud.h>
 #include <nvblox/semantics/image_projector.h>
+#include <nvblox/sensors/pointcloud.h>
 
 #include <message_filters/subscriber.h>
 #include <message_filters/sync_policies/approximate_time.h>
@@ -33,12 +33,10 @@
 
 #include "nvblox_ros/nvblox_node.hpp"
 
-namespace nvblox
-{
+namespace nvblox {
 
-class NvbloxHumanNode : public NvbloxNode
-{
-public:
+class NvbloxHumanNode : public NvbloxNode {
+ public:
   explicit NvbloxHumanNode(ros::NodeHandle& nodeHandle);
   virtual ~NvbloxHumanNode() = default;
 
@@ -51,23 +49,21 @@ public:
 
   // Callbacks for Sensor + Mask
   void depthPlusMaskImageCallback(
-    const sensor_msgs::ImageConstPtr & depth_img_ptr,
-    const sensor_msgs::CameraInfo::ConstPtr & camera_info_msg,
-    const sensor_msgs::ImageConstPtr & mask_img_ptr,
-    const sensor_msgs::CameraInfo::ConstPtr & mask_camera_info_msg);
+      const sensor_msgs::ImageConstPtr& depth_img_ptr,
+      const sensor_msgs::CameraInfo::ConstPtr& camera_info_msg,
+      const sensor_msgs::ImageConstPtr& mask_img_ptr,
+      const sensor_msgs::CameraInfo::ConstPtr& mask_camera_info_msg);
   void colorPlusMaskImageCallback(
-    const sensor_msgs::ImageConstPtr & color_img_ptr,
-    const sensor_msgs::CameraInfo::ConstPtr & camera_info_msg,
-    const sensor_msgs::ImageConstPtr & mask_img_ptr,
-    const sensor_msgs::CameraInfo::ConstPtr & mask_camera_info_msg);
+      const sensor_msgs::ImageConstPtr& color_img_ptr,
+      const sensor_msgs::CameraInfo::ConstPtr& camera_info_msg,
+      const sensor_msgs::ImageConstPtr& mask_img_ptr,
+      const sensor_msgs::CameraInfo::ConstPtr& mask_camera_info_msg);
 
   // This is our internal type for passing around images, their matching
   // segmentation masks, as well as the camera intrinsics.
   using ImageSegmentationMaskMsgTuple =
-    std::tuple<sensor_msgs::ImageConstPtr,
-      sensor_msgs::CameraInfo::ConstPtr,
-      sensor_msgs::ImageConstPtr,
-      sensor_msgs::CameraInfo::ConstPtr>;
+      std::tuple<sensor_msgs::ImageConstPtr, sensor_msgs::CameraInfo::ConstPtr,
+                 sensor_msgs::ImageConstPtr, sensor_msgs::CameraInfo::ConstPtr>;
 
   // Override the depth processing from the base node
   void processDepthQueue(const ros::TimerEvent& /*event*/) override;
@@ -75,9 +71,9 @@ public:
 
   // The methods for processing images from the internal queue.
   virtual bool processDepthImage(
-    const ImageSegmentationMaskMsgTuple & depth_mask_msg);
+      const ImageSegmentationMaskMsgTuple& depth_mask_msg);
   virtual bool processColorImage(
-    const ImageSegmentationMaskMsgTuple & color_mask_msg);
+      const ImageSegmentationMaskMsgTuple& color_mask_msg);
 
   // Publish human data on fixed frequency
   void processHumanEsdf(const ros::WallTimerEvent& /*event*/);
@@ -85,7 +81,7 @@ public:
   // Decay the human occupancy grid on fixed frequency
   void decayHumanOccupancy(const ros::WallTimerEvent& /*event*/);
 
-protected:
+ protected:
   // Publish human data (if any subscribers) that helps
   // visualization and debugging.
   void publishHumanDebugOutput();
@@ -98,18 +94,18 @@ protected:
 
   // Synchronize: Depth + CamInfo + SegmentationMake + CamInfo
   typedef message_filters::sync_policies::ApproximateTime<
-      sensor_msgs::Image, sensor_msgs::CameraInfo,
-      sensor_msgs::Image, sensor_msgs::CameraInfo>
-    mask_time_policy_t;
+      sensor_msgs::Image, sensor_msgs::CameraInfo, sensor_msgs::Image,
+      sensor_msgs::CameraInfo>
+      mask_time_policy_t;
   std::shared_ptr<message_filters::Synchronizer<mask_time_policy_t>>
-  timesync_depth_mask_;
+      timesync_depth_mask_;
   std::shared_ptr<message_filters::Synchronizer<mask_time_policy_t>>
-  timesync_color_mask_;
+      timesync_color_mask_;
 
   // Segmentation mask sub.
   message_filters::Subscriber<sensor_msgs::Image> segmentation_mask_sub_;
   message_filters::Subscriber<sensor_msgs::CameraInfo>
-  segmentation_camera_info_sub_;
+      segmentation_camera_info_sub_;
 
   ros::NodeHandle nodeHandle_;
 

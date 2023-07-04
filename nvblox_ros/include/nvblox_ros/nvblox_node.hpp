@@ -76,15 +76,12 @@ class NvbloxNode {
       const sensor_msgs::CameraInfo::ConstPtr& color_info_msg);
   void pointcloudCallback(const sensor_msgs::PointCloud2::ConstPtr pointcloud);
 
-  bool savePly(
-  nvblox_msgs::FilePath::Request& request,
-  nvblox_msgs::FilePath::Response& response);
-  bool saveMap(
-  nvblox_msgs::FilePath::Request& request,
-  nvblox_msgs::FilePath::Response& response);
-  bool loadMap(
-  nvblox_msgs::FilePath::Request& request,
-  nvblox_msgs::FilePath::Response& response);
+  bool savePly(nvblox_msgs::FilePath::Request& request,
+               nvblox_msgs::FilePath::Response& response);
+  bool saveMap(nvblox_msgs::FilePath::Request& request,
+               nvblox_msgs::FilePath::Response& response);
+  bool loadMap(nvblox_msgs::FilePath::Request& request,
+               nvblox_msgs::FilePath::Response& response);
 
   // Does whatever processing there is to be done, depending on what
   // transforms are available.
@@ -95,7 +92,8 @@ class NvbloxNode {
   virtual void processMesh(const ros::TimerEvent& /*event*/);
 
   // Alternative callbacks to using TF.
-  void transformCallback(const geometry_msgs::TransformStampedConstPtr& transform_msg);
+  void transformCallback(
+      const geometry_msgs::TransformStampedConstPtr& transform_msg);
   void poseCallback(const geometry_msgs::PoseStampedConstPtr& transform_msg);
 
   // Publish data on fixed frequency

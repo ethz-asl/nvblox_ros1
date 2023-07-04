@@ -22,10 +22,9 @@
 
 #include <ros/ros.h>
 
-namespace nvblox
-{
+namespace nvblox {
 
-rmw_qos_profile_t parseQoSString(const std::string & str);
+rmw_qos_profile_t parseQoSString(const std::string& str);
 
 }  // namespace nvblox
 

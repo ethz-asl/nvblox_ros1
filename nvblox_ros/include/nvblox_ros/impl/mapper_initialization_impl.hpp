@@ -18,19 +18,16 @@
 #ifndef NVBLOX_ROS__IMPL__MAPPER_INITIALIZATION_IMPL_HPP_
 #define NVBLOX_ROS__IMPL__MAPPER_INITIALIZATION_IMPL_HPP_
 
-#include <string>
 #include <ros/ros.h>
+#include <string>
 
-namespace nvblox
-{
+namespace nvblox {
 
-template<typename T>
-void set_mapper_parameter(
-  const std::string & mapper_name,
-  const std::string & parameter_name,
-  std::function<void(T)> parameter_setter,
-  ros::NodeHandle& nodeHandle)
-{
+template <typename T>
+void set_mapper_parameter(const std::string& mapper_name,
+                          const std::string& parameter_name,
+                          std::function<void(T)> parameter_setter,
+                          ros::NodeHandle& nodeHandle) {
   /*
   T parameter_value;
   const std::string full_name = mapper_name + "." + parameter_name;

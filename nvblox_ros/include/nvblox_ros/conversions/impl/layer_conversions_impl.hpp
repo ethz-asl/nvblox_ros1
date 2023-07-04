@@ -18,17 +18,14 @@
 #ifndef NVBLOX_ROS__CONVERSIONS__IMPL__LAYER_CONVERSIONS_IMPL_HPP_
 #define NVBLOX_ROS__CONVERSIONS__IMPL__LAYER_CONVERSIONS_IMPL_HPP_
 
-namespace nvblox
-{
-namespace conversions
-{
+namespace nvblox {
+namespace conversions {
 
 // Convert an SDF to a pointcloud.
-template<typename VoxelType>
+template <typename VoxelType>
 inline void LayerConverter::pointcloudMsgFromLayer(
-  const VoxelBlockLayer<VoxelType> & layer,
-  sensor_msgs::PointCloud2 * pointcloud_msg)
-{
+    const VoxelBlockLayer<VoxelType>& layer,
+    sensor_msgs::PointCloud2* pointcloud_msg) {
   AxisAlignedBoundingBox aabb;
   aabb.setEmpty();
   pointcloudMsgFromLayerInAABB<VoxelType>(layer, aabb, pointcloud_msg);
