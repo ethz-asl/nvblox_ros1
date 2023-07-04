@@ -15,19 +15,18 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#include "nvblox_ros/transformer.hpp"
-
 #include <algorithm>
 #include <memory>
 #include <string>
 
+#include "nvblox_ros/transformer.hpp"
+
 namespace nvblox {
 
-Transformer::Transformer(ros::NodeHandle& nodeHandle)
-    : nodeHandle_(nodeHandle) {
+Transformer::Transformer(ros::NodeHandle& nh) : nh_(nh) {
   // Get params like "use_tf_transforms".
-  nodeHandle_.getParam("use_tf_transforms", use_tf_transforms_);
-  nodeHandle_.getParam("use_topic_transforms", use_topic_transforms_);
+  nh_.getParam("use_tf_transforms", use_tf_transforms_);
+  nh_.getParam("use_topic_transforms", use_topic_transforms_);
 
   // Init the transform listeners if we ARE using TF at all.
   if (use_tf_transforms_) {

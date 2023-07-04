@@ -18,19 +18,19 @@
 #ifndef NVBLOX_ROS__TRANSFORMER_HPP_
 #define NVBLOX_ROS__TRANSFORMER_HPP_
 
-#include <nvblox/core/types.h>
-#include <tf2_ros/buffer.h>
-#include <tf2_ros/transform_listener.h>
+#include <map>
+#include <memory>
+#include <string>
+#include <unordered_map>
 
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <ros/ros.h>
 #include <ros/time.h>
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
 
-#include <map>
-#include <memory>
-#include <string>
-#include <unordered_map>
+#include <nvblox/core/types.h>
 
 namespace nvblox {
 
@@ -41,14 +41,11 @@ class Transformer {
   explicit Transformer(ros::NodeHandle& nh);
 
   /// @brief Looks up the transform between the frame with the passed name and
-  /// the global frame
-  ///        (which is set by the setters below). We either use tf2 or a stored
-  ///        queue of
-  ///         transforms from messages.
+  /// the global frame (which is set by the setters below). We either use tf2
+  //// or a stored queue of transforms from messages.
   /// @param sensor_frame The frame name.
   /// @param timestamp Time of the transform. Passing ros::Time(0) will return
-  /// the latest
-  ///                  transform in the queue.
+  /// the latest transform in the queue.
   /// @param transform The output transform.
   /// @return true if the lookup was successful.
   bool lookupTransformToGlobalFrame(const std::string& sensor_frame,

@@ -18,15 +18,14 @@
 #ifndef NVBLOX_ROS__MAPPER_INITIALIZATION_HPP_
 #define NVBLOX_ROS__MAPPER_INITIALIZATION_HPP_
 
-#include <nvblox/mapper/mapper.h>
-
 #include <string>
 
 #include <ros/ros.h>
 
-#include "nvblox_ros/utils.hpp"
 
 namespace nvblox {
+
+class Mapper;
 
 bool initializeMapper(const std::string& mapper_name, Mapper* mapper_ptr,
                       ros::NodeHandle& nh);

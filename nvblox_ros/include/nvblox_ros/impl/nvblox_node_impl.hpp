@@ -18,11 +18,11 @@
 #ifndef NVBLOX_ROS__IMPL__NVBLOX_NODE_IMPL_HPP_
 #define NVBLOX_ROS__IMPL__NVBLOX_NODE_IMPL_HPP_
 
-#include <nvblox/utils/timing.h>
-
 #include <deque>
 #include <string>
 #include <vector>
+
+#include <nvblox/utils/timing.h>
 
 namespace nvblox {
 

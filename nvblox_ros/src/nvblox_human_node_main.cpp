@@ -16,11 +16,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <glog/logging.h>
-#include <nvblox/core/internal/warmup_cuda.h>
-
 #include <memory>
 
 #include <ros/ros.h>
+
+#include <nvblox/core/internal/warmup_cuda.h>
 
 #include "nvblox_ros/nvblox_human_node.hpp"
 

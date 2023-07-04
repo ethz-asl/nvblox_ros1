@@ -18,6 +18,7 @@
 #include <string>
 
 #include <nvblox/integrators/weighting_function.h>
+#include <nvblox/mapper/mapper.h>
 
 #include "nvblox_ros/mapper_initialization.hpp"
 

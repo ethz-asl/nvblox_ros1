@@ -26,8 +26,6 @@
 #include <string>
 #include <utility>
 
-#include <nvblox/nvblox.h>
-
 #include <message_filters/subscriber.h>
 #include <message_filters/sync_policies/approximate_time.h>
 #include <message_filters/sync_policies/exact_time.h>
@@ -43,6 +41,8 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <std_msgs/String.h>
 #include <visualization_msgs/Marker.h>
+
+#include <nvblox/nvblox.h>
 
 #include "nvblox_ros/conversions/esdf_slice_conversions.hpp"
 #include "nvblox_ros/conversions/image_conversions.hpp"

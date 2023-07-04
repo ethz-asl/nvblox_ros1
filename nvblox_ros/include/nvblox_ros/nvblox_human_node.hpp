@@ -18,18 +18,18 @@
 #ifndef NVBLOX_ROS__NVBLOX_HUMAN_NODE_HPP_
 #define NVBLOX_ROS__NVBLOX_HUMAN_NODE_HPP_
 
-#include <nvblox/mapper/multi_mapper.h>
-#include <nvblox/semantics/image_projector.h>
-#include <nvblox/sensors/pointcloud.h>
+#include <deque>
+#include <memory>
+#include <tuple>
 
 #include <message_filters/subscriber.h>
 #include <message_filters/sync_policies/approximate_time.h>
 #include <message_filters/synchronizer.h>
 #include <message_filters/time_synchronizer.h>
 
-#include <deque>
-#include <memory>
-#include <tuple>
+#include <nvblox/mapper/multi_mapper.h>
+#include <nvblox/semantics/image_projector.h>
+#include <nvblox/sensors/pointcloud.h>
 
 #include "nvblox_ros/nvblox_node.hpp"
 
