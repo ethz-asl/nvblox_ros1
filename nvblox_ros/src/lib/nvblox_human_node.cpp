@@ -164,12 +164,20 @@ void NvbloxHumanNode::advertiseTopics() {
 }
 
 void NvbloxHumanNode::setupTimers() {
-  human_occupancy_decay_timer_ = nh_private_.createWallTimer(
-      ros::WallDuration(1.0 / human_occupancy_decay_rate_hz_),
-      &NvbloxHumanNode::decayHumanOccupancy, this);
-  human_esdf_processing_timer_ = nh_private_.createWallTimer(
-      ros::WallDuration(1.0 / human_esdf_update_rate_hz_),
-      &NvbloxHumanNode::processHumanEsdf, this);
+  {
+    ros::TimerOptions timer_options(
+        ros::Duration(1.0 / human_occupancy_decay_rate_hz_),
+        boost::bind(&NvbloxHumanNode::decayHumanOccupancy, this, _1),
+        &processing_queue_);
+    human_occupancy_decay_timer_ = nh_private_.createTimer(timer_options);
+  }
+  {
+    ros::TimerOptions timer_options(
+        ros::Duration(1.0 / human_esdf_update_rate_hz_),
+        boost::bind(&NvbloxHumanNode::processHumanEsdf, this, _1),
+        &processing_queue_);
+    human_esdf_processing_timer_ = nh_private_.createTimer(timer_options);
+  }
 }
 
 void NvbloxHumanNode::depthPlusMaskImageCallback(
@@ -177,10 +185,6 @@ void NvbloxHumanNode::depthPlusMaskImageCallback(
     const sensor_msgs::CameraInfo::ConstPtr& camera_info_msg,
     const sensor_msgs::ImageConstPtr& mask_img_ptr,
     const sensor_msgs::CameraInfo::ConstPtr& mask_camera_info_msg) {
-  /*
-  printMessageArrivalStatistics(
-    *depth_img_ptr, "Depth plus Mask Statistics",
-    &depth_frame_statistics_);*/
   pushMessageOntoQueue<ImageSegmentationMaskMsgTuple>(
       std::make_tuple(depth_img_ptr, camera_info_msg, mask_img_ptr,
                       mask_camera_info_msg),
@@ -192,10 +196,6 @@ void NvbloxHumanNode::colorPlusMaskImageCallback(
     const sensor_msgs::CameraInfo::ConstPtr& camera_info_msg,
     const sensor_msgs::ImageConstPtr& mask_img_ptr,
     const sensor_msgs::CameraInfo::ConstPtr& mask_camera_info_msg) {
-  /*
-  printMessageArrivalStatistics(
-    *color_img_ptr, "Color plus Mask Statistics",
-    &rgb_frame_statistics_);*/
   pushMessageOntoQueue<ImageSegmentationMaskMsgTuple>(
       std::make_tuple(color_img_ptr, camera_info_msg, mask_img_ptr,
                       mask_camera_info_msg),
@@ -384,7 +384,8 @@ bool NvbloxHumanNode::processColorImage(
   return true;
 }
 
-void NvbloxHumanNode::processHumanEsdf(const ros::WallTimerEvent& /*event*/) {
+void NvbloxHumanNode::processHumanEsdf(const ros::TimerEvent& /*event*/) {
+  std::unique_lock<std::mutex> lock(map_mutex_);
   timing::Timer ros_total_timer("ros/total");
   timing::Timer ros_human_total_timer("ros/humans");
 
@@ -494,7 +495,8 @@ void NvbloxHumanNode::processHumanEsdf(const ros::WallTimerEvent& /*event*/) {
 }
 
 void NvbloxHumanNode::decayHumanOccupancy(
-    const ros::WallTimerEvent& /*event*/) {
+    const ros::TimerEvent& /*event*/) {
+  std::unique_lock<std::mutex> lock(map_mutex_);
   human_mapper_->decayOccupancy();
 }
 

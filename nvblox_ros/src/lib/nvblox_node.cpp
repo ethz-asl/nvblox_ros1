@@ -264,14 +264,13 @@ void NvbloxNode::setupTimers() {
         &processing_queue_);
     pointcloud_processing_timer_ = nh_private_.createTimer(timer_options);
   }
-
-  {
+  if (compute_esdf_) {
     ros::TimerOptions timer_options(
         ros::Duration(1.0 / esdf_update_rate_hz_),
         boost::bind(&NvbloxNode::processEsdf, this, _1), &processing_queue_);
     esdf_processing_timer_ = nh_private_.createTimer(timer_options);
   }
-  {
+  if (compute_mesh_) {
     ros::TimerOptions timer_options(
         ros::Duration(1.0 / mesh_update_rate_hz_),
         boost::bind(&NvbloxNode::processMesh, this, _1), &processing_queue_);
@@ -286,7 +285,6 @@ void NvbloxNode::setupTimers() {
         &processing_queue_);
     occupancy_publishing_timer_ = nh_private_.createTimer(timer_options);
   }
-
   if (map_clearing_radius_m_ > 0.0f) {
     ros::TimerOptions timer_options(
         ros::Duration(1.0 / clear_outside_radius_rate_hz_),
@@ -381,10 +379,6 @@ void NvbloxNode::processPointcloudQueue(const ros::TimerEvent& /*event*/) {
 }
 
 void NvbloxNode::processEsdf(const ros::TimerEvent& /*event*/) {
-  if (!compute_esdf_) {
-    return;
-  }
-
   std::unique_lock<std::mutex> lock(map_mutex_);
 
   const ros::Time timestamp = ros::Time::now();
@@ -467,9 +461,6 @@ void NvbloxNode::processEsdf(const ros::TimerEvent& /*event*/) {
 }
 
 void NvbloxNode::processMesh(const ros::TimerEvent& /*event*/) {
-  if (!compute_mesh_) {
-    return;
-  }
   std::unique_lock<std::mutex> lock(map_mutex_);
 
   const ros::Time timestamp = ros::Time::now();

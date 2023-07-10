@@ -76,10 +76,10 @@ class NvbloxHumanNode : public NvbloxNode {
       const ImageSegmentationMaskMsgTuple& color_mask_msg);
 
   // Publish human data on fixed frequency
-  void processHumanEsdf(const ros::WallTimerEvent& /*event*/);
+  void processHumanEsdf(const ros::TimerEvent& /*event*/);
 
   // Decay the human occupancy grid on fixed frequency
-  void decayHumanOccupancy(const ros::WallTimerEvent& /*event*/);
+  void decayHumanOccupancy(const ros::TimerEvent& /*event*/);
 
  protected:
   // Publish human data (if any subscribers) that helps
@@ -121,8 +121,8 @@ class NvbloxHumanNode : public NvbloxNode {
   ros::Publisher color_frame_overlay_publisher_;
 
   // Timers
-  ros::WallTimer human_occupancy_decay_timer_;
-  ros::WallTimer human_esdf_processing_timer_;
+  ros::Timer human_occupancy_decay_timer_;
+  ros::Timer human_esdf_processing_timer_;
 
   // Rates.
   float human_occupancy_decay_rate_hz_ = 10.0f;
