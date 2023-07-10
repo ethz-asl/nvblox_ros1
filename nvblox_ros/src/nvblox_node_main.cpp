@@ -39,9 +39,7 @@ int main(int argc, char* argv[]) {
 
   nvblox::NvbloxNode NvbloxNode(nh, nh_private);
 
-  // TODO(TT) Make sure to check the number of subscribers to the topics.
-  ros::MultiThreadedSpinner spinner(4);
-  spinner.spin();
+  ros::spin();
 
   ros::shutdown();
   return 0;

@@ -39,8 +39,7 @@ int main(int argc, char* argv[]) {
 
   nvblox::NvbloxNode NvbloxNode(nh, nh_private);
 
-  ros::MultiThreadedSpinner spinner(4);
-  spinner.spin();
+  ros::spin();
 
   ros::shutdown();
   return 0;

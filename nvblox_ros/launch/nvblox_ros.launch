@@ -13,18 +13,19 @@
 
   <node pkg="nvblox_ros" type="nvblox_node" name="$(arg node_name)" respawn="false" output="$(arg output)" >
     <rosparam file="$(arg default_param_file)"/>
+    <remap from="depth/image" to="/data/depth_image" />
+    <remap from="depth/camera_info" to="/data/depth_image/camera_info" />
 
-    <remap from="depth/image" to="/depth_camera_rear_upper/aligned_depth_to_color/image_raw" />
-    <remap from="depth/camera_info" to="/depth_camera_rear_upper/aligned_depth_to_color/camera_info" />
-
-    <remap from="color/image" to="/depth_camera_rear_upper/color/image_raw" />
-    <remap from="color/camera_info" to="/depth_camera_rear_upper/color/camera_info" />
+    <remap from="color/image" to="/data/color_image" />
+    <remap from="color/camera_info" to="/data/color_image/camera_info" />
 
     <remap from="pointcloud" to="/lidar/point_cloud" />
 
+    <param name="global_frame" value="odom" />
     <param name="use_sim_time" value="$(arg use_sim_time)"/>
     <param name="lidar_width" value="440" />
     <param name="use_depth" value="true" />
+    <param name="voxel_size" value="0.02" />
     
   </node>
 

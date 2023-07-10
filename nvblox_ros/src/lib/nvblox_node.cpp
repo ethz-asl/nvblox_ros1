@@ -34,7 +34,10 @@
 namespace nvblox {
 
 NvbloxNode::NvbloxNode(ros::NodeHandle& nh, ros::NodeHandle& nh_private)
-    : nh_(nh), nh_private_(nh_private), transformer_(nh) {
+    : nh_(nh),
+      nh_private_(nh_private),
+      processing_spinner_(1, &processing_queue_),
+      transformer_(nh) {
   // Get parameters first (stuff below depends on parameters)
   if (!getParameters()) {
     ROS_ERROR(
@@ -52,7 +55,7 @@ NvbloxNode::NvbloxNode(ros::NodeHandle& nh, ros::NodeHandle& nh_private)
   // - Map layers
   // - Integrators
   const std::string mapper_name = "mapper";
-  // declareMapperParameters(mapper_name, this);
+
   mapper_ = std::make_shared<Mapper>(voxel_size_, MemoryType::kDevice,
                                      static_projective_layer_type_);
 
@@ -74,6 +77,15 @@ NvbloxNode::NvbloxNode(ros::NodeHandle& nh, ros::NodeHandle& nh_private)
   last_depth_update_time_ = ros::Time(0.0);
   last_color_update_time_ = ros::Time(0.0);
   last_lidar_update_time_ = ros::Time(0.0);
+
+  // Start the processing spinner now that everything is set up.
+  processing_spinner_.start();
+}
+
+NvbloxNode::~NvbloxNode() {
+  // Need to explicitly delete these or there's a segfault on exit :(
+  timesync_depth_.reset();
+  timesync_color_.reset();
 }
 
 bool NvbloxNode::getParameters() {
@@ -151,7 +163,7 @@ bool NvbloxNode::getParameters() {
     ROS_ERROR("Failed to get general parameters from the parameter server.");
   }
 
-  return true;//success;
+  return true;  // success;
 }
 
 void NvbloxNode::subscribeToTopics() {
@@ -231,38 +243,57 @@ void NvbloxNode::advertiseServices() {
 void NvbloxNode::setupTimers() {
   ROS_INFO_STREAM("NvbloxNode::setupTimers()");
   if (use_depth_) {
-    depth_processing_timer_ =
-        nh_private_.createTimer(ros::Duration(1.0 / max_poll_rate_hz_),
-                                &NvbloxNode::processDepthQueue, this);
+    ros::TimerOptions timer_options(
+        ros::Duration(1.0 / max_poll_rate_hz_),
+        boost::bind(&NvbloxNode::processDepthQueue, this, _1),
+        &processing_queue_);
+
+    depth_processing_timer_ = nh_private_.createTimer(timer_options);
   }
   if (use_color_) {
-    color_processing_timer_ =
-        nh_private_.createTimer(ros::Duration(1.0 / max_poll_rate_hz_),
-                                &NvbloxNode::processColorQueue, this);
+    ros::TimerOptions timer_options(
+        ros::Duration(1.0 / max_poll_rate_hz_),
+        boost::bind(&NvbloxNode::processColorQueue, this, _1),
+        &processing_queue_);
+    color_processing_timer_ = nh_private_.createTimer(timer_options);
   }
   if (use_lidar_) {
-    pointcloud_processing_timer_ =
-        nh_private_.createTimer(ros::Duration(1.0 / max_poll_rate_hz_),
-                                &NvbloxNode::processPointcloudQueue, this);
+    ros::TimerOptions timer_options(
+        ros::Duration(1.0 / max_poll_rate_hz_),
+        boost::bind(&NvbloxNode::processPointcloudQueue, this, _1),
+        &processing_queue_);
+    pointcloud_processing_timer_ = nh_private_.createTimer(timer_options);
   }
 
-  esdf_processing_timer_ =
-      nh_private_.createTimer(ros::Duration(1.0 / esdf_update_rate_hz_),
-                              &NvbloxNode::processEsdf, this);
-  mesh_processing_timer_ =
-      nh_private_.createTimer(ros::Duration(1.0 / mesh_update_rate_hz_),
-                              &NvbloxNode::processMesh, this);
-
+  {
+    ros::TimerOptions timer_options(
+        ros::Duration(1.0 / esdf_update_rate_hz_),
+        boost::bind(&NvbloxNode::processEsdf, this, _1), &processing_queue_);
+    esdf_processing_timer_ = nh_private_.createTimer(timer_options);
+  }
+  {
+    ros::TimerOptions timer_options(
+        ros::Duration(1.0 / mesh_update_rate_hz_),
+        boost::bind(&NvbloxNode::processMesh, this, _1), &processing_queue_);
+    mesh_processing_timer_ =
+        nh_private_.createTimer(ros::Duration(1.0 / mesh_update_rate_hz_),
+                                &NvbloxNode::processMesh, this);
+  }
   if (static_projective_layer_type_ == ProjectiveLayerType::kOccupancy) {
-    occupancy_publishing_timer_ = nh_private_.createTimer(
+    ros::TimerOptions timer_options(
         ros::Duration(1.0 / occupancy_publication_rate_hz_),
-        &NvbloxNode::publishOccupancyPointcloud, this);
+        boost::bind(&NvbloxNode::publishOccupancyPointcloud, this, _1),
+        &processing_queue_);
+    occupancy_publishing_timer_ = nh_private_.createTimer(timer_options);
   }
 
   if (map_clearing_radius_m_ > 0.0f) {
-    clear_outside_radius_timer_ = nh_private_.createTimer(
+    ros::TimerOptions timer_options(
         ros::Duration(1.0 / clear_outside_radius_rate_hz_),
-        &NvbloxNode::clearMapOutsideOfRadiusOfLastKnownPose, this);
+        boost::bind(&NvbloxNode::clearMapOutsideOfRadiusOfLastKnownPose, this,
+                    _1),
+        &processing_queue_);
+    clear_outside_radius_timer_ = nh_private_.createTimer(timer_options);
   }
 }
 
@@ -279,10 +310,6 @@ void NvbloxNode::poseCallback(
 void NvbloxNode::depthImageCallback(
     const sensor_msgs::ImageConstPtr& depth_img_ptr,
     const sensor_msgs::CameraInfo::ConstPtr& camera_info_msg) {
-  /*
-  printMessageArrivalStatistics(
-    *depth_img_ptr, "Depth Statistics",
-    &depth_frame_statistics_);*/
   pushMessageOntoQueue({depth_img_ptr, camera_info_msg}, &depth_image_queue_,
                        &depth_queue_mutex_);
 }
@@ -290,20 +317,12 @@ void NvbloxNode::depthImageCallback(
 void NvbloxNode::colorImageCallback(
     const sensor_msgs::ImageConstPtr& color_image_ptr,
     const sensor_msgs::CameraInfo::ConstPtr& camera_info_msg) {
-  /*
-  printMessageArrivalStatistics(
-    *color_image_ptr, "Color Statistics",
-    &rgb_frame_statistics_);*/
   pushMessageOntoQueue({color_image_ptr, camera_info_msg}, &color_image_queue_,
                        &color_queue_mutex_);
 }
 
 void NvbloxNode::pointcloudCallback(
     const sensor_msgs::PointCloud2::ConstPtr pointcloud) {
-  /*
-  printMessageArrivalStatistics(
-    *pointcloud, "Pointcloud Statistics",
-    &pointcloud_frame_statistics_);*/
   pushMessageOntoQueue(pointcloud, &pointcloud_queue_,
                        &pointcloud_queue_mutex_);
 }
@@ -365,6 +384,9 @@ void NvbloxNode::processEsdf(const ros::TimerEvent& /*event*/) {
   if (!compute_esdf_) {
     return;
   }
+
+  std::unique_lock<std::mutex> lock(map_mutex_);
+
   const ros::Time timestamp = ros::Time::now();
   timing::Timer ros_total_timer("ros/total");
   timing::Timer ros_esdf_timer("ros/esdf");
@@ -448,6 +470,8 @@ void NvbloxNode::processMesh(const ros::TimerEvent& /*event*/) {
   if (!compute_mesh_) {
     return;
   }
+  std::unique_lock<std::mutex> lock(map_mutex_);
+
   const ros::Time timestamp = ros::Time::now();
   timing::Timer ros_total_timer("ros/total");
   timing::Timer ros_mesh_timer("ros/mesh");
@@ -562,6 +586,7 @@ bool NvbloxNode::processDepthImage(
   conversions_timer.Stop();
 
   // Integrate
+  std::unique_lock<std::mutex> lock(map_mutex_);
   timing::Timer integration_timer("ros/depth/integrate");
   mapper_->integrateDepth(depth_image_, T_L_C, camera);
   ROS_DEBUG("Depth Camera based depth integration is done.");
@@ -610,6 +635,7 @@ bool NvbloxNode::processColorImage(
   color_convert_timer.Stop();
 
   // Integrate.
+  std::unique_lock<std::mutex> lock(map_mutex_);
   timing::Timer color_integrate_timer("ros/color/integrate");
   mapper_->integrateColor(color_image_, T_L_C, camera);
   color_integrate_timer.Stop();
@@ -660,8 +686,9 @@ bool NvbloxNode::processLidarPointcloud(
                                                     &pointcloud_image_);
   lidar_conversion_timer.Stop();
 
-  timing::Timer lidar_integration_timer("ros/lidar/integration");
+  std::unique_lock<std::mutex> lock(map_mutex_);
 
+  timing::Timer lidar_integration_timer("ros/lidar/integration");
   mapper_->integrateLidarDepth(pointcloud_image_, T_L_C, lidar);
   lidar_integration_timer.Stop();
 
@@ -674,6 +701,7 @@ void NvbloxNode::publishOccupancyPointcloud(const ros::TimerEvent& /*event*/) {
 
   if (occupancy_publisher_.getNumSubscribers() > 0) {
     sensor_msgs::PointCloud2 pointcloud_msg;
+    std::unique_lock<std::mutex> lock(map_mutex_);
     layer_converter_.pointcloudMsgFromLayer(mapper_->occupancy_layer(),
                                             &pointcloud_msg);
     pointcloud_msg.header.frame_id = global_frame_;
@@ -689,6 +717,7 @@ void NvbloxNode::clearMapOutsideOfRadiusOfLastKnownPose(
     Transform T_L_MC;  // MC = map clearing frame
     if (transformer_.lookupTransformToGlobalFrame(map_clearing_frame_id_,
                                                   ros::Time(0), &T_L_MC)) {
+      std::unique_lock<std::mutex> lock(map_mutex_);
       const std::vector<Index3D> blocks_cleared = mapper_->clearOutsideRadius(
           T_L_MC.translation(), map_clearing_radius_m_);
       // We keep track of the deleted blocks for publishing later.
@@ -719,10 +748,12 @@ bool NvbloxNode::savePly(nvblox_msgs::FilePath::Request& request,
   // If we get a full path, then write to that path.
   bool success = false;
   if (ends_with(request.file_path, ".ply")) {
+    std::unique_lock<std::mutex> lock(map_mutex_);
     success =
         io::outputMeshLayerToPly(mapper_->mesh_layer(), request.file_path);
   } else {
     // If we get a partial path then output a bunch of stuff to a folder.
+    std::unique_lock<std::mutex> lock(map_mutex_);
     io::outputVoxelLayerToPly(mapper_->tsdf_layer(),
                               request.file_path + "/ros2_tsdf.ply");
     io::outputVoxelLayerToPly(mapper_->esdf_layer(),
@@ -742,8 +773,7 @@ bool NvbloxNode::savePly(nvblox_msgs::FilePath::Request& request,
 
 bool NvbloxNode::saveMap(nvblox_msgs::FilePath::Request& request,
                          nvblox_msgs::FilePath::Response& response) {
-  std::unique_lock<std::mutex> lock1(depth_queue_mutex_);
-  std::unique_lock<std::mutex> lock2(color_queue_mutex_);
+  std::unique_lock<std::mutex> lock(map_mutex_);
 
   std::string filename = request.file_path;
   if (!ends_with(request.file_path, ".nvblx")) {
@@ -761,8 +791,7 @@ bool NvbloxNode::saveMap(nvblox_msgs::FilePath::Request& request,
 
 bool NvbloxNode::loadMap(nvblox_msgs::FilePath::Request& request,
                          nvblox_msgs::FilePath::Response& response) {
-  std::unique_lock<std::mutex> lock1(depth_queue_mutex_);
-  std::unique_lock<std::mutex> lock2(color_queue_mutex_);
+  std::unique_lock<std::mutex> lock(map_mutex_);
 
   std::string filename = request.file_path;
   if (!ends_with(request.file_path, ".nvblx")) {

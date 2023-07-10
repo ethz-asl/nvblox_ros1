@@ -57,7 +57,7 @@ namespace nvblox {
 class NvbloxNode {
  public:
   explicit NvbloxNode(ros::NodeHandle& nh, ros::NodeHandle& nh_private);
-  virtual ~NvbloxNode() = default;
+  virtual ~NvbloxNode();
 
   // Setup. These are called by the constructor.
   bool getParameters();
@@ -154,10 +154,19 @@ class NvbloxNode {
 
   template <typename MessageType>
   void limitQueueSizeByDeletingOldestMessages(
-      const int max_num_messages, const std::string& queue_name,
+      const size_t max_num_messages, const std::string& queue_name,
       std::deque<MessageType>* queue_ptr, std::mutex* queue_mutex_ptr);
 
-  // ROS publishers and subscribers
+  // ROS publishers and subscribers and misc
+  // Node Handles
+  ros::NodeHandle nh_;
+  ros::NodeHandle nh_private_;
+
+  // Callback queue for processing. All subs run on default thread but heavy
+  // lifting is on the processing thread instead. This keeps pub/sub pretty
+  // clean (main thread) and only the timers have to be moved to this.
+  ros::CallbackQueue processing_queue_;
+  ros::AsyncSpinner processing_spinner_;
 
   // Transformer to handle... everything, let's be honest.
   Transformer transformer_;
@@ -176,10 +185,6 @@ class NvbloxNode {
   std::shared_ptr<message_filters::Synchronizer<time_policy_t>> timesync_color_;
   message_filters::Subscriber<sensor_msgs::Image> color_sub_;
   message_filters::Subscriber<sensor_msgs::CameraInfo> color_camera_info_sub_;
-
-  // Ros handle
-  ros::NodeHandle nh_;
-  ros::NodeHandle nh_private_;
 
   // Pointcloud sub.
   ros::Subscriber pointcloud_sub_;
@@ -314,6 +319,8 @@ class NvbloxNode {
   std::mutex depth_queue_mutex_;
   std::mutex color_queue_mutex_;
   std::mutex pointcloud_queue_mutex_;
+  // Safety check for only touching the map with one thread at a time.
+  std::mutex map_mutex_;
 
   // Keeps track of the mesh blocks deleted such that we can publish them for
   // deletion in the rviz plugin
