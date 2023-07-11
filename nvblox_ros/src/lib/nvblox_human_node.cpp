@@ -74,7 +74,7 @@ void NvbloxHumanNode::initializeMultiMapper() {
   // calling initializeMapper() (again) (it its also called in the base
   // constructor, on the now-deleted Mapper).
   mapper_ = multi_mapper_.get()->unmasked_mapper();
-  initializeMapper("mapper", mapper_.get(), nh_);
+  initializeMapper(mapper_.get(), nh_);
   // Set to an invalid depth to ignore human pixels in the unmasked mapper
   // during integration.
   multi_mapper_->setDepthUnmaskedImageInvalidPixel(-1.f);
@@ -84,7 +84,7 @@ void NvbloxHumanNode::initializeMultiMapper() {
   human_mapper_ = multi_mapper_.get()->masked_mapper();
   // Human mapper params have not been declared yet
   // declareMapperParameters(mapper_name, this);
-  initializeMapper(mapper_name, human_mapper_.get(), nh_);
+  initializeMapper(human_mapper_.get(), nh_);
   // Set to a distance bigger than the max. integration distance to not include
   // non human pixels on the human mapper, but clear along the projection.
   // TODO(remosteiner): Think of a better way to do this.

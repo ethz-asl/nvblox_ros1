@@ -19,7 +19,7 @@ cmake_minimum_required(VERSION 3.20)
 include(ExternalProject)
 
 project(nvblox_ros LANGUAGES CXX CUDA)
-add_compile_options(-Wall -Wextra -O3)
+add_compile_options(-Wall -Wextra -Wpedantic -O3)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -128,7 +128,7 @@ target_include_directories(${PROJECT_NAME}_lib PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
   ${catkin_INCLUDE_DIRS})
-target_include_directories(${PROJECT_NAME}_lib BEFORE PRIVATE
+target_include_directories(${PROJECT_NAME}_lib SYSTEM BEFORE PRIVATE
   $<TARGET_PROPERTY:nvblox::nvblox_eigen,INTERFACE_INCLUDE_DIRECTORIES>)
 
 

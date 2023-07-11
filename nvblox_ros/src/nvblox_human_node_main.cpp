@@ -37,7 +37,7 @@ int main(int argc, char* argv[]) {
   // CUDA call.
   nvblox::warmupCuda();
 
-  nvblox::NvbloxNode NvbloxNode(nh, nh_private);
+  nvblox::NvbloxHumanNode node(nh, nh_private);
 
   ros::spin();
 

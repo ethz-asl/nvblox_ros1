@@ -60,7 +60,7 @@ class NvbloxNode {
   virtual ~NvbloxNode();
 
   // Setup. These are called by the constructor.
-  bool getParameters();
+  void getParameters();
   void subscribeToTopics();
   void advertiseTopics();
   void advertiseServices();
@@ -216,28 +216,18 @@ class NvbloxNode {
   ros::Timer clear_outside_radius_timer_;
 
   // ROS & nvblox settings
-
-  // Topic Names
-  std::string depth_image_topic_name_ = "null";
-  std::string depth_image_camera_info_topic_name_ = "null";
-
-  std::string color_image_topic_name_ = "null";
-  std::string color_image_camera_info_topic_name_ = "null";
-
-  std::string pointcloud_topic_name_ = "null";
-
   float voxel_size_ = 0.05f;
-  bool esdf_2d_ = true;
-  bool esdf_distance_slice_ = true;
+  bool esdf_2d_ = false;
+  bool esdf_distance_slice_ = false;
   float esdf_slice_height_ = 1.0f;
   ProjectiveLayerType static_projective_layer_type_ =
       ProjectiveLayerType::kTsdf;
-  bool is_realsense_data_ = true;
+  bool is_realsense_data_ = false;
 
   // Toggle parameters
-  bool use_depth_ = false;
-  bool use_lidar_ = true;
-  bool use_color_ = false;
+  bool use_depth_ = true;
+  bool use_lidar_ = false;
+  bool use_color_ = true;
   bool compute_esdf_ = true;
   bool compute_mesh_ = true;
 
@@ -254,13 +244,13 @@ class NvbloxNode {
   float esdf_2d_max_height_ = 1.0f;
 
   // Slice visualization params
-  std::string slice_visualization_attachment_frame_id_ = "lidar";
+  std::string slice_visualization_attachment_frame_id_ = "base_link";
   float slice_visualization_side_length_ = 10.0f;
 
   // ROS settings & update throttles
   std::string global_frame_ = "map";
   /// Pose frame to use if using transform topics.
-  std::string pose_frame_ = "lidar";
+  std::string pose_frame_ = "base_link";
   float max_depth_update_hz_ = 10.0f;
   float max_color_update_hz_ = 5.0f;
   float max_lidar_update_hz_ = 10.0f;

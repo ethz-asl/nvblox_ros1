@@ -22,13 +22,11 @@
 
 #include <ros/ros.h>
 
-
 namespace nvblox {
 
 class Mapper;
 
-bool initializeMapper(const std::string& mapper_name, Mapper* mapper_ptr,
-                      ros::NodeHandle& nh);
+void initializeMapper(Mapper* mapper_ptr, ros::NodeHandle& nh);
 
 }  // namespace nvblox
 

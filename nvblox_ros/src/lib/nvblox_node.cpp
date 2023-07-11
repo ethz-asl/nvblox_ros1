@@ -39,11 +39,7 @@ NvbloxNode::NvbloxNode(ros::NodeHandle& nh, ros::NodeHandle& nh_private)
       processing_spinner_(1, &processing_queue_),
       transformer_(nh) {
   // Get parameters first (stuff below depends on parameters)
-  if (!getParameters()) {
-    ROS_ERROR(
-        "General Parameter reading is unsuccessful. Shutting down the node.");
-    ros::requestShutdown();
-  }
+  getParameters();
 
   // Set the transformer settings.
   transformer_.set_global_frame(global_frame_);
@@ -59,10 +55,7 @@ NvbloxNode::NvbloxNode(ros::NodeHandle& nh, ros::NodeHandle& nh_private)
   mapper_ = std::make_shared<Mapper>(voxel_size_, MemoryType::kDevice,
                                      static_projective_layer_type_);
 
-  if (!initializeMapper(mapper_name, mapper_.get(), nh_private_)) {
-    ROS_ERROR("Mapper initialization is unsuccessful. Shutting down the node.");
-    ros::requestShutdown();
-  }
+  initializeMapper(mapper_.get(), nh_private_);
 
   // Setup interactions with ROS
   subscribeToTopics();
@@ -88,11 +81,12 @@ NvbloxNode::~NvbloxNode() {
   timesync_color_.reset();
 }
 
-bool NvbloxNode::getParameters() {
-  ROS_INFO_STREAM("NvbloxNode::getParameters()");
-  bool success = true;
+void NvbloxNode::getParameters() {
+  ROS_INFO_STREAM("Getting parameters from parameter server.");
+
+  // Get the type of layer to use.
   bool is_occupancy = false;
-  success &= nh_.getParam("use_static_occupancy_layer", is_occupancy);
+  nh_private_.param("use_static_occupancy_layer", is_occupancy, is_occupancy);
 
   if (is_occupancy) {
     static_projective_layer_type_ = ProjectiveLayerType::kOccupancy;
@@ -107,68 +101,63 @@ bool NvbloxNode::getParameters() {
   }
 
   // Declare & initialize the parameters.
-  success &=
-      nh_private_.getParam("depth_image_topic_name", depth_image_topic_name_);
-  success &= nh_private_.getParam("depth_image_camera_info_topic_name",
-                                  depth_image_camera_info_topic_name_);
-  success &=
-      nh_private_.getParam("color_image_topic_name", color_image_topic_name_);
-  success &= nh_private_.getParam("color_image_camera_info_topic_name",
-                                  color_image_camera_info_topic_name_);
-  success &=
-      nh_private_.getParam("pointcloud_topic_name", pointcloud_topic_name_);
-
-  success &= nh_private_.getParam("voxel_size", voxel_size_);
-  success &= nh_private_.getParam("global_frame", global_frame_);
-  success &= nh_private_.getParam("pose_frame", pose_frame_);
-  success &= nh_private_.getParam("is_realsense_data", is_realsense_data_);
-  success &= nh_private_.getParam("compute_mesh", compute_mesh_);
-  success &= nh_private_.getParam("compute_esdf", compute_esdf_);
-  success &= nh_private_.getParam("esdf_2d", esdf_2d_);
-  success &= nh_private_.getParam("esdf_distance_slice", esdf_distance_slice_);
-  success &= nh_private_.getParam("use_color", use_color_);
-  success &= nh_private_.getParam("use_depth", use_depth_);
-  success &= nh_private_.getParam("use_lidar", use_lidar_);
-  success &= nh_private_.getParam("esdf_slice_height", esdf_slice_height_);
-  success &= nh_private_.getParam("esdf_2d_min_height", esdf_2d_min_height_);
-  success &= nh_private_.getParam("esdf_2d_max_height", esdf_2d_max_height_);
-  success &= nh_private_.getParam("lidar_width", lidar_width_);
-  success &= nh_private_.getParam("lidar_height", lidar_width_);
-  success &=
-      nh_private_.getParam("lidar_vertical_fov_deg", lidar_vertical_fov_deg_);
-  success &= nh_private_.getParam("slice_visualization_attachment_frame_id",
-                                  slice_visualization_attachment_frame_id_);
-  success &= nh_private_.getParam("slice_visualization_side_length",
-                                  slice_visualization_side_length_);
-  success &= nh_private_.getParam("max_depth_update_hz", max_depth_update_hz_);
-  success &= nh_private_.getParam("max_color_update_hz", max_color_update_hz_);
-  success &= nh_private_.getParam("max_lidar_update_hz", max_lidar_update_hz_);
-  success &= nh_private_.getParam("mesh_update_rate_hz", mesh_update_rate_hz_);
-  success &= nh_private_.getParam("esdf_update_rate_hz", esdf_update_rate_hz_);
-  success &= nh_private_.getParam("occupancy_publication_rate_hz",
-                                  occupancy_publication_rate_hz_);
-  success &= nh_private_.getParam("max_poll_rate_hz", max_poll_rate_hz_);
-  success &= nh_private_.getParam("maximum_sensor_message_queue_length",
-                                  maximum_sensor_message_queue_length_);
-  success &=
-      nh_private_.getParam("map_clearing_radius_m", map_clearing_radius_m_);
-  success &=
-      nh_private_.getParam("map_clearing_frame_id", map_clearing_frame_id_);
-  success &= nh_private_.getParam("clear_outside_radius_rate_hz",
-                                  clear_outside_radius_rate_hz_);
-
-  if (success) {
-    ROS_INFO("Successfully read general parameters from the parameter server.");
-  } else {
-    ROS_ERROR("Failed to get general parameters from the parameter server.");
-  }
-
-  return true;  // success;
+  nh_private_.param("voxel_size", voxel_size_, voxel_size_);
+  nh_private_.param("global_frame", global_frame_, global_frame_);
+  nh_private_.param("pose_frame", pose_frame_, pose_frame_);
+  nh_private_.param("is_realsense_data", is_realsense_data_,
+                    is_realsense_data_);
+  nh_private_.param("compute_mesh", compute_mesh_, compute_mesh_);
+  nh_private_.param("compute_esdf", compute_esdf_, compute_esdf_);
+  nh_private_.param("esdf_2d", esdf_2d_, esdf_2d_);
+  nh_private_.param("esdf_distance_slice", esdf_distance_slice_,
+                    esdf_distance_slice_);
+  nh_private_.param("use_color", use_color_, use_color_);
+  nh_private_.param("use_depth", use_depth_, use_depth_);
+  nh_private_.param("use_lidar", use_lidar_, use_lidar_);
+  nh_private_.param("esdf_slice_height", esdf_slice_height_,
+                    esdf_slice_height_);
+  nh_private_.param("esdf_2d_min_height", esdf_2d_min_height_,
+                    esdf_2d_min_height_);
+  nh_private_.param("esdf_2d_max_height", esdf_2d_max_height_,
+                    esdf_2d_max_height_);
+  nh_private_.param("lidar_width", lidar_width_, lidar_width_);
+  nh_private_.param("lidar_height", lidar_width_, lidar_width_);
+  nh_private_.param("lidar_vertical_fov_deg", lidar_vertical_fov_deg_,
+                    lidar_vertical_fov_deg_);
+  nh_private_.param("slice_visualization_attachment_frame_id",
+                    slice_visualization_attachment_frame_id_,
+                    slice_visualization_attachment_frame_id_);
+  nh_private_.param("slice_visualization_side_length",
+                    slice_visualization_side_length_,
+                    slice_visualization_side_length_);
+  nh_private_.param("max_depth_update_hz", max_depth_update_hz_,
+                    max_depth_update_hz_);
+  nh_private_.param("max_color_update_hz", max_color_update_hz_,
+                    max_color_update_hz_);
+  nh_private_.param("max_lidar_update_hz", max_lidar_update_hz_,
+                    max_lidar_update_hz_);
+  nh_private_.param("mesh_update_rate_hz", mesh_update_rate_hz_,
+                    mesh_update_rate_hz_);
+  nh_private_.param("esdf_update_rate_hz", esdf_update_rate_hz_,
+                    esdf_update_rate_hz_);
+  nh_private_.param("occupancy_publication_rate_hz",
+                    occupancy_publication_rate_hz_,
+                    occupancy_publication_rate_hz_);
+  nh_private_.param("max_poll_rate_hz", max_poll_rate_hz_, max_poll_rate_hz_);
+  nh_private_.param("maximum_sensor_message_queue_length",
+                    maximum_sensor_message_queue_length_,
+                    maximum_sensor_message_queue_length_);
+  nh_private_.param("map_clearing_radius_m", map_clearing_radius_m_,
+                    map_clearing_radius_m_);
+  nh_private_.param("map_clearing_frame_id", map_clearing_frame_id_,
+                    map_clearing_frame_id_);
+  nh_private_.param("clear_outside_radius_rate_hz",
+                    clear_outside_radius_rate_hz_,
+                    clear_outside_radius_rate_hz_);
 }
 
 void NvbloxNode::subscribeToTopics() {
   ROS_INFO_STREAM("Subscribing to topics.");
-  constexpr int kQueueSize = 10;
 
   if (!use_depth_ && !use_lidar_) {
     ROS_WARN(
@@ -178,11 +167,14 @@ void NvbloxNode::subscribeToTopics() {
 
   if (use_depth_) {
     // Subscribe to synchronized depth + cam_info topics
-    depth_sub_.subscribe(nh_, "depth/image", kQueueSize);
-    depth_camera_info_sub_.subscribe(nh_, "depth/camera_info", kQueueSize);
+    depth_sub_.subscribe(nh_, "depth/image",
+                         maximum_sensor_message_queue_length_);
+    depth_camera_info_sub_.subscribe(nh_, "depth/camera_info",
+                                     maximum_sensor_message_queue_length_);
 
     timesync_depth_.reset(new message_filters::Synchronizer<time_policy_t>(
-        time_policy_t(kQueueSize), depth_sub_, depth_camera_info_sub_));
+        time_policy_t(maximum_sensor_message_queue_length_), depth_sub_,
+        depth_camera_info_sub_));
     timesync_depth_->registerCallback(std::bind(&NvbloxNode::depthImageCallback,
                                                 this, std::placeholders::_1,
                                                 std::placeholders::_2));
@@ -190,11 +182,14 @@ void NvbloxNode::subscribeToTopics() {
 
   if (use_color_) {
     // Subscribe to synchronized color + cam_info topics
-    color_sub_.subscribe(nh_, "color/image", kQueueSize);
-    color_camera_info_sub_.subscribe(nh_, "color/camera_info", kQueueSize);
+    color_sub_.subscribe(nh_, "color/image",
+                         maximum_sensor_message_queue_length_);
+    color_camera_info_sub_.subscribe(nh_, "color/camera_info",
+                                     maximum_sensor_message_queue_length_);
 
     timesync_color_.reset(new message_filters::Synchronizer<time_policy_t>(
-        time_policy_t(kQueueSize), color_sub_, color_camera_info_sub_));
+        time_policy_t(maximum_sensor_message_queue_length_), color_sub_,
+        color_camera_info_sub_));
     timesync_color_->registerCallback(std::bind(&NvbloxNode::colorImageCallback,
                                                 this, std::placeholders::_1,
                                                 std::placeholders::_2));
@@ -213,8 +208,6 @@ void NvbloxNode::subscribeToTopics() {
 }
 
 void NvbloxNode::advertiseTopics() {
-  ROS_INFO_STREAM("NvbloxNode::advertiseTopics()");
-
   mesh_publisher_ = nh_private_.advertise<nvblox_msgs::Mesh>("mesh", 1, false);
   esdf_pointcloud_publisher_ = nh_private_.advertise<sensor_msgs::PointCloud2>(
       "esdf_pointcloud", 1, false);
@@ -230,8 +223,6 @@ void NvbloxNode::advertiseTopics() {
 }
 
 void NvbloxNode::advertiseServices() {
-  ROS_INFO_STREAM("NvbloxNode::advertiseServices()");
-
   save_ply_service_ =
       nh_private_.advertiseService("save_ply", &NvbloxNode::savePly, this);
   save_map_service_ =
