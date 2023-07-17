@@ -24,66 +24,57 @@
 
 #include "nvblox_ros/conversions/pointcloud_conversions.hpp"
 
-namespace nvblox
-{
-namespace conversions
-{
+namespace nvblox {
+namespace conversions {
 
 constexpr float kDistanceMapSliceUnknownValue = 1000.0f;
 
 // Helper class to store all the buffers.
-class EsdfSliceConverter
-{
-public:
+class EsdfSliceConverter {
+ public:
   EsdfSliceConverter();
 
   // Create a distance map slice from an ESDF layer. Only works with z-axis
   // slices for now.
-  void distanceMapSliceFromLayer(
-    const EsdfLayer & layer, float z_slice_level,
-    nvblox_msgs::DistanceMapSlice * map_slice);
+  void distanceMapSliceFromLayer(const EsdfLayer& layer, float z_slice_level,
+                                 nvblox_msgs::DistanceMapSlice* map_slice);
 
-  void distanceMapSliceFromLayers(
-    const EsdfLayer & layer_1,
-    const EsdfLayer & layer_2, float z_slice_level,
-    Image<float> * map_slice_image_ptr,
-    AxisAlignedBoundingBox * aabb_ptr);
+  void distanceMapSliceFromLayers(const EsdfLayer& layer_1,
+                                  const EsdfLayer& layer_2, float z_slice_level,
+                                  Image<float>* map_slice_image_ptr,
+                                  AxisAlignedBoundingBox* aabb_ptr);
 
-  void distanceMapSliceImageFromLayer(
-    const EsdfLayer & layer,
-    float z_slice_level,
-    const AxisAlignedBoundingBox & aabb,
-    Image<float> * map_slice_image_ptr);
+  void distanceMapSliceImageFromLayer(const EsdfLayer& layer,
+                                      float z_slice_level,
+                                      const AxisAlignedBoundingBox& aabb,
+                                      Image<float>* map_slice_image_ptr);
 
-  void distanceMapSliceImageFromLayer(
-    const EsdfLayer & layer,
-    float z_slice_level,
-    Image<float> * map_slice_image_ptr,
-    AxisAlignedBoundingBox * aabb_ptr);
+  void distanceMapSliceImageFromLayer(const EsdfLayer& layer,
+                                      float z_slice_level,
+                                      Image<float>* map_slice_image_ptr,
+                                      AxisAlignedBoundingBox* aabb_ptr);
 
-  void distanceMapSliceImageToMsg(
-    const Image<float> & map_slice_image, const AxisAlignedBoundingBox & aabb,
-    float z_slice_level, float voxel_size,
-    nvblox_msgs::DistanceMapSlice * map_slice);
+  void distanceMapSliceImageToMsg(const Image<float>& map_slice_image,
+                                  const AxisAlignedBoundingBox& aabb,
+                                  float z_slice_level, float voxel_size,
+                                  nvblox_msgs::DistanceMapSlice* map_slice);
 
-  void sliceImageToPointcloud(
-    const Image<float> & map_slice_image,
-    const AxisAlignedBoundingBox & aabb,
-    float z_slice_level, float voxel_size,
-    sensor_msgs::PointCloud2 * pointcloud_msg);
+  void sliceImageToPointcloud(const Image<float>& map_slice_image,
+                              const AxisAlignedBoundingBox& aabb,
+                              float z_slice_level, float voxel_size,
+                              sensor_msgs::PointCloud2* pointcloud_msg);
 
   AxisAlignedBoundingBox getBoundingBoxOfLayerAtHeight(
-    const EsdfLayer & layer, const float z_slice_level);
+      const EsdfLayer& layer, const float z_slice_level);
 
-private:
+ private:
   // Output methods to access GPU layer *slice* in a more efficient way.
   // The output is a float image whose size *should* match the AABB with
   // a given resolution (in meters). Otherwise behavior is undefined.
-  void populateSliceFromLayer(
-    const EsdfLayer & layer,
-    const AxisAlignedBoundingBox & aabb,
-    float z_slice_height, float resolution,
-    float unobserved_value, Image<float> * image);
+  void populateSliceFromLayer(const EsdfLayer& layer,
+                              const AxisAlignedBoundingBox& aabb,
+                              float z_slice_height, float resolution,
+                              float unobserved_value, Image<float>* image);
 
   cudaStream_t cuda_stream_ = nullptr;
 

@@ -17,18 +17,14 @@
 
 #include "nvblox_ros/conversions/mesh_conversions.hpp"
 
-#include <geometry_msgs/Point32.h>
 #include <geometry_msgs/Point.h>
+#include <geometry_msgs/Point32.h>
 #include <std_msgs/ColorRGBA.h>
 
-namespace nvblox
-{
-namespace conversions
-{
+namespace nvblox {
+namespace conversions {
 
-geometry_msgs::Point32 point32MessageFromVector(
-  const Eigen::Vector3f & vector)
-{
+geometry_msgs::Point32 point32MessageFromVector(const Eigen::Vector3f& vector) {
   geometry_msgs::Point32 point;
   point.x = vector.x();
   point.y = vector.y();
@@ -36,9 +32,7 @@ geometry_msgs::Point32 point32MessageFromVector(
   return point;
 }
 
-geometry_msgs::Point pointMessageFromVector(
-  const Eigen::Vector3f & vector)
-{
+geometry_msgs::Point pointMessageFromVector(const Eigen::Vector3f& vector) {
   geometry_msgs::Point point;
   point.x = vector.x();
   point.y = vector.y();
@@ -46,8 +40,7 @@ geometry_msgs::Point pointMessageFromVector(
   return point;
 }
 
-std_msgs::ColorRGBA colorMessageFromColor(const Color & color)
-{
+std_msgs::ColorRGBA colorMessageFromColor(const Color& color) {
   std_msgs::ColorRGBA color_msg;
   color_msg.r = static_cast<float>(color.r) / 255.0f;
   color_msg.g = static_cast<float>(color.g) / 255.0f;
@@ -56,8 +49,7 @@ std_msgs::ColorRGBA colorMessageFromColor(const Color & color)
   return color_msg;
 }
 
-nvblox_msgs::Index3D index3DMessageFromIndex3D(const Index3D & index)
-{
+nvblox_msgs::Index3D index3DMessageFromIndex3D(const Index3D& index) {
   nvblox_msgs::Index3D index_msg;
   index_msg.x = index.x();
   index_msg.y = index.y();
@@ -65,17 +57,14 @@ nvblox_msgs::Index3D index3DMessageFromIndex3D(const Index3D & index)
   return index_msg;
 }
 
-void meshMessageFromMeshLayer(
-  const BlockLayer<MeshBlock> & mesh_layer,
-  nvblox_msgs::Mesh * mesh_msg)
-{
+void meshMessageFromMeshLayer(const BlockLayer<MeshBlock>& mesh_layer,
+                              nvblox_msgs::Mesh* mesh_msg) {
   std::vector<Index3D> block_indices = mesh_layer.getAllBlockIndices();
   meshMessageFromMeshBlocks(mesh_layer, block_indices, mesh_msg);
 }
 
-void meshBlockMessageFromMeshBlock(
-  const MeshBlock & mesh_block, nvblox_msgs::MeshBlock * mesh_block_msg)
-{
+void meshBlockMessageFromMeshBlock(const MeshBlock& mesh_block,
+                                   nvblox_msgs::MeshBlock* mesh_block_msg) {
   CHECK_NOTNULL(mesh_block_msg);
 
   size_t num_vertices = mesh_block.vertices.size();
@@ -105,10 +94,9 @@ void meshBlockMessageFromMeshBlock(
 }
 
 void meshMessageFromMeshBlocks(
-  const BlockLayer<MeshBlock> & mesh_layer,
-  const std::vector<Index3D> & block_indices, nvblox_msgs::Mesh * mesh_msg,
-  const std::vector<Index3D> & block_indices_to_delete)
-{
+    const BlockLayer<MeshBlock>& mesh_layer,
+    const std::vector<Index3D>& block_indices, nvblox_msgs::Mesh* mesh_msg,
+    const std::vector<Index3D>& block_indices_to_delete) {
   // Go through all the blocks, converting each individual one.
   mesh_msg->block_size = mesh_layer.block_size();
   mesh_msg->block_indices.resize(block_indices.size());
@@ -119,7 +107,7 @@ void meshMessageFromMeshBlocks(
     mesh_msg->block_indices[i] = index3DMessageFromIndex3D(block_indices[i]);
 
     MeshBlock::ConstPtr mesh_block =
-      mesh_layer.getBlockAtIndex(block_indices[i]);
+        mesh_layer.getBlockAtIndex(block_indices[i]);
     if (mesh_block == nullptr) {
       continue;
     }
@@ -128,17 +116,15 @@ void meshMessageFromMeshBlocks(
     meshBlockMessageFromMeshBlock(*mesh_block, &mesh_msg->blocks[i]);
   }
 
-  for (const Index3D & block_index : block_indices_to_delete) {
+  for (const Index3D& block_index : block_indices_to_delete) {
     mesh_msg->block_indices.push_back(index3DMessageFromIndex3D(block_index));
     mesh_msg->blocks.push_back(nvblox_msgs::MeshBlock());
   }
 }
 
-void markerMessageFromMeshBlock(
-  const MeshBlock::ConstPtr & mesh_block,
-  const std::string & frame_id,
-  visualization_msgs::Marker * marker)
-{
+void markerMessageFromMeshBlock(const MeshBlock::ConstPtr& mesh_block,
+                                const std::string& frame_id,
+                                visualization_msgs::Marker* marker) {
   marker->header.frame_id = frame_id;
   marker->ns = "mesh";
   marker->scale.x = 1;
@@ -171,10 +157,9 @@ void markerMessageFromMeshBlock(
 }
 
 // Convert a mesh to a marker array.
-void markerMessageFromMeshLayer(
-  const BlockLayer<MeshBlock> & mesh_layer, const std::string & frame_id,
-  visualization_msgs::MarkerArray * marker_msg)
-{
+void markerMessageFromMeshLayer(const BlockLayer<MeshBlock>& mesh_layer,
+                                const std::string& frame_id,
+                                visualization_msgs::MarkerArray* marker_msg) {
   // Get all the mesh blocks.
   std::vector<Index3D> indices = mesh_layer.getAllBlockIndices();
 
@@ -186,9 +171,8 @@ void markerMessageFromMeshLayer(
     if (mesh_block->size() == 0) {
       continue;
     }
-    markerMessageFromMeshBlock(
-      mesh_block, frame_id,
-      &marker_msg->markers[output_index]);
+    markerMessageFromMeshBlock(mesh_block, frame_id,
+                               &marker_msg->markers[output_index]);
     marker_msg->markers[output_index].id = output_index;
     std::stringstream ns_stream;
     ns_stream << indices[i].x() << "_" << indices[i].y() << "_"

@@ -24,15 +24,13 @@
 #include <string>
 #include <vector>
 
-namespace nvblox
-{
+namespace nvblox {
 
-template<typename QueuedType>
+template <typename QueuedType>
 void NvbloxNode::processMessageQueue(
-  std::deque<QueuedType> * queue_ptr, std::mutex * queue_mutex_ptr,
-  MessageReadyCallback<QueuedType> message_ready_check,
-  ProcessMessageCallback<QueuedType> callback)
-{
+    std::deque<QueuedType>* queue_ptr, std::mutex* queue_mutex_ptr,
+    MessageReadyCallback<QueuedType> message_ready_check,
+    ProcessMessageCallback<QueuedType> callback) {
   timing::Timer ros_total_timer("ros/total");
 
   // Copy over all the pointers we actually want to process here.
@@ -74,8 +72,11 @@ void NvbloxNode::processMessageQueue(
     const int num_messages_deleted = it_last_valid - queue_ptr->begin();
     const int num_messages_processed = items_to_process.size();
     if (num_messages_deleted > num_messages_processed) {
-      const int num_messages_lost = num_messages_deleted - num_messages_processed;
-      ROS_WARN_STREAM("Deleted " << num_messages_lost << "because we could not interpolate transforms.");
+      const int num_messages_lost =
+          num_messages_deleted - num_messages_processed;
+      ROS_WARN_STREAM("Deleted "
+                      << num_messages_lost
+                      << "because we could not interpolate transforms.");
     }
   }
   lock.unlock();
@@ -93,12 +94,10 @@ void NvbloxNode::processMessageQueue(
   ROS_INFO_STREAM("Timing statistics: \n" << nvblox::timing::Timing::Print());
 }
 
-template<typename MessageType>
-void NvbloxNode::pushMessageOntoQueue(
-  MessageType message,
-  std::deque<MessageType> * queue_ptr,
-  std::mutex * queue_mutex_ptr)
-{
+template <typename MessageType>
+void NvbloxNode::pushMessageOntoQueue(MessageType message,
+                                      std::deque<MessageType>* queue_ptr,
+                                      std::mutex* queue_mutex_ptr) {
   // Push it into the queue.
   timing::Timer ros_total_timer("ros/total");
   {
@@ -107,21 +106,20 @@ void NvbloxNode::pushMessageOntoQueue(
   }
 }
 
-template<typename MessageType>
+template <typename MessageType>
 inline void NvbloxNode::limitQueueSizeByDeletingOldestMessages(
-  const int max_num_messages, const std::string & queue_name,
-  std::deque<MessageType> * queue_ptr, std::mutex * queue_mutex_ptr)
-{
+    const int max_num_messages, const std::string& queue_name,
+    std::deque<MessageType>* queue_ptr, std::mutex* queue_mutex_ptr) {
   // Delete extra elements in the queue.
   timing::Timer ros_total_timer("ros/total");
   const std::lock_guard<std::mutex> lock(*queue_mutex_ptr);
   if (queue_ptr->size() > max_num_messages) {
     const int num_elements_to_delete = queue_ptr->size() - max_num_messages;
-    queue_ptr->erase(
-      queue_ptr->begin(),
-      queue_ptr->begin() + num_elements_to_delete);
-    ROS_INFO_STREAM(queue_name << " queue was longer than " << max_num_messages <<
-        " deleted " << num_elements_to_delete << " messages.");
+    queue_ptr->erase(queue_ptr->begin(),
+                     queue_ptr->begin() + num_elements_to_delete);
+    ROS_INFO_STREAM(queue_name << " queue was longer than " << max_num_messages
+                               << " deleted " << num_elements_to_delete
+                               << " messages.");
   }
 }
 /*
@@ -138,13 +136,13 @@ void NvbloxNode::printMessageArrivalStatistics(
   // Print statistics
   constexpr int kPublishPeriodMs = 10000;
   auto & clk = *get_clock();
-  
+
   ROS_INFO_STREAM_THROTTLE(clk, kPublishPeriodMs,
     output_prefix << ": \n" <<
       libstatistics_collector::moving_average_statistics::
       StatisticsDataToString(
       statistics_collector->GetStatisticsResults()));
-      
+
 }
 */
 

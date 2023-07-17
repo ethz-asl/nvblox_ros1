@@ -22,20 +22,16 @@
 
 #include <ros/ros.h>
 
-namespace nvblox
-{
+namespace nvblox {
 
-template<typename ParameterType>
-void inline declareParameterWithoutDefault(
-  const std::string & name,
-  ros::NodeHandle& nodeHandle)
-{
+template <typename ParameterType>
+void inline declareParameterWithoutDefault(const std::string& name,
+                                           ros::NodeHandle& nodeHandle) {
   try {
     // TODO figure out how to replicate this in ROS1
-    //nodeHandle_.param<ParameterType>(name, is_occupancy, false);
+    // nodeHandle_.param<ParameterType>(name, is_occupancy, false);
 
-  } catch (ros::Exception& e)
-  {
+  } catch (ros::Exception& e) {
     ROS_ERROR(" Parameter Declare Error: %s ", e.what());
     // log the error
   }

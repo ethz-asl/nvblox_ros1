@@ -20,11 +20,9 @@
 #include <algorithm>
 #include <string>
 
-namespace nvblox
-{
+namespace nvblox {
 
-rmw_qos_profile_t parseQoSString(const std::string & str)
-{
+rmw_qos_profile_t parseQoSString(const std::string& str) {
   std::string profile = str;
   // Convert to upper case.
   std::transform(profile.begin(), profile.end(), profile.begin(), ::toupper);
@@ -48,8 +46,8 @@ rmw_qos_profile_t parseQoSString(const std::string & str)
     return rmw_qos_profile_sensor_data;
   }
   ros_WARN_STREAM(
-    ros::get_logger("parseQoSString"),
-    "Unknown QoS profile: " << profile << ". Returning profile: DEFAULT");
+      ros::get_logger("parseQoSString"),
+      "Unknown QoS profile: " << profile << ". Returning profile: DEFAULT");
   return rmw_qos_profile_default;
 }
 

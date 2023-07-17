@@ -39,29 +39,6 @@ message( STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}" )
 ################
 # DEPENDENCIES #
 ################
-
-list(APPEND CMAKE_INCLUDE_PATH "/usr/local/include")
-
-if(NOT WIN32)
-  string(ASCII 27 Esc)
-  set(ColourReset "${Esc}[m")
-  set(BoldMagenta "${Esc}[1;35m")
-  set(Magenta     "${Esc}[35m")
-endif()
-
-message("${Magenta}INFO: CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}.${ColourReset}")
-message("${Magenta}INFO: CMAKE_PREFIX_PATH  ${CMAKE_PREFIX_PATH}.${ColourReset}")
-message("${Magenta}INFO: CMAKE_FIND_ROOT_PATH ${CMAKE_FIND_ROOT_PATH}.${ColourReset}")
-message("${Magenta}INFO: CMAKE_INCLUDE_PATH ${CMAKE_INCLUDE_PATH}.${ColourReset}")
-message("${Magenta}INFO: CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX}.${ColourReset}")
-message("${Magenta}INFO: PROJECT_SOURCE_DIR ${PROJECT_SOURCE_DIR}.${ColourReset}")
-
-set(gflags_DIR /usr/lib/x86_64-linux-gnu/cmake/gflags)
-find_package(gflags REQUIRED PATHS /usr/lib/x86_64-linux-gnu/cmake/gflags)
-if(gflags_FOUND)
-  message(STATUS "Found installed version of gflags: ${gflags_DIR}")
-endif()
-
 find_package(Eigen3 3.3.7 REQUIRED NO_MODULE)
 find_package(OpenCV REQUIRED)
 find_package(catkin REQUIRED COMPONENTS
@@ -91,7 +68,7 @@ catkin_package(
   INCLUDE_DIRS
     include
   LIBRARIES
-  ${PROJECT_NAME}
+    ${PROJECT_NAME}
   CATKIN_DEPENDS
     roscpp
     std_msgs
@@ -105,58 +82,23 @@ catkin_package(
     visualization_msgs
 )
 
-# Process nvblox
-#set(NVBLOX_DIR /home/tutuna/nvblox_ws/src/nvblox_ros1/nvblox/nvblox)
-
-
-# Disable tests and experiments
-set(BUILD_EXPERIMENTS OFF)
-set(BUILD_TESTS OFF)
-
-# Direct the child cmake to install eigen to the devel space.
-# Note that we put it in the include/nvblox_ros directory, which should stop it
-# colliding with other versions of eigen used by other catkin packages.
-#set(NVBLOX_EIGEN_CATKIN_INCLUDE_DESTINATION "${CMAKE_INSTALL_PREFIX}")
-#set(EIGEN_INCLUDE_DESTINATION "${NVBLOX_EIGEN_CATKIN_INCLUDE_DESTINATION}")
-#set(STDGPU_INSTALL_DESTINATION ${CMAKE_INSTALL_PREFIX})
+# Set up correct include directories
+include_directories(AFTER include ${catkin_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
 
 ##########
 # NVBLOX #
 ##########
-set(NVBLOX_DIR ${PROJECT_SOURCE_DIR}/../nvblox/nvblox)
-message("NVBLOX_DIR: ${NVBLOX_DIR}")
-
-set(NVBLOX_INCLUDE_DIR ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
-set(NVBLOX_BUILD_DIR ${CMAKE_BINARY_DIR}/build)
-set(NVBLOX_INCLUDE_OUTPUT_DIR ${CATKIN_DEVEL_PREFIX}/${NVBLOX_INCLUDE_DIR})
-#set(NVBLOX_BIN_DIR ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
-
-message("${Magenta}NVBLOX_INCLUDE_DIR ${NVBLOX_INCLUDE_DIR}${ColourReset}")
-
-ExternalProject_Add(nvblox
-  PREFIX nvblox
-  SOURCE_DIR ${NVBLOX_DIR}
-  UPDATE_COMMAND ""
-  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR> -DCMAKE_INSTALL_INCLUDEDIR=${NVBLOX_INCLUDE_DIR}
-  #INSTALL_COMMAND make install
-  INSTALL_DIR "${CATKIN_DEVEL_PREFIX}"
-  BINARY_DIR "${NVBLOX_BIN_DIR}"
-  #INCLUDE_DIR ""
-  #BUILD_COMMAND cmake --build .
-  #INSTALL_COMMAND ""
-)
+message(STATUS "Installing nvblox.")
+include(cmake/nvblox.cmake)
 
 find_package(nvblox REQUIRED)
-
-# Set up correct include directories
-include_directories(AFTER include ${catkin_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS} ${NVBLOX_INCLUDE_OUTPUT_DIR})
-
 
 ########
 # CUDA #
 ########
 set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --expt-relaxed-constexpr -Xcudafe --display_error_number --disable-warnings ")
 set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} --compiler-options -fPIC")
+include_directories("${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}")
 
 #############
 # LIBRARIES #
@@ -182,7 +124,6 @@ target_link_libraries(${PROJECT_NAME}_lib
 
 set_target_properties(${PROJECT_NAME}_lib PROPERTIES CUDA_ARCHITECTURES "62;72;75;80;86;87") 
 
-
 target_include_directories(${PROJECT_NAME}_lib PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
@@ -193,6 +134,7 @@ target_include_directories(${PROJECT_NAME}_lib BEFORE PRIVATE
 
 add_dependencies(${PROJECT_NAME}_lib
   ${catkin_EXPORTED_TARGETS}
+  nvblox_interface
 )
 
 ############
@@ -215,6 +157,8 @@ target_link_libraries(nvblox_human_node ${PROJECT_NAME}_lib)
 add_dependencies(nvblox_human_node
   ${catkin_EXPORTED_TARGETS}
 )
+
+# TODO(helenol): Make sure we're properly setting up the install targets.
 
 # #get_target_property(nvblox_INCLUDES nvblox_interface INTERFACE_INCLUDE_DIRECTORIES)
 # ###########

@@ -26,19 +26,19 @@
 
 #include "nvblox_ros/utils.hpp"
 
-namespace nvblox
-{
+namespace nvblox {
 /*
-void declareMapperParameters(const std::string & mapper_name, ros::NodeHandle& nodeHandle);
+void declareMapperParameters(const std::string & mapper_name, ros::NodeHandle&
+nodeHandle);
 */
-template<typename T>
-void set_mapper_parameter(
-  const std::string & mapper_name,
-  const std::string & parameter_name,
-  std::function<void(T)> parameter_setter,
-  ros::NodeHandle& nodeHandle);
+template <typename T>
+void set_mapper_parameter(const std::string& mapper_name,
+                          const std::string& parameter_name,
+                          std::function<void(T)> parameter_setter,
+                          ros::NodeHandle& nodeHandle);
 
-bool initializeMapper(const std::string& mapper_name, Mapper * mapper_ptr, ros::NodeHandle& nodeHandle);
+bool initializeMapper(const std::string& mapper_name, Mapper* mapper_ptr,
+                      ros::NodeHandle& nodeHandle);
 
 }  // namespace nvblox
 

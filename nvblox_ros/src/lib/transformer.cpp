@@ -21,13 +21,10 @@
 #include <memory>
 #include <string>
 
-
-namespace nvblox
-{
+namespace nvblox {
 
 Transformer::Transformer(ros::NodeHandle& nodeHandle)
-: nodeHandle_(nodeHandle)
-{
+    : nodeHandle_(nodeHandle) {
   // Get params like "use_tf_transforms".
   nodeHandle_.getParam("use_tf_transforms", use_tf_transforms_);
   nodeHandle_.getParam("use_topic_transforms", use_topic_transforms_);
@@ -36,19 +33,16 @@ Transformer::Transformer(ros::NodeHandle& nodeHandle)
   if (use_tf_transforms_) {
     tf_buffer_ = std::make_unique<tf2_ros::Buffer>();
     transform_listener_ =
-      std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
+        std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
   }
 }
 
-bool Transformer::lookupTransformToGlobalFrame(
-  const std::string & sensor_frame,
-  const ros::Time & timestamp,
-  Transform * transform)
-{
+bool Transformer::lookupTransformToGlobalFrame(const std::string& sensor_frame,
+                                               const ros::Time& timestamp,
+                                               Transform* transform) {
   if (!use_tf_transforms_ && !use_topic_transforms_) {
     // ERROR HERE, literally can't do anything.
-    ROS_ERROR(
-      "Not using TF OR topic transforms, what do you want us to use?");
+    ROS_ERROR("Not using TF OR topic transforms, what do you want us to use?");
     return false;
   }
 
@@ -83,40 +77,37 @@ bool Transformer::lookupTransformToGlobalFrame(
 }
 
 void Transformer::transformCallback(
-  const geometry_msgs::TransformStampedConstPtr& transform_msg)
-{
+    const geometry_msgs::TransformStampedConstPtr& transform_msg) {
   ros::Time timestamp = transform_msg->header.stamp;
   transform_queue_[timestamp.toNSec()] =
-    transformToEigen(transform_msg->transform);
+      transformToEigen(transform_msg->transform);
 }
 
 void Transformer::poseCallback(
-  const geometry_msgs::PoseStampedConstPtr& transform_msg)
-{
+    const geometry_msgs::PoseStampedConstPtr& transform_msg) {
   ros::Time timestamp = transform_msg->header.stamp;
   transform_queue_[timestamp.toNSec()] = poseToEigen(transform_msg->pose);
 }
 
-bool Transformer::lookupTransformTf(
-  const std::string & from_frame,
-  const std::string & to_frame,
-  const ros::Time & timestamp,
-  Transform * transform)
-{
+bool Transformer::lookupTransformTf(const std::string& from_frame,
+                                    const std::string& to_frame,
+                                    const ros::Time& timestamp,
+                                    Transform* transform) {
   geometry_msgs::TransformStamped T_L_C_msg;
   try {
     std::string error_string;
-    if (tf_buffer_->canTransform(from_frame, to_frame, timestamp, ros::Duration(0.1)))
-    {
+    if (tf_buffer_->canTransform(from_frame, to_frame, timestamp,
+                                 ros::Duration(0.1))) {
       T_L_C_msg = tf_buffer_->lookupTransform(from_frame, to_frame, timestamp);
     } else {
-      ROS_DEBUG_STREAM(
-        "Cant transform: from:" << from_frame << " to " << to_frame << ". Error string: " <<
-          error_string);
+      ROS_DEBUG_STREAM("Cant transform: from:" << from_frame << " to "
+                                               << to_frame << ". Error string: "
+                                               << error_string);
       return false;
     }
-  } catch (tf2::TransformException & e) {
-    ROS_DEBUG_STREAM("Cant transform: from:" << from_frame << " to " << to_frame << ". Error: " << e.what());
+  } catch (tf2::TransformException& e) {
+    ROS_DEBUG_STREAM("Cant transform: from:" << from_frame << " to " << to_frame
+                                             << ". Error: " << e.what());
     return false;
   }
 
@@ -124,10 +115,8 @@ bool Transformer::lookupTransformTf(
   return true;
 }
 
-bool Transformer::lookupTransformQueue(
-  const ros::Time & timestamp,
-  Transform * transform)
-{
+bool Transformer::lookupTransformQueue(const ros::Time& timestamp,
+                                       Transform* transform) {
   // Get latest transform
   if (timestamp == ros::Time(0)) {
     if (transform_queue_.empty()) {
@@ -147,7 +136,7 @@ bool Transformer::lookupTransformQueue(
 
     // If we're too far off on the timestamp:
     uint64_t distance = std::max(closest_match->first, timestamp_ns) -
-      std::min(closest_match->first, timestamp_ns);
+                        std::min(closest_match->first, timestamp_ns);
     if (distance > timestamp_tolerance_ns_) {
       return false;
     }
@@ -159,10 +148,8 @@ bool Transformer::lookupTransformQueue(
   }
 }
 
-bool Transformer::lookupSensorTransform(
-  const std::string & sensor_frame,
-  Transform * transform)
-{
+bool Transformer::lookupSensorTransform(const std::string& sensor_frame,
+                                        Transform* transform) {
   auto it = sensor_transforms_.find(sensor_frame);
   if (it == sensor_transforms_.end()) {
     // Couldn't find sensor transform. Gotta look it up.
@@ -170,8 +157,8 @@ bool Transformer::lookupSensorTransform(
       // Well we're kind out out of options here.
       return false;
     }
-    bool success = lookupTransformTf(
-      pose_frame_, sensor_frame, ros::Time::now(), transform);
+    bool success = lookupTransformTf(pose_frame_, sensor_frame,
+                                     ros::Time::now(), transform);
     if (success) {
       sensor_transforms_[sensor_frame] = *transform;
     } else {
@@ -185,24 +172,18 @@ bool Transformer::lookupSensorTransform(
 }
 
 Transform Transformer::transformToEigen(
-  const geometry_msgs::Transform & msg) const
-{
-  return Transform(
-    Eigen::Translation3f(
-      msg.translation.x, msg.translation.y,
-      msg.translation.z) *
-    Eigen::Quaternionf(
-      msg.rotation.w, msg.rotation.x,
-      msg.rotation.y, msg.rotation.z));
+    const geometry_msgs::Transform& msg) const {
+  return Transform(Eigen::Translation3f(msg.translation.x, msg.translation.y,
+                                        msg.translation.z) *
+                   Eigen::Quaternionf(msg.rotation.w, msg.rotation.x,
+                                      msg.rotation.y, msg.rotation.z));
 }
 
-Transform Transformer::poseToEigen(const geometry_msgs::Pose & msg) const
-{
+Transform Transformer::poseToEigen(const geometry_msgs::Pose& msg) const {
   return Transform(
-    Eigen::Translation3d(msg.position.x, msg.position.y, msg.position.z) *
-    Eigen::Quaterniond(
-      msg.orientation.w, msg.orientation.x,
-      msg.orientation.y, msg.orientation.z));
+      Eigen::Translation3d(msg.position.x, msg.position.y, msg.position.z) *
+      Eigen::Quaterniond(msg.orientation.w, msg.orientation.x,
+                         msg.orientation.y, msg.orientation.z));
 }
 
 }  // namespace nvblox

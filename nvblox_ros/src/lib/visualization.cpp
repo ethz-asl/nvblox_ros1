@@ -22,19 +22,17 @@
 
 #include "nvblox_ros/visualization.hpp"
 
-namespace nvblox
-{
+namespace nvblox {
 
 visualization_msgs::Marker sliceLimitsToMarker(
-  const Transform & T_G_PB, const float slice_visualization_side_length,
-  const ros::Time & timestamp, const std::string & global_frame_id,
-  const float min_height, const float max_height)
-{
+    const Transform& T_G_PB, const float slice_visualization_side_length,
+    const ros::Time& timestamp, const std::string& global_frame_id,
+    const float min_height, const float max_height) {
   // Corners of the plane in the plane-body frame.
   // NOTE: We attach the z value later because this is specified in the odom
   // frame.
   const float square_half_side_length_m =
-    slice_visualization_side_length / 2.0f;
+      slice_visualization_side_length / 2.0f;
   Vector3f p0_PB(square_half_side_length_m, square_half_side_length_m, 0.0f);
   Vector3f p1_PB(-square_half_side_length_m, square_half_side_length_m, 0.0f);
   Vector3f p2_PB(square_half_side_length_m, -square_half_side_length_m, 0.0f);
@@ -42,19 +40,19 @@ visualization_msgs::Marker sliceLimitsToMarker(
 
   // 6 triangle corners ([0,1,2], [1,2,3])
   std::vector<Vector3f> vertices_PB_vec{p0_PB, p1_PB, p2_PB,
-    p1_PB, p2_PB, p3_PB};
+                                        p1_PB, p2_PB, p3_PB};
 
   // Vertices in the global coordinate plane
   std::vector<Vector3f> vertices_G_vec;
 
   // Bottom plane
-  for (const Vector3f & vertex_PB : vertices_PB_vec) {
+  for (const Vector3f& vertex_PB : vertices_PB_vec) {
     Vector3f vertex_G = T_G_PB * vertex_PB;
     vertex_G.z() = min_height;
     vertices_G_vec.push_back(vertex_G);
   }
   // Top plane
-  for (const Vector3f & vertex_PB : vertices_PB_vec) {
+  for (const Vector3f& vertex_PB : vertices_PB_vec) {
     Vector3f vertex_G = T_G_PB * vertex_PB;
     vertex_G.z() = max_height;
     vertices_G_vec.push_back(vertex_G);

@@ -22,31 +22,26 @@
 
 #include "nvblox_ros/conversions/pointcloud_conversions.hpp"
 
-namespace nvblox
-{
-namespace conversions
-{
+namespace nvblox {
+namespace conversions {
 
 // Helper class to store all the buffers.
-class LayerConverter
-{
-public:
+class LayerConverter {
+ public:
   LayerConverter();
 
   // Convert a layer to a pointcloud.
-  template<typename VoxelType>
-  void pointcloudMsgFromLayer(
-    const VoxelBlockLayer<VoxelType> & layer,
-    sensor_msgs::PointCloud2 * pointcloud_msg);
+  template <typename VoxelType>
+  void pointcloudMsgFromLayer(const VoxelBlockLayer<VoxelType>& layer,
+                              sensor_msgs::PointCloud2* pointcloud_msg);
 
   // Convert a layer in AABB to a pointcloud.
-  template<typename VoxelType>
-  void pointcloudMsgFromLayerInAABB(
-    const VoxelBlockLayer<VoxelType> & layer,
-    const AxisAlignedBoundingBox & aabb,
-    sensor_msgs::PointCloud2 * pointcloud_msg);
+  template <typename VoxelType>
+  void pointcloudMsgFromLayerInAABB(const VoxelBlockLayer<VoxelType>& layer,
+                                    const AxisAlignedBoundingBox& aabb,
+                                    sensor_msgs::PointCloud2* pointcloud_msg);
 
-private:
+ private:
   cudaStream_t cuda_stream_ = nullptr;
 
   // Buffers

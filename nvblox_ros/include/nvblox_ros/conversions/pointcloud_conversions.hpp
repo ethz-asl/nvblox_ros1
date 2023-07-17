@@ -21,21 +21,18 @@
 #include <nvblox/nvblox.h>
 
 #include <string>
-#include <vector>
 #include <unordered_set>
+#include <vector>
 
 #include <sensor_msgs/PointCloud2.h>
 #include <visualization_msgs/Marker.h>
-namespace nvblox
-{
-namespace conversions
-{
+namespace nvblox {
+namespace conversions {
 
 // Helper struct for storing PCL points.
 // 16-byte alignment to match what PCL does internally:
 // https://pointclouds.org/documentation/point__types_8hpp_source.html
-struct alignas (16) PclPointXYZI
-{
+struct alignas(16) PclPointXYZI {
   float x;
   float y;
   float z;
@@ -43,35 +40,32 @@ struct alignas (16) PclPointXYZI
 };
 
 void copyDevicePointcloudToMsg(
-  const device_vector<PclPointXYZI> & pcl_pointcloud_device,
-  sensor_msgs::PointCloud2 * pointcloud_msg);
+    const device_vector<PclPointXYZI>& pcl_pointcloud_device,
+    sensor_msgs::PointCloud2* pointcloud_msg);
 
 // Helper class to store all the buffers.
-class PointcloudConverter
-{
-public:
+class PointcloudConverter {
+ public:
   PointcloudConverter();
 
   // Internal pointcloud representation to a ROS pointcloud
-  void pointcloudMsgFromPointcloud(
-    const Pointcloud & pointcloud,
-    sensor_msgs::PointCloud2 * pointcloud_msg);
+  void pointcloudMsgFromPointcloud(const Pointcloud& pointcloud,
+                                   sensor_msgs::PointCloud2* pointcloud_msg);
 
   // Convert pointcloud to depth image.
   void depthImageFromPointcloudGPU(
-    const sensor_msgs::PointCloud2::ConstPtr & pointcloud,
-    const Lidar & lidar, DepthImage * depth_image_ptr);
+      const sensor_msgs::PointCloud2::ConstPtr& pointcloud, const Lidar& lidar,
+      DepthImage* depth_image_ptr);
 
   // This function returns true if the pointcloud passed in is consistent with
   // the LiDAR intrinsics model.
   bool checkLidarPointcloud(
-    const sensor_msgs::PointCloud2::ConstPtr & pointcloud,
-    const Lidar & lidar);
+      const sensor_msgs::PointCloud2::ConstPtr& pointcloud, const Lidar& lidar);
 
   // Write the pointcloud to file
   void writeLidarPointcloudToFile(
-    const std::string filepath,
-    const sensor_msgs::PointCloud2::ConstPtr & pointcloud);
+      const std::string filepath,
+      const sensor_msgs::PointCloud2::ConstPtr& pointcloud);
 
   /// Generates a marker with a bunch of cubes in it. Note that the resultant
   /// marker has does not have a frame or timestamp set (this is left to
@@ -81,12 +75,11 @@ public:
   /// @param cube_size Edge length of the cubes in Marker msg
   /// @param color What color the cubes appear
   /// @param[out] marker_ptr Output marker
-  void pointsToCubesMarkerMsg(
-    const std::vector<Vector3f> & points,
-    const float cube_size, const Color & color,
-    visualization_msgs::Marker * marker_ptr);
+  void pointsToCubesMarkerMsg(const std::vector<Vector3f>& points,
+                              const float cube_size, const Color& color,
+                              visualization_msgs::Marker* marker_ptr);
 
-private:
+ private:
   std::unordered_set<Lidar, Lidar::Hash> checked_lidar_models_;
 
   cudaStream_t cuda_stream_ = nullptr;
