@@ -218,7 +218,7 @@ class NvbloxNode {
   // ROS & nvblox settings
   float voxel_size_ = 0.05f;
   bool esdf_2d_ = false;
-  bool esdf_distance_slice_ = false;
+  bool esdf_distance_slice_ = true;
   float esdf_slice_height_ = 1.0f;
   ProjectiveLayerType static_projective_layer_type_ =
       ProjectiveLayerType::kTsdf;

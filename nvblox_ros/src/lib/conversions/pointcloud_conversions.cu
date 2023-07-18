@@ -25,12 +25,14 @@
 namespace nvblox {
 namespace conversions {
 
-
 void copyDevicePointcloudToMsg(
     const device_vector<PclPointXYZI>& pcl_pointcloud_device,
     sensor_msgs::PointCloud2* pointcloud_msg) {
   // Copy into the pointcloud message.
   const int num_points = pcl_pointcloud_device.size();
+
+  LOG(INFO) << "Num points: " << num_points;
+
   size_t output_num_bytes = sizeof(PclPointXYZI) * num_points;
   pointcloud_msg->data.resize(output_num_bytes);
   // Copy over all the points.
@@ -62,14 +64,10 @@ void copyDevicePointcloudToMsg(
   pointcloud_msg->fields.push_back(point_field);
 }
 
-
-PointcloudConverter::PointcloudConverter() {cudaStreamCreate(&cuda_stream_);}
-
+PointcloudConverter::PointcloudConverter() { cudaStreamCreate(&cuda_stream_); }
 
 bool PointcloudConverter::checkLidarPointcloud(
-  const sensor_msgs::PointCloud2::ConstPtr & pointcloud,
-  const Lidar & lidar)
-{
+    const sensor_msgs::PointCloud2::ConstPtr& pointcloud, const Lidar& lidar) {
   // Check the cache
   if (checked_lidar_models_.find(lidar) != checked_lidar_models_.end()) {
     return true;
@@ -94,9 +92,8 @@ bool PointcloudConverter::checkLidarPointcloud(
 }
 
 void PointcloudConverter::writeLidarPointcloudToFile(
-  const std::string filepath_prefix,
-  const sensor_msgs::PointCloud2::ConstPtr & pointcloud)
-{
+    const std::string filepath_prefix,
+    const sensor_msgs::PointCloud2::ConstPtr& pointcloud) {
   // Write the dimensions
   std::ofstream width_file(filepath_prefix + "_dims.txt", std::ofstream::out);
   width_file << pointcloud->width << ", " << pointcloud->height;
@@ -112,7 +109,6 @@ void PointcloudConverter::writeLidarPointcloudToFile(
   }
   io::writeToCsv(filepath_prefix + ".csv", pointcloud_matrix);
 }
-
 
 __global__ void depthImageFromPointcloudKernel(
     const Vector3f* pointcloud,          // NOLINT
@@ -149,8 +145,8 @@ __global__ void depthImageFromPointcloudKernel(
 }
 
 void PointcloudConverter::depthImageFromPointcloudGPU(
-    const sensor_msgs::PointCloud2::ConstPtr& pointcloud,
-    const Lidar& lidar, DepthImage* depth_image_ptr) {
+    const sensor_msgs::PointCloud2::ConstPtr& pointcloud, const Lidar& lidar,
+    DepthImage* depth_image_ptr) {
   CHECK(depth_image_ptr->memory_type() == MemoryType::kDevice ||
         depth_image_ptr->memory_type() == MemoryType::kUnified);
 
@@ -211,8 +207,7 @@ struct Vector3fToPcl {
 
 // Internal pointcloud representation to a ROS pointcloud
 void PointcloudConverter::pointcloudMsgFromPointcloud(
-    const Pointcloud& pointcloud,
-    sensor_msgs::PointCloud2* pointcloud_msg) {
+    const Pointcloud& pointcloud, sensor_msgs::PointCloud2* pointcloud_msg) {
   CHECK_NOTNULL(pointcloud_msg);
   CHECK(pointcloud.memory_type() == MemoryType::kDevice ||
         pointcloud.memory_type() == MemoryType::kUnified);

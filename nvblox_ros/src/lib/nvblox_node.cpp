@@ -217,7 +217,7 @@ void NvbloxNode::advertiseTopics() {
       nh_private_.advertise<visualization_msgs::MarkerArray>("mesh_marker", 1,
                                                              false);
   slice_bounds_publisher_ = nh_private_.advertise<visualization_msgs::Marker>(
-      "map_slice_bounds", 1, false);
+      "map_slice_bounds", 1, true);
   occupancy_publisher_ =
       nh_private_.advertise<sensor_msgs::PointCloud2>("occupancy", 1, false);
 }
@@ -418,7 +418,7 @@ void NvbloxNode::processEsdf(const ros::TimerEvent& /*event*/) {
 
     // Also publish the map slice (costmap for nav2).
     if (map_slice_publisher_.getNumSubscribers() > 0) {
-      timing::Timer esdf_output_human_slice_timer("ros/esdf/output/slice");
+      timing::Timer esdf_output_esdf_slice_timer("ros/esdf/output/slice");
       nvblox_msgs::DistanceMapSlice map_slice_msg;
       esdf_slice_converter_.distanceMapSliceImageToMsg(
           map_slice_image, aabb, esdf_slice_height_, mapper_->voxel_size_m(),
@@ -448,6 +448,18 @@ void NvbloxNode::processEsdf(const ros::TimerEvent& /*event*/) {
           "Tried to publish slice bounds but couldn't look up frame: "
               << slice_visualization_attachment_frame_id_);
     }
+  }
+
+  // If we don't want the slice, output the full map.
+  if (!esdf_distance_slice_ &&
+      esdf_pointcloud_publisher_.getNumSubscribers() > 0) {
+    timing::Timer esdf_output_esdf_full_map_timer("ros/esdf/output/full_cloud");
+    sensor_msgs::PointCloud2 pointcloud_msg;
+    layer_converter_.pointcloudMsgFromLayer(mapper_->esdf_layer(),
+                                            &pointcloud_msg);
+    pointcloud_msg.header.frame_id = global_frame_;
+    pointcloud_msg.header.stamp = ros::Time::now();
+    esdf_pointcloud_publisher_.publish(pointcloud_msg);
   }
 }
 

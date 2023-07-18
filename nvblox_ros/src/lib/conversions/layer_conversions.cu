@@ -75,6 +75,11 @@ __global__ void copyLayerToPCLKernel(
     auto it = block_hash.find(block_indices[blockIdx.x]);
     if (it != block_hash.end()) {
       block_ptr = it->second;
+      printf("Found the block ptr.\n");
+    } else {
+      printf("Couldn't find the block ptr. %d %d %d\n",
+             block_indices[blockIdx.x].x(), block_indices[blockIdx.x].y(),
+             block_indices[blockIdx.x].z());
     }
   }
 
@@ -82,6 +87,8 @@ __global__ void copyLayerToPCLKernel(
 
   if (block_ptr == nullptr) {
     return;
+  } else {
+    printf("Valid block index.\n");
   }
 
   // For every voxel, check if it's in the AABB.
@@ -141,6 +148,10 @@ void LayerConverter::pointcloudMsgFromLayerInAABB(
   // Copy to device memory.
   block_indices_device_ = block_indices;
 
+  LOG(INFO) << "Number of block indices to be published: "
+            << block_indices.size();
+  LOG(INFO) << "Volume of AABB: " << aabb_intersect.volume();
+
   if (block_indices.empty()) {
     return;
   }
@@ -151,6 +162,8 @@ void LayerConverter::pointcloudMsgFromLayerInAABB(
 
   // Get the hash.
   GPULayerView<VoxelBlock<VoxelType>> gpu_layer_view = layer.getGpuLayerView();
+
+  LOG(INFO) << "Size of GPU view layer: " << gpu_layer_view.size();
 
   // Create an output size variable.
   if (!max_index_device_) {
@@ -163,7 +176,7 @@ void LayerConverter::pointcloudMsgFromLayerInAABB(
   dim3 dim_threads(kVoxelsPerSide, kVoxelsPerSide, kVoxelsPerSide);
 
   copyLayerToPCLKernel<VoxelType><<<dim_block, dim_threads, 0, cuda_stream_>>>(
-      gpu_layer_view.getHash().impl_, block_indices_device_.data(),
+      gpu_layer_view2.getHash().impl_, block_indices_device_.data(),
       block_indices.size(), num_voxels, aabb_intersect, layer.block_size(),
       pcl_pointcloud_device_.data(), max_index_device_.get());
   checkCudaErrors(cudaStreamSynchronize(cuda_stream_));
@@ -171,6 +184,7 @@ void LayerConverter::pointcloudMsgFromLayerInAABB(
 
   // Copy the pointcloud out.
   max_index_host_ = max_index_device_.clone(MemoryType::kHost);
+  LOG(INFO) << "Max index host: " << max_index_host_;
   pcl_pointcloud_device_.resize(*max_index_host_);
 
   // Copy to the message
@@ -188,8 +202,7 @@ template void LayerConverter::pointcloudMsgFromLayerInAABB<EsdfVoxel>(
 
 template void LayerConverter::pointcloudMsgFromLayerInAABB<OccupancyVoxel>(
     const VoxelBlockLayer<OccupancyVoxel>& layer,
-    const AxisAlignedBoundingBox& aabb,
-    sensor_msgs::PointCloud2* pointcloud);
+    const AxisAlignedBoundingBox& aabb, sensor_msgs::PointCloud2* pointcloud);
 
 }  // namespace conversions
 }  // namespace nvblox
