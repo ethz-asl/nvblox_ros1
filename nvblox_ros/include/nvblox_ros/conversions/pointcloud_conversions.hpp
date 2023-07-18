@@ -26,6 +26,7 @@
 
 #include <sensor_msgs/PointCloud2.h>
 #include <visualization_msgs/Marker.h>
+
 namespace nvblox {
 namespace conversions {
 

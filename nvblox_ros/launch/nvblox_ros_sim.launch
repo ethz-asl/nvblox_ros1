@@ -22,6 +22,7 @@
     <param name="use_lidar" value="true" />
     <param name="voxel_size" value="0.05" />
     <param name="esdf_distance_slice" value="false" />
+    <param name="use_static_occupancy_layer" value="false" />
   </node>
 
 </launch>

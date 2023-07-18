@@ -16,12 +16,10 @@ ExternalProject_Add(nvblox
   UPDATE_COMMAND ""
   CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR> -DCMAKE_INSTALL_INCLUDEDIR=${NVBLOX_INCLUDE_DIR}
   INSTALL_DIR "${CATKIN_DEVEL_PREFIX}"
-  #BINARY_DIR "${NVBLOX_BIN_DIR}"
 )
 
 # Set up correct include directories
-include_directories(AFTER include ${NVBLOX_INCLUDE_OUTPUT_DIR})
+include_directories(BEFORE include ${NVBLOX_INCLUDE_OUTPUT_DIR} ${NVBLOX_INCLUDE_OUTPUT_DIR}/eigen3)
 
 add_library(nvblox_interface INTERFACE)
-
 add_dependencies(nvblox_interface nvblox)
