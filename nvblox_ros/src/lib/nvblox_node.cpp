@@ -232,7 +232,6 @@ void NvbloxNode::advertiseServices() {
 }
 
 void NvbloxNode::setupTimers() {
-  ROS_INFO_STREAM("NvbloxNode::setupTimers()");
   if (use_depth_) {
     ros::TimerOptions timer_options(
         ros::Duration(1.0 / max_poll_rate_hz_),

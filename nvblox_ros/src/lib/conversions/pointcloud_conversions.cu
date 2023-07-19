@@ -31,8 +31,6 @@ void copyDevicePointcloudToMsg(
   // Copy into the pointcloud message.
   const int num_points = pcl_pointcloud_device.size();
 
-  LOG(INFO) << "Num points: " << num_points;
-
   size_t output_num_bytes = sizeof(PclPointXYZI) * num_points;
   pointcloud_msg->data.resize(output_num_bytes);
   // Copy over all the points.
