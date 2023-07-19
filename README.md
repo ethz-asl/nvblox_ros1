@@ -3,11 +3,8 @@
 This is the ROS1 wrapper of nvblox, intended to make nvblox usable for the wider robotics community (especially for research).
 This is a work in progress by [Turcan Tuna](https://github.com/tutunarsl) and [Helen Oleynikova](https://github.com/helenol).
 
-Everything below this line still needs to be cleaned up/edited.
-
+This repo is still under construction.
 See the [TODO](TODO.md) list for a complete list.
-
----
 
 <div align="center"><img src="resources/isaac_sim_nvblox_humans.gif" width=400px/></div>
 
@@ -25,22 +22,20 @@ To relax the assumption that occupancy grid maps only capture static objects, Nv
 
 
 ## Table of Contents
-
-- [Isaac ROS Nvblox](#isaac-ros-nvblox)
-  - [Overview](#overview)
-  - [Table of Contents](#table-of-contents)
-  - [Latest Update](#latest-update)
-  - [Supported Platforms](#supported-platforms)
-    - [Docker](#docker)
-  - [Quickstart](#quickstart)
-  - [Next Steps](#next-steps)
-    - [Try More Examples](#try-more-examples)
-    - [Customize your Dev Environment](#customize-your-dev-environment)
-  - [Packages Overview](#packages-overview)
-  - [ROS 1 Parameters](#ros-2-parameters)
-  - [ROS 1 Topics and Services](#ros-2-topics-and-services)
-  - [Troubleshooting](#troubleshooting)
-  - [Updates](#updates)
+- [nvblox_ROS1](#nvblox_ros1)
+  * [Overview](#overview)
+  * [Table of Contents](#table-of-contents)
+  * [Latest Update](#latest-update)
+  * [Supported Platforms](#supported-platforms)
+- [Installation](#installation)
+  * [Docker](#docker)
+  * [Native Install](#native-install)
+- [Details ](#details)
+  * [Packages Overview](#packages-overview)
+  * [ROS 1 Parameters](#ros-1-parameters)
+  * [ROS 1 Topics and Services](#ros-1-topics-and-services)
+  * [Troubleshooting](#troubleshooting)
+  * [Updates](#updates)
 
 ## Latest Update
 
@@ -52,106 +47,106 @@ This package is designed and tested to be compatible with ROS 1 Noetic running o
 
 > **Note**: Versions of ROS 1 earlier than Noetic are **not** tested.
 
-| Platform | Hardware                                                                                                                                                                                                 | Software                                                                                                           | Notes                                                                                                                                                                                   |
-| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Jetson   | [Jetson Orin](https://www.nvidia.com/en-us/autonomous-machines/embedded-systems/jetson-orin/) <br> [Jetson Xavier](https://www.nvidia.com/en-us/autonomous-machines/embedded-systems/jetson-agx-xavier/) | [JetPack 5.1.1](https://developer.nvidia.com/embedded/jetpack)                                                     | For best performance, ensure that [power settings](https://docs.nvidia.com/jetson/archives/r34.1/DeveloperGuide/text/SD/PlatformPowerAndPerformance.html) are configured appropriately. |
-| x86_64   | NVIDIA GPU                                                                                                                                                                                               | [Ubuntu 20.04+](https://releases.ubuntu.com/20.04/) <br> [CUDA 11.8+](https://developer.nvidia.com/cuda-downloads) |                                                                                                                                                                                         |
+| Platform | Hardware   | Software  | Notes   |
+| -------- | -------    | -------  | ------------ |
+| Jetson   | [Jetson Orin](https://www.nvidia.com/en-us/autonomous-machines/embedded-systems/jetson-orin/) <br> [Jetson Xavier](https://www.nvidia.com/en-us/autonomous-machines/embedded-systems/jetson-agx-xavier/) | [JetPack 5.1.1](https://developer.nvidia.com/embedded/jetpack) | For best performance, ensure that [power settings](https://docs.nvidia.com/jetson/archives/r34.1/DeveloperGuide/text/SD/PlatformPowerAndPerformance.html) are configured appropriately. |
+| x86_64   | NVIDIA GPU   | [Ubuntu 20.04+](https://releases.ubuntu.com/20.04/) <br> [CUDA 11.8+](https://developer.nvidia.com/cuda-downloads) |                                                                                                                                                                                         |
 
-### Docker
+# Installation
+There's 2 options: docker 
+## Docker
 
-To simplify development, we strongly recommend leveraging the Isaac ROS Dev Docker images by following [these steps](https://github.com/NVIDIA-ISAAC-ROS/isaac_ros_common/blob/main/docs/dev-env-setup.md). This will streamline your development environment setup with the correct versions of dependencies on both Jetson and x86_64 platforms.
+To simplify development, we strongly recommend using the docker images in [the docker subfolder](./docker/run_docker.sh)
 
-> **Note**: All Isaac ROS Quickstarts, tutorials, and examples have been designed with the Isaac ROS Docker images as a prerequisite.
+First check out this repo into `~/nvblox_ws/src/` and create `~/data` to store data:
+```
+mkdir -p ~/nvblox_ws/src/
+mkdir -p ~/data
+cd ~/nvblox_ws/src/
+git clone https://github.com/ethz-asl/nvblox_ros1.git
+cd nvblox_ros1
+git submodule update --init --recursive
+```
+
+Then build the docker using:
+```
+cd ~/nvblox_ws/src/nvblox_ros1/docker
+./run_docker.sh -b
+```
+
+Within the docker, make sure to set up the workspace with:
+```
+cd ~/nvblox_ws/
+catkin init
+catkin config --extend /opt/ros/noetic
+catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release
+catkin build
+echo "source ~/nvblox_ws/devel/setup.bash" >> ~/.bashrc
+```
+
+For future iterations you can run it with just:
+```
+./run_docker.sh
+```
+(Check out `./run_docker.sh -h` for more settings, such as the docker name).
+
+To launch additional terminal sessions into the docker, use:
+```
+docker exec -it nvblox bash
+```
+
+## Native Install
+This is meant for Ubuntu 20.04 and will not work on other versions. Use the docker instead.
+
+First, install ROS1 noetic, preferably desktop-full, following instructions here: [ROS installation](https://wiki.ros.org/noetic/Installation/Ubuntu)
+
+Then install CUDA, preferably 11.8, but most versions after 11.0 should work: [CUDA installation](https://developer.nvidia.com/cuda-11-8-0-download-archive)
+
+Install additional dependenices:
+```
+apt-get install python3-catkin-tools python3-vcstool python3-pip qtbase5-dev
+apt-get -qq update &&  apt-get install -y libgoogle-glog-dev libgtest-dev libgflags-dev python3-dev libsqlite3-dev
+pip install --upgrade cmake
+```
+
+Note that the above upgrades your version of CMake as CUDA support before 3.18 was seriously missing.
+
+Then check out the necessary repos:
+```
+mkdir -p ~/nvblox_ws/src/
+cd ~/nvblox_ws/src/
+git clone https://github.com/ethz-asl/nvblox_ros1.git
+cd nvblox_ros1
+git submodule update --init --recursive
+cd ~/nvblox_ws/src/
+vcs import --recursive --input nvblox_ros1/docker/scripts/nvblox_ros_deps.repos
+cd ~/nvblox_ws/
+catkin init
+catkin config --extend /opt/ros/noetic
+catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release
+catkin build
+echo "source ~/nvblox_ws/devel/setup.bash" >> ~/.bashrc
+```
 
 ## Quickstart
+Download a rosbag version of the [Panoptic Mapping](https://github.com/ethz-asl/panoptic_mapping/) synthetic dataset: [run1.bag](http://robotics.ethz.ch/~asl-datasets/2023_nvblox_datasets/panopt/run1.bag) and/or [run2.bag](http://robotics.ethz.ch/~asl-datasets/2023_nvblox_datasets/panopt/run2.bag). These bags contain synthetic depth and color images and ground truth poses.
 
-0. nvblox_ros1 requies an up-to-date compiler. Make sure your system has one. For example, on Ubuntu 20.04, you can install gcc-9 and gcc-11 with:
-  
-      ```bash
-      sudo apt update && sudo apt install -y build-essential
-      sudo apt install gcc-11
-      ```
-   Furthermore, CMake version >3.20. You can install it with:
-      1. Download the latest source distribution tar archive from https://cmake.org/download/ for your operating system (e.g. cmake-3.24.1.tar.gz).
-      2. Extract it by doing 'tar -xf cmake-<version>.tar.gz', where <version> can for example be 3.24.1.
-      3. Then install this cmake version by doing:
-   
-      ```bash
-      cd cmake-<version>-rc4.tar.gz
-      ./configure
-      make -j$(nproc)
-      sudo make install
-      ```
+Put it in `~/data` so that it gets mapped in the docker (if using a docker).
 
-1. Set up your development environment by following the instructions [here](https://github.com/NVIDIA-ISAAC-ROS/isaac_ros_common/blob/main/docs/dev-env-setup.md).
+In one terminal, start up nvblox with:
+```
+roslaunch nvblox_ros nvblox_panopt.launch rviz:=true
+```
 
-2. Clone this repository and its dependencies under `~/workspaces/isaac_ros-dev/src`.
+In another terminal (if in docker, start with `docker exec -it nvblox bash`):
+```
+rosbag play --clock ~/data/run1.bag
+```
 
-    ```bash
-    cd ~/workspaces/isaac_ros-dev/src
-    ```
+<div align="center"><img src="resources/nvblox_panopt_quick.gif" width=621px/></div>
 
-    ```bash
-    git clone --recurse-submodules https://github.com/ethz-asl/nvblox_ros1.git && \
-        cd nvblox_ros1 && git lfs pull
-    ```
-
-3. Pull down a ROS Bag of sample data:
-
-    ```bash
-    cd ~/workspaces/isaac_ros-dev/src/nvblox_ros1 && \ 
-      git lfs pull -X "" -I "nvblox_ros/test/test_cases/rosbags/nvblox_pol"
-    ```
-
-4. Inside the container, install package-specific dependencies via `rosdep`:
-
-    ```bash
-    cd /workspaces/isaac_ros-dev/ && \
-        rosdep install -i -r --from-paths src --rosdistro noetic -y --skip-keys "libopencv-dev libopencv-contrib-dev libopencv-imgproc-dev python-opencv python3-opencv nvblox"
-    ```
-
-5. Build and source the workspace:  
-
-    ```bash
-    cd /workspaces/isaac_ros-dev && \
-      catkin build && \
-      source devel/setup.bash
-    ```
-
-6. (Optional) Run tests to verify complete and correct installation: (TODO[TT] Convert to cmake tests or remove.)  
-
-    ```bash
-    catkin test --executor sequential
-    ```
-
-7. In a **current terminal** inside the Docker container, run the launch file for Nvblox:
-
-    ```bash
-    source /workspaces/isaac_ros-dev/devel/setup.bash && \
-        roslaunch nvblox_ros nvblox_ros.launch
-    ```
-
-8. Open a **second terminal** inside the docker container:
-
-    ```bash
-    cd ~/workspaces/isaac_ros-dev/src/isaac_ros_common && \
-      ./scripts/run_dev.sh
-    ```
-
-9. In the **second terminal**, play the ROS Bag:
-
-    ```bash
-    rosbag play --pause --clock -s 0 -r 1 <your-favorite-rosbag>.bag
-    ```
-
-You should see the robot reconstructing a mesh, with the 2d esdf slice overlaid on top.
-
-<div align="center"><img src="resources/basic_example_rviz.png" width=500px/></div>
-
-## Next Ste                     |
-### Customize your Dev Environment
-
-To customize your development environment, reference [this guide](https://github.com/NVIDIA-ISAAC-ROS/isaac_ros_common/blob/main/docs/modify-dockerfile.md).
+# Details
+A better overview of the technical details is available [here](./docs/technical-details.md).
 
 ## Packages Overview
 * **nvblox_msgs**: Custom messages for transmitting the output distance map slice and mesh over ROS 1.
@@ -169,14 +164,10 @@ Find all ROS 1 subscribers, publishers and services [here](./docs/topics-and-ser
 
 ## Troubleshooting
 Currently, the nvblox_ros1 package is only tested on Ubuntu 20.04 with ROS 1 Noetic. 
-The LiDAR depth input known to be unstable in terms of robustness.
-
-### Isaac ROS Troubleshooting
-
-For solutions to problems with Isaac ROS, please check [here](https://github.com/NVIDIA-ISAAC-ROS/isaac_ros_common/blob/main/docs/troubleshooting.md).
 
 ## Updates
 
-| Date       | Changes                                                                                                                                    |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| 2023-07-01 | ROS 2 to ROS 1 port is done.                                                                                                               |
+| Date       | Changes    |
+| ---------- | ------------ |
+| 2023-07-19 | ROS2 to ROS1 port is done and tested. |
+| 2023-07-01 | ROS 2 to ROS 1 port is started. |

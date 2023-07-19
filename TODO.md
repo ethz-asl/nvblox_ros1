@@ -18,10 +18,10 @@ Please try to update this in the PR where the appropriate changes are made. :)
 - [ ] Add a CI job
 
 ## Porting Documentation
-- [ ] Update README to actually reflect repo status
-- [ ] Update/remove docs
+- [x] Update README to actually reflect repo status
+- [x] Update/remove docs
 
 ## Testing
 - [x] Realsense Bags
-- [ ] LIDAR Bags
+- [x] LIDAR Bags
 - [ ] Jetson
