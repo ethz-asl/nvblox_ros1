@@ -1,0 +1,98 @@
+##########################
+### General Parameters ###
+##########################
+# Use this file as a minimum set of example parameters that you'll most likely 
+# have to modify.
+
+# Whether to use the static occupancy layer for projective integration. If this flag is set to false (default), TSDF integration is used.
+use_static_occupancy_layer: false
+
+# Voxel size (in meters) to use for the map.
+voxel_size: 0.05
+
+# The name of the TF frame to be used as the global frame.
+global_frame: "map"
+
+# Only used if `use_topic_transforms` is set to true. Pose and transform messages will be interpreted as being in this pose frame, and the remaining transform to the sensor frame will be looked up on the TF tree.
+pose_frame: "base_link"
+
+#  If the depth data is originating from Realsense Depth Cameras.
+is_realsense_data: false
+
+# Whether to output a mesh for visualization in rviz, to be used with `nvblox_rviz_plugin`.
+compute_mesh: true
+
+# Whether to compute the ESDF (map of distances to the nearest obstacle).
+compute_esdf: true
+
+# Whether to compute the ESDF in 2D (true) or 3D (false).
+esdf_2d: false
+
+# Whether to output a distance slice of the ESDF to be used for path planning.
+esdf_distance_slice: false
+
+# Whether to integrate color images to color the mesh.
+use_color: true
+
+# Whether to integrate depth images.
+use_depth: true
+
+# Whether to integrate LiDAR scans.
+use_lidar: false
+
+# The *output* slice height for the distance slice and ESDF pointcloud. Does not need to be within min and max height below. In units of meters.
+esdf_slice_height: 1.0
+
+# The minimum height, in meters, to consider obstacles part of the 2D ESDF slice.
+esdf_2d_min_height: 0.0
+
+# The maximum height, in meters, to consider obstacles part of the 2D ESDF slice.
+esdf_2d_max_height: 1.0
+
+# Width of the LIDAR scan, in number of beams. Defaults are for the Velodyne VLP16.
+lidar_width: 1800
+
+# Height of the LIDAR scan, in number of beams. Defaults are for the VLP16.
+lidar_height: 16
+
+# The vertical field of view of the LIDAR scan, in degrees. Horizontal FoV is assumed to be 360 degrees. This is used to calculate the individual beam angle offsets.
+lidar_vertical_fov_deg: 30.0
+
+# Frame to which the map slice bounds visualization is centered on the xy-plane.
+slice_visualization_attachment_frame_id: "base_link"
+
+# Side length of the map slice bounds visualization plane.
+slice_visualization_side_length: 10.0
+
+# The maximum rate (in Hz) at which to integrate depth images. A value of 0.0 means there is no cap.
+max_depth_update_hz: 10.0
+
+# The maximum rate (in Hz) at which to integrate color images into the color layer. A value of 0.0 means there is no cap.
+max_color_update_hz: 5.0
+
+# The maximum rate (in Hz) at which to integrate LiDAR scans. A value of 0.0 means there is no cap.
+max_lidar_update_hz: 10.0
+
+# The rate (in Hz) at which to update and publish the mesh.
+mesh_update_rate_hz: 5.0
+
+# The rate (in Hz) at which to update the ESDF and output the distance slice.
+esdf_update_rate_hz: 2.0
+
+# The rate (in Hz) at which to publish the static occupancy pointcloud.
+occupancy_publication_rate_hz: 2.0
+
+# Specifies what rate to poll the color & depth updates at. Will exit as no-op if no new images. Set this higher than you expect images to come in at.
+max_poll_rate_hz: 100.0
+
+# How many messages to store in the sensor messages queues (depth, color, lidar) before deleting oldest messages.
+maximum_sensor_message_queue_length: 30
+
+# Radius around the `map_clearing_frame_id` outside which we clear the map. Note that values <= 0.0 indicate that no clearing is performed.
+map_clearing_radius_m: -1.0
+
+# The name of the TF frame around which we clear the map.
+map_clearing_frame_id: "base_link"
+
+# The rate (in Hz) at wich we clear the map outside of the `map_clearing_radius_m`.
+clear_outside_radius_rate_hz: 1.0

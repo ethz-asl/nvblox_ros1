@@ -15,10 +15,10 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#include <nvblox/core/types.h>
-
 #include <string>
 #include <vector>
+
+#include <nvblox/core/types.h>
 
 #include "nvblox_ros/visualization.hpp"
 

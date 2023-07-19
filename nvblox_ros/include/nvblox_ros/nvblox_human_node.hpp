@@ -18,18 +18,18 @@
 #ifndef NVBLOX_ROS__NVBLOX_HUMAN_NODE_HPP_
 #define NVBLOX_ROS__NVBLOX_HUMAN_NODE_HPP_
 
-#include <nvblox/mapper/multi_mapper.h>
-#include <nvblox/semantics/image_projector.h>
-#include <nvblox/sensors/pointcloud.h>
+#include <deque>
+#include <memory>
+#include <tuple>
 
 #include <message_filters/subscriber.h>
 #include <message_filters/sync_policies/approximate_time.h>
 #include <message_filters/synchronizer.h>
 #include <message_filters/time_synchronizer.h>
 
-#include <deque>
-#include <memory>
-#include <tuple>
+#include <nvblox/mapper/multi_mapper.h>
+#include <nvblox/semantics/image_projector.h>
+#include <nvblox/sensors/pointcloud.h>
 
 #include "nvblox_ros/nvblox_node.hpp"
 
@@ -37,7 +37,7 @@ namespace nvblox {
 
 class NvbloxHumanNode : public NvbloxNode {
  public:
-  explicit NvbloxHumanNode(ros::NodeHandle& nodeHandle);
+  explicit NvbloxHumanNode(ros::NodeHandle& nh, ros::NodeHandle& nh_private);
   virtual ~NvbloxHumanNode() = default;
 
   // Setup. These are called by the constructor.
@@ -76,10 +76,10 @@ class NvbloxHumanNode : public NvbloxNode {
       const ImageSegmentationMaskMsgTuple& color_mask_msg);
 
   // Publish human data on fixed frequency
-  void processHumanEsdf(const ros::WallTimerEvent& /*event*/);
+  void processHumanEsdf(const ros::TimerEvent& /*event*/);
 
   // Decay the human occupancy grid on fixed frequency
-  void decayHumanOccupancy(const ros::WallTimerEvent& /*event*/);
+  void decayHumanOccupancy(const ros::TimerEvent& /*event*/);
 
  protected:
   // Publish human data (if any subscribers) that helps
@@ -107,7 +107,7 @@ class NvbloxHumanNode : public NvbloxNode {
   message_filters::Subscriber<sensor_msgs::CameraInfo>
       segmentation_camera_info_sub_;
 
-  ros::NodeHandle nodeHandle_;
+  ros::NodeHandle nh_;
 
   // Publishers
   ros::Publisher human_pointcloud_publisher_;
@@ -121,8 +121,8 @@ class NvbloxHumanNode : public NvbloxNode {
   ros::Publisher color_frame_overlay_publisher_;
 
   // Timers
-  ros::WallTimer human_occupancy_decay_timer_;
-  ros::WallTimer human_esdf_processing_timer_;
+  ros::Timer human_occupancy_decay_timer_;
+  ros::Timer human_esdf_processing_timer_;
 
   // Rates.
   float human_occupancy_decay_rate_hz_ = 10.0f;

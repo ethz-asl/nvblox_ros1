@@ -15,10 +15,6 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#include "nvblox_ros/nvblox_human_node.hpp"
-
-#include <nvblox/io/csv.h>
-
 #include <limits>
 #include <memory>
 #include <string>
@@ -27,11 +23,15 @@
 #include <geometry_msgs/Point.h>
 #include <visualization_msgs/Marker.h>
 
+#include <nvblox/io/csv.h>
+
+#include "nvblox_ros/nvblox_human_node.hpp"
+
 namespace nvblox {
 
-NvbloxHumanNode::NvbloxHumanNode(ros::NodeHandle& nodeHandle)
-    : NvbloxNode(nodeHandle),
-      nodeHandle_(nodeHandle),
+NvbloxHumanNode::NvbloxHumanNode(ros::NodeHandle& nh,
+                                 ros::NodeHandle& nh_private)
+    : NvbloxNode(nh, nh_private),
       human_pointcloud_C_device_(MemoryType::kDevice),
       human_pointcloud_L_device_(MemoryType::kDevice) {
   ROS_INFO_STREAM("NvbloxHumanNode::NvbloxHumanNode()");
@@ -54,10 +54,8 @@ NvbloxHumanNode::NvbloxHumanNode(ros::NodeHandle& nodeHandle)
 
 void NvbloxHumanNode::getParameters() {
   // TODO(TT) how to handle this node?
-  nodeHandle_.getParam("human_occupancy_decay_rate_hz",
-                       human_occupancy_decay_rate_hz_);
-  nodeHandle_.getParam("human_esdf_update_rate_hz_",
-                       human_esdf_update_rate_hz_);
+  nh_.getParam("human_occupancy_decay_rate_hz", human_occupancy_decay_rate_hz_);
+  nh_.getParam("human_esdf_update_rate_hz_", human_esdf_update_rate_hz_);
 }
 
 void NvbloxHumanNode::initializeMultiMapper() {
@@ -76,7 +74,7 @@ void NvbloxHumanNode::initializeMultiMapper() {
   // calling initializeMapper() (again) (it its also called in the base
   // constructor, on the now-deleted Mapper).
   mapper_ = multi_mapper_.get()->unmasked_mapper();
-  initializeMapper("mapper", mapper_.get(), nodeHandle_);
+  initializeMapper(mapper_.get(), nh_);
   // Set to an invalid depth to ignore human pixels in the unmasked mapper
   // during integration.
   multi_mapper_->setDepthUnmaskedImageInvalidPixel(-1.f);
@@ -86,7 +84,7 @@ void NvbloxHumanNode::initializeMultiMapper() {
   human_mapper_ = multi_mapper_.get()->masked_mapper();
   // Human mapper params have not been declared yet
   // declareMapperParameters(mapper_name, this);
-  initializeMapper(mapper_name, human_mapper_.get(), nodeHandle_);
+  initializeMapper(human_mapper_.get(), nh_);
   // Set to a distance bigger than the max. integration distance to not include
   // non human pixels on the human mapper, but clear along the projection.
   // TODO(remosteiner): Think of a better way to do this.
@@ -107,8 +105,8 @@ void NvbloxHumanNode::subscribeToTopics() {
   NvbloxNode::timesync_depth_.reset();
   NvbloxNode::timesync_color_.reset();
 
-  segmentation_mask_sub_.subscribe(nodeHandle_, "mask/image", 20);
-  segmentation_camera_info_sub_.subscribe(nodeHandle_, "mask/camera_info", 20);
+  segmentation_mask_sub_.subscribe(nh_, "mask/image", 20);
+  segmentation_camera_info_sub_.subscribe(nh_, "mask/camera_info", 20);
 
   if (use_depth_) {
     // Unsubscribe from the depth topic in nvblox_node
@@ -141,37 +139,45 @@ void NvbloxHumanNode::subscribeToTopics() {
 
 void NvbloxHumanNode::advertiseTopics() {
   // Add some stuff
-  human_pointcloud_publisher_ = nodeHandle_.advertise<sensor_msgs::PointCloud2>(
+  human_pointcloud_publisher_ = nh_private_.advertise<sensor_msgs::PointCloud2>(
       "human_pointcloud", 1, false);
-  human_voxels_publisher_ = nodeHandle_.advertise<visualization_msgs::Marker>(
+  human_voxels_publisher_ = nh_private_.advertise<visualization_msgs::Marker>(
       "human_voxels", 1, false);
-  human_occupancy_publisher_ = nodeHandle_.advertise<sensor_msgs::PointCloud2>(
+  human_occupancy_publisher_ = nh_private_.advertise<sensor_msgs::PointCloud2>(
       "human_occupancy", 1, false);
   human_esdf_pointcloud_publisher_ =
-      nodeHandle_.advertise<sensor_msgs::PointCloud2>("human_esdf_pointcloud",
+      nh_private_.advertise<sensor_msgs::PointCloud2>("human_esdf_pointcloud",
                                                       1, false);
   combined_esdf_pointcloud_publisher_ =
-      nodeHandle_.advertise<sensor_msgs::PointCloud2>(
+      nh_private_.advertise<sensor_msgs::PointCloud2>(
           "combined_esdf_pointcloud", 1, false);
   human_map_slice_publisher_ =
-      nodeHandle_.advertise<nvblox_msgs::DistanceMapSlice>("human_map_slice", 1,
+      nh_private_.advertise<nvblox_msgs::DistanceMapSlice>("human_map_slice", 1,
                                                            false);
   combined_map_slice_publisher_ =
-      nodeHandle_.advertise<nvblox_msgs::DistanceMapSlice>("combined_map_slice",
+      nh_private_.advertise<nvblox_msgs::DistanceMapSlice>("combined_map_slice",
                                                            1, false);
-  depth_frame_overlay_publisher_ = nodeHandle_.advertise<sensor_msgs::Image>(
+  depth_frame_overlay_publisher_ = nh_private_.advertise<sensor_msgs::Image>(
       "depth_frame_overlay", 1, false);
-  color_frame_overlay_publisher_ = nodeHandle_.advertise<sensor_msgs::Image>(
+  color_frame_overlay_publisher_ = nh_private_.advertise<sensor_msgs::Image>(
       "color_frame_overlay", 1, false);
 }
 
 void NvbloxHumanNode::setupTimers() {
-  human_occupancy_decay_timer_ = nodeHandle_.createWallTimer(
-      ros::WallDuration(1.0 / human_occupancy_decay_rate_hz_),
-      &NvbloxHumanNode::decayHumanOccupancy, this);
-  human_esdf_processing_timer_ = nodeHandle_.createWallTimer(
-      ros::WallDuration(1.0 / human_esdf_update_rate_hz_),
-      &NvbloxHumanNode::processHumanEsdf, this);
+  {
+    ros::TimerOptions timer_options(
+        ros::Duration(1.0 / human_occupancy_decay_rate_hz_),
+        boost::bind(&NvbloxHumanNode::decayHumanOccupancy, this, _1),
+        &processing_queue_);
+    human_occupancy_decay_timer_ = nh_private_.createTimer(timer_options);
+  }
+  {
+    ros::TimerOptions timer_options(
+        ros::Duration(1.0 / human_esdf_update_rate_hz_),
+        boost::bind(&NvbloxHumanNode::processHumanEsdf, this, _1),
+        &processing_queue_);
+    human_esdf_processing_timer_ = nh_private_.createTimer(timer_options);
+  }
 }
 
 void NvbloxHumanNode::depthPlusMaskImageCallback(
@@ -179,10 +185,6 @@ void NvbloxHumanNode::depthPlusMaskImageCallback(
     const sensor_msgs::CameraInfo::ConstPtr& camera_info_msg,
     const sensor_msgs::ImageConstPtr& mask_img_ptr,
     const sensor_msgs::CameraInfo::ConstPtr& mask_camera_info_msg) {
-  /*
-  printMessageArrivalStatistics(
-    *depth_img_ptr, "Depth plus Mask Statistics",
-    &depth_frame_statistics_);*/
   pushMessageOntoQueue<ImageSegmentationMaskMsgTuple>(
       std::make_tuple(depth_img_ptr, camera_info_msg, mask_img_ptr,
                       mask_camera_info_msg),
@@ -194,10 +196,6 @@ void NvbloxHumanNode::colorPlusMaskImageCallback(
     const sensor_msgs::CameraInfo::ConstPtr& camera_info_msg,
     const sensor_msgs::ImageConstPtr& mask_img_ptr,
     const sensor_msgs::CameraInfo::ConstPtr& mask_camera_info_msg) {
-  /*
-  printMessageArrivalStatistics(
-    *color_img_ptr, "Color plus Mask Statistics",
-    &rgb_frame_statistics_);*/
   pushMessageOntoQueue<ImageSegmentationMaskMsgTuple>(
       std::make_tuple(color_img_ptr, camera_info_msg, mask_img_ptr,
                       mask_camera_info_msg),
@@ -386,7 +384,8 @@ bool NvbloxHumanNode::processColorImage(
   return true;
 }
 
-void NvbloxHumanNode::processHumanEsdf(const ros::WallTimerEvent& /*event*/) {
+void NvbloxHumanNode::processHumanEsdf(const ros::TimerEvent& /*event*/) {
+  std::unique_lock<std::mutex> lock(map_mutex_);
   timing::Timer ros_total_timer("ros/total");
   timing::Timer ros_human_total_timer("ros/humans");
 
@@ -496,7 +495,8 @@ void NvbloxHumanNode::processHumanEsdf(const ros::WallTimerEvent& /*event*/) {
 }
 
 void NvbloxHumanNode::decayHumanOccupancy(
-    const ros::WallTimerEvent& /*event*/) {
+    const ros::TimerEvent& /*event*/) {
+  std::unique_lock<std::mutex> lock(map_mutex_);
   human_mapper_->decayOccupancy();
 }
 

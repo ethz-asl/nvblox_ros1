@@ -18,11 +18,11 @@
 #ifndef NVBLOX_ROS__IMPL__NVBLOX_NODE_IMPL_HPP_
 #define NVBLOX_ROS__IMPL__NVBLOX_NODE_IMPL_HPP_
 
-#include <nvblox/utils/timing.h>
-
 #include <deque>
 #include <string>
 #include <vector>
+
+#include <nvblox/utils/timing.h>
 
 namespace nvblox {
 
@@ -68,7 +68,7 @@ void NvbloxNode::processMessageQueue(
   if (it_first_valid != queue_ptr->end()) {
     // Actually erase from the beginning of the queue.
     queue_ptr->erase(queue_ptr->begin(), ++it_last_valid);
-    // Warn user if we're loosing messages unprocessed
+    // Warn user if we're losing unprocessed messages
     const int num_messages_deleted = it_last_valid - queue_ptr->begin();
     const int num_messages_processed = items_to_process.size();
     if (num_messages_deleted > num_messages_processed) {
@@ -91,7 +91,8 @@ void NvbloxNode::processMessageQueue(
   }
 
   // nvblox statistics
-  ROS_INFO_STREAM("Timing statistics: \n" << nvblox::timing::Timing::Print());
+  ROS_INFO_STREAM_THROTTLE(10, "Timing statistics: \n"
+                                   << nvblox::timing::Timing::Print());
 }
 
 template <typename MessageType>
@@ -108,7 +109,7 @@ void NvbloxNode::pushMessageOntoQueue(MessageType message,
 
 template <typename MessageType>
 inline void NvbloxNode::limitQueueSizeByDeletingOldestMessages(
-    const int max_num_messages, const std::string& queue_name,
+    const size_t max_num_messages, const std::string& queue_name,
     std::deque<MessageType>* queue_ptr, std::mutex* queue_mutex_ptr) {
   // Delete extra elements in the queue.
   timing::Timer ros_total_timer("ros/total");
@@ -122,29 +123,6 @@ inline void NvbloxNode::limitQueueSizeByDeletingOldestMessages(
                                << " messages.");
   }
 }
-/*
-template<typename MessageType>
-void NvbloxNode::printMessageArrivalStatistics(
-  const MessageType & message, const std::string & output_prefix,
-  libstatistics_collector::topic_statistics_collector::
-  ReceivedMessagePeriodCollector<MessageType> * statistics_collector)
-{
-  // Calculate statistics
-  statistics_collector->OnMessageReceived(
-    message,
-    ros::Time::now().toNSec());
-  // Print statistics
-  constexpr int kPublishPeriodMs = 10000;
-  auto & clk = *get_clock();
-
-  ROS_INFO_STREAM_THROTTLE(clk, kPublishPeriodMs,
-    output_prefix << ": \n" <<
-      libstatistics_collector::moving_average_statistics::
-      StatisticsDataToString(
-      statistics_collector->GetStatisticsResults()));
-
-}
-*/
 
 }  // namespace nvblox
 

@@ -18,13 +18,6 @@
 #ifndef NVBLOX_ROS__NVBLOX_NODE_HPP_
 #define NVBLOX_ROS__NVBLOX_NODE_HPP_
 
-#include <nvblox/nvblox.h>
-
-#include <message_filters/subscriber.h>
-#include <message_filters/sync_policies/approximate_time.h>
-#include <message_filters/sync_policies/exact_time.h>
-#include <message_filters/synchronizer.h>
-
 #include <chrono>
 #include <deque>
 #include <functional>
@@ -33,6 +26,10 @@
 #include <string>
 #include <utility>
 
+#include <message_filters/subscriber.h>
+#include <message_filters/sync_policies/approximate_time.h>
+#include <message_filters/sync_policies/exact_time.h>
+#include <message_filters/synchronizer.h>
 #include <nvblox_msgs/FilePath.h>
 #include <ros/node_handle.h>
 #include <ros/publisher.h>
@@ -44,6 +41,8 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <std_msgs/String.h>
 #include <visualization_msgs/Marker.h>
+
+#include <nvblox/nvblox.h>
 
 #include "nvblox_ros/conversions/esdf_slice_conversions.hpp"
 #include "nvblox_ros/conversions/image_conversions.hpp"
@@ -57,11 +56,11 @@ namespace nvblox {
 
 class NvbloxNode {
  public:
-  explicit NvbloxNode(ros::NodeHandle& nodeHandle);
-  virtual ~NvbloxNode() = default;
+  explicit NvbloxNode(ros::NodeHandle& nh, ros::NodeHandle& nh_private);
+  virtual ~NvbloxNode();
 
   // Setup. These are called by the constructor.
-  bool getParameters();
+  void getParameters();
   void subscribeToTopics();
   void advertiseTopics();
   void advertiseServices();
@@ -126,12 +125,6 @@ class NvbloxNode {
   void pushMessageOntoQueue(MessageType message,
                             std::deque<MessageType>* queue_ptr,
                             std::mutex* queue_mutex_ptr);
-  /*
-  template<typename MessageType>
-  void printMessageArrivalStatistics(
-    const MessageType & message, const std::string & output_prefix,
-    libstatistics_collector::topic_statistics_collector::
-    ReceivedMessagePeriodCollector<MessageType> * statistics_collector);*/
 
   // Used internally to unify processing of queues that process a message and a
   // matching transform.
@@ -161,10 +154,19 @@ class NvbloxNode {
 
   template <typename MessageType>
   void limitQueueSizeByDeletingOldestMessages(
-      const int max_num_messages, const std::string& queue_name,
+      const size_t max_num_messages, const std::string& queue_name,
       std::deque<MessageType>* queue_ptr, std::mutex* queue_mutex_ptr);
 
-  // ROS publishers and subscribers
+  // ROS publishers and subscribers and misc
+  // Node Handles
+  ros::NodeHandle nh_;
+  ros::NodeHandle nh_private_;
+
+  // Callback queue for processing. All subs run on default thread but heavy
+  // lifting is on the processing thread instead. This keeps pub/sub pretty
+  // clean (main thread) and only the timers have to be moved to this.
+  ros::CallbackQueue processing_queue_;
+  ros::AsyncSpinner processing_spinner_;
 
   // Transformer to handle... everything, let's be honest.
   Transformer transformer_;
@@ -183,9 +185,6 @@ class NvbloxNode {
   std::shared_ptr<message_filters::Synchronizer<time_policy_t>> timesync_color_;
   message_filters::Subscriber<sensor_msgs::Image> color_sub_;
   message_filters::Subscriber<sensor_msgs::CameraInfo> color_camera_info_sub_;
-
-  // Ros handle
-  ros::NodeHandle nodeHandle_;
 
   // Pointcloud sub.
   ros::Subscriber pointcloud_sub_;
@@ -217,28 +216,18 @@ class NvbloxNode {
   ros::Timer clear_outside_radius_timer_;
 
   // ROS & nvblox settings
-
-  // Topic Names
-  std::string depth_image_topic_name_ = "null";
-  std::string depth_image_camera_info_topic_name_ = "null";
-
-  std::string color_image_topic_name_ = "null";
-  std::string color_image_camera_info_topic_name_ = "null";
-
-  std::string pointcloud_topic_name_ = "null";
-
   float voxel_size_ = 0.05f;
-  bool esdf_2d_ = true;
-  bool esdf_distance_slice_ = true;
+  bool esdf_2d_ = false;
+  bool esdf_distance_slice_ = false;
   float esdf_slice_height_ = 1.0f;
   ProjectiveLayerType static_projective_layer_type_ =
       ProjectiveLayerType::kTsdf;
-  bool is_realsense_data_ = true;
+  bool is_realsense_data_ = false;
 
   // Toggle parameters
-  bool use_depth_ = false;
-  bool use_lidar_ = true;
-  bool use_color_ = false;
+  bool use_depth_ = true;
+  bool use_lidar_ = false;
+  bool use_color_ = true;
   bool compute_esdf_ = true;
   bool compute_mesh_ = true;
 
@@ -255,13 +244,13 @@ class NvbloxNode {
   float esdf_2d_max_height_ = 1.0f;
 
   // Slice visualization params
-  std::string slice_visualization_attachment_frame_id_ = "lidar";
+  std::string slice_visualization_attachment_frame_id_ = "base_link";
   float slice_visualization_side_length_ = 10.0f;
 
   // ROS settings & update throttles
   std::string global_frame_ = "map";
   /// Pose frame to use if using transform topics.
-  std::string pose_frame_ = "lidar";
+  std::string pose_frame_ = "base_link";
   float max_depth_update_hz_ = 10.0f;
   float max_color_update_hz_ = 5.0f;
   float max_lidar_update_hz_ = 10.0f;
@@ -299,19 +288,6 @@ class NvbloxNode {
   DepthImage depth_image_;
   DepthImage pointcloud_image_;
 
-  /*
-  // Message statistics (useful for debugging)
-  libstatistics_collector::topic_statistics_collector::
-  ReceivedMessagePeriodCollector<sensor_msgs::Image>
-  depth_frame_statistics_;
-  libstatistics_collector::topic_statistics_collector::
-  ReceivedMessagePeriodCollector<sensor_msgs::Image>
-  rgb_frame_statistics_;
-  libstatistics_collector::topic_statistics_collector::
-  ReceivedMessagePeriodCollector<sensor_msgs::PointCloud2>
-  pointcloud_frame_statistics_;
-  */
-
   // State for integrators running at various speeds.
   ros::Time last_depth_update_time_;
   ros::Time last_color_update_time_;
@@ -333,6 +309,8 @@ class NvbloxNode {
   std::mutex depth_queue_mutex_;
   std::mutex color_queue_mutex_;
   std::mutex pointcloud_queue_mutex_;
+  // Safety check for only touching the map with one thread at a time.
+  std::mutex map_mutex_;
 
   // Keeps track of the mesh blocks deleted such that we can publish them for
   // deletion in the rviz plugin

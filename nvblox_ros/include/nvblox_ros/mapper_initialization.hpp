@@ -18,30 +18,16 @@
 #ifndef NVBLOX_ROS__MAPPER_INITIALIZATION_HPP_
 #define NVBLOX_ROS__MAPPER_INITIALIZATION_HPP_
 
-#include <nvblox/mapper/mapper.h>
-
 #include <string>
 
 #include <ros/ros.h>
 
-#include "nvblox_ros/utils.hpp"
-
 namespace nvblox {
-/*
-void declareMapperParameters(const std::string & mapper_name, ros::NodeHandle&
-nodeHandle);
-*/
-template <typename T>
-void set_mapper_parameter(const std::string& mapper_name,
-                          const std::string& parameter_name,
-                          std::function<void(T)> parameter_setter,
-                          ros::NodeHandle& nodeHandle);
 
-bool initializeMapper(const std::string& mapper_name, Mapper* mapper_ptr,
-                      ros::NodeHandle& nodeHandle);
+class Mapper;
+
+void initializeMapper(Mapper* mapper_ptr, ros::NodeHandle& nh);
 
 }  // namespace nvblox
-
-#include "nvblox_ros/impl/mapper_initialization_impl.hpp"
 
 #endif  // NVBLOX_ROS__MAPPER_INITIALIZATION_HPP_

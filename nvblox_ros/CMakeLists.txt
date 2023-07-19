@@ -128,7 +128,7 @@ target_include_directories(${PROJECT_NAME}_lib PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
   ${catkin_INCLUDE_DIRS})
-target_include_directories(${PROJECT_NAME}_lib BEFORE PRIVATE
+target_include_directories(${PROJECT_NAME}_lib SYSTEM BEFORE PRIVATE
   $<TARGET_PROPERTY:nvblox::nvblox_eigen,INTERFACE_INCLUDE_DIRECTORIES>)
 
 

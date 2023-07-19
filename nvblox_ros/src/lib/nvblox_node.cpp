@@ -15,12 +15,6 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#include "nvblox_ros/nvblox_node.hpp"
-
-#include <nvblox/io/mesh_io.h>
-#include <nvblox/io/pointcloud_io.h>
-#include <nvblox/utils/timing.h>
-
 #include <limits>
 #include <memory>
 #include <mutex>
@@ -28,19 +22,24 @@
 #include <utility>
 #include <vector>
 
+#include <nvblox/io/mesh_io.h>
+#include <nvblox/io/pointcloud_io.h>
+#include <nvblox/utils/timing.h>
+
 #include "nvblox_ros/transformer.hpp"
 #include "nvblox_ros/visualization.hpp"
 
+#include "nvblox_ros/nvblox_node.hpp"
+
 namespace nvblox {
 
-NvbloxNode::NvbloxNode(ros::NodeHandle& nodeHandle)
-    : nodeHandle_(nodeHandle), transformer_(nodeHandle) {
+NvbloxNode::NvbloxNode(ros::NodeHandle& nh, ros::NodeHandle& nh_private)
+    : nh_(nh),
+      nh_private_(nh_private),
+      processing_spinner_(1, &processing_queue_),
+      transformer_(nh) {
   // Get parameters first (stuff below depends on parameters)
-  if (!getParameters()) {
-    ROS_ERROR(
-        "General Parameter reading is unsuccessful. Shutting down the node.");
-    ros::requestShutdown();
-  }
+  getParameters();
 
   // Set the transformer settings.
   transformer_.set_global_frame(global_frame_);
@@ -52,25 +51,17 @@ NvbloxNode::NvbloxNode(ros::NodeHandle& nodeHandle)
   // - Map layers
   // - Integrators
   const std::string mapper_name = "mapper";
-  // declareMapperParameters(mapper_name, this);
+
   mapper_ = std::make_shared<Mapper>(voxel_size_, MemoryType::kDevice,
                                      static_projective_layer_type_);
 
-  if (!initializeMapper(mapper_name, mapper_.get(), nodeHandle_)) {
-    ROS_ERROR("Mapper initialization is unsuccessful. Shutting down the node.");
-    ros::requestShutdown();
-  }
+  initializeMapper(mapper_.get(), nh_private_);
 
   // Setup interactions with ROS
   subscribeToTopics();
   setupTimers();
   advertiseTopics();
   advertiseServices();
-
-  // Start the message statistics
-  // depth_frame_statistics_.Start();
-  // rgb_frame_statistics_.Start();
-  // pointcloud_frame_statistics_.Start();
 
   ROS_INFO_STREAM("Started up nvblox node in frame "
                   << global_frame_ << " and voxel size " << voxel_size_);
@@ -79,13 +70,23 @@ NvbloxNode::NvbloxNode(ros::NodeHandle& nodeHandle)
   last_depth_update_time_ = ros::Time(0.0);
   last_color_update_time_ = ros::Time(0.0);
   last_lidar_update_time_ = ros::Time(0.0);
+
+  // Start the processing spinner now that everything is set up.
+  processing_spinner_.start();
 }
 
-bool NvbloxNode::getParameters() {
-  ROS_INFO_STREAM("NvbloxNode::getParameters()");
-  bool success = true;
+NvbloxNode::~NvbloxNode() {
+  // Need to explicitly delete these or there's a segfault on exit :(
+  timesync_depth_.reset();
+  timesync_color_.reset();
+}
+
+void NvbloxNode::getParameters() {
+  ROS_INFO_STREAM("Getting parameters from parameter server.");
+
+  // Get the type of layer to use.
   bool is_occupancy = false;
-  success &= nodeHandle_.getParam("use_static_occupancy_layer", is_occupancy);
+  nh_private_.param("use_static_occupancy_layer", is_occupancy, is_occupancy);
 
   if (is_occupancy) {
     static_projective_layer_type_ = ProjectiveLayerType::kOccupancy;
@@ -100,68 +101,63 @@ bool NvbloxNode::getParameters() {
   }
 
   // Declare & initialize the parameters.
-  success &=
-      nodeHandle_.getParam("depth_image_topic_name", depth_image_topic_name_);
-  success &= nodeHandle_.getParam("depth_image_camera_info_topic_name",
-                                  depth_image_camera_info_topic_name_);
-  success &=
-      nodeHandle_.getParam("color_image_topic_name", color_image_topic_name_);
-  success &= nodeHandle_.getParam("color_image_camera_info_topic_name",
-                                  color_image_camera_info_topic_name_);
-  success &=
-      nodeHandle_.getParam("pointcloud_topic_name", pointcloud_topic_name_);
-
-  success &= nodeHandle_.getParam("voxel_size", voxel_size_);
-  success &= nodeHandle_.getParam("global_frame", global_frame_);
-  success &= nodeHandle_.getParam("pose_frame", pose_frame_);
-  success &= nodeHandle_.getParam("is_realsense_data", is_realsense_data_);
-  success &= nodeHandle_.getParam("compute_mesh", compute_mesh_);
-  success &= nodeHandle_.getParam("compute_esdf", compute_esdf_);
-  success &= nodeHandle_.getParam("esdf_2d", esdf_2d_);
-  success &= nodeHandle_.getParam("esdf_distance_slice", esdf_distance_slice_);
-  success &= nodeHandle_.getParam("use_color", use_color_);
-  success &= nodeHandle_.getParam("use_depth", use_depth_);
-  success &= nodeHandle_.getParam("use_lidar", use_lidar_);
-  success &= nodeHandle_.getParam("esdf_slice_height", esdf_slice_height_);
-  success &= nodeHandle_.getParam("esdf_2d_min_height", esdf_2d_min_height_);
-  success &= nodeHandle_.getParam("esdf_2d_max_height", esdf_2d_max_height_);
-  success &= nodeHandle_.getParam("lidar_width", lidar_width_);
-  success &= nodeHandle_.getParam("lidar_height", lidar_width_);
-  success &=
-      nodeHandle_.getParam("lidar_vertical_fov_deg", lidar_vertical_fov_deg_);
-  success &= nodeHandle_.getParam("slice_visualization_attachment_frame_id",
-                                  slice_visualization_attachment_frame_id_);
-  success &= nodeHandle_.getParam("slice_visualization_side_length",
-                                  slice_visualization_side_length_);
-  success &= nodeHandle_.getParam("max_depth_update_hz", max_depth_update_hz_);
-  success &= nodeHandle_.getParam("max_color_update_hz", max_color_update_hz_);
-  success &= nodeHandle_.getParam("max_lidar_update_hz", max_lidar_update_hz_);
-  success &= nodeHandle_.getParam("mesh_update_rate_hz", mesh_update_rate_hz_);
-  success &= nodeHandle_.getParam("esdf_update_rate_hz", esdf_update_rate_hz_);
-  success &= nodeHandle_.getParam("occupancy_publication_rate_hz",
-                                  occupancy_publication_rate_hz_);
-  success &= nodeHandle_.getParam("max_poll_rate_hz", max_poll_rate_hz_);
-  success &= nodeHandle_.getParam("maximum_sensor_message_queue_length",
-                                  maximum_sensor_message_queue_length_);
-  success &=
-      nodeHandle_.getParam("map_clearing_radius_m", map_clearing_radius_m_);
-  success &=
-      nodeHandle_.getParam("map_clearing_frame_id", map_clearing_frame_id_);
-  success &= nodeHandle_.getParam("clear_outside_radius_rate_hz",
-                                  clear_outside_radius_rate_hz_);
-
-  if (success) {
-    ROS_INFO("Successfully read general parameters from the parameter server.");
-  } else {
-    ROS_ERROR("Failed to get general parameters from the parameter server.");
-  }
-
-  return success;
+  nh_private_.param("voxel_size", voxel_size_, voxel_size_);
+  nh_private_.param("global_frame", global_frame_, global_frame_);
+  nh_private_.param("pose_frame", pose_frame_, pose_frame_);
+  nh_private_.param("is_realsense_data", is_realsense_data_,
+                    is_realsense_data_);
+  nh_private_.param("compute_mesh", compute_mesh_, compute_mesh_);
+  nh_private_.param("compute_esdf", compute_esdf_, compute_esdf_);
+  nh_private_.param("esdf_2d", esdf_2d_, esdf_2d_);
+  nh_private_.param("esdf_distance_slice", esdf_distance_slice_,
+                    esdf_distance_slice_);
+  nh_private_.param("use_color", use_color_, use_color_);
+  nh_private_.param("use_depth", use_depth_, use_depth_);
+  nh_private_.param("use_lidar", use_lidar_, use_lidar_);
+  nh_private_.param("esdf_slice_height", esdf_slice_height_,
+                    esdf_slice_height_);
+  nh_private_.param("esdf_2d_min_height", esdf_2d_min_height_,
+                    esdf_2d_min_height_);
+  nh_private_.param("esdf_2d_max_height", esdf_2d_max_height_,
+                    esdf_2d_max_height_);
+  nh_private_.param("lidar_width", lidar_width_, lidar_width_);
+  nh_private_.param("lidar_height", lidar_width_, lidar_width_);
+  nh_private_.param("lidar_vertical_fov_deg", lidar_vertical_fov_deg_,
+                    lidar_vertical_fov_deg_);
+  nh_private_.param("slice_visualization_attachment_frame_id",
+                    slice_visualization_attachment_frame_id_,
+                    slice_visualization_attachment_frame_id_);
+  nh_private_.param("slice_visualization_side_length",
+                    slice_visualization_side_length_,
+                    slice_visualization_side_length_);
+  nh_private_.param("max_depth_update_hz", max_depth_update_hz_,
+                    max_depth_update_hz_);
+  nh_private_.param("max_color_update_hz", max_color_update_hz_,
+                    max_color_update_hz_);
+  nh_private_.param("max_lidar_update_hz", max_lidar_update_hz_,
+                    max_lidar_update_hz_);
+  nh_private_.param("mesh_update_rate_hz", mesh_update_rate_hz_,
+                    mesh_update_rate_hz_);
+  nh_private_.param("esdf_update_rate_hz", esdf_update_rate_hz_,
+                    esdf_update_rate_hz_);
+  nh_private_.param("occupancy_publication_rate_hz",
+                    occupancy_publication_rate_hz_,
+                    occupancy_publication_rate_hz_);
+  nh_private_.param("max_poll_rate_hz", max_poll_rate_hz_, max_poll_rate_hz_);
+  nh_private_.param("maximum_sensor_message_queue_length",
+                    maximum_sensor_message_queue_length_,
+                    maximum_sensor_message_queue_length_);
+  nh_private_.param("map_clearing_radius_m", map_clearing_radius_m_,
+                    map_clearing_radius_m_);
+  nh_private_.param("map_clearing_frame_id", map_clearing_frame_id_,
+                    map_clearing_frame_id_);
+  nh_private_.param("clear_outside_radius_rate_hz",
+                    clear_outside_radius_rate_hz_,
+                    clear_outside_radius_rate_hz_);
 }
 
 void NvbloxNode::subscribeToTopics() {
-  ROS_INFO_STREAM("NvbloxNode::subscribeToTopics()");
-  constexpr int kQueueSize = 10;
+  ROS_INFO_STREAM("Subscribing to topics.");
 
   if (!use_depth_ && !use_lidar_) {
     ROS_WARN(
@@ -171,13 +167,14 @@ void NvbloxNode::subscribeToTopics() {
 
   if (use_depth_) {
     // Subscribe to synchronized depth + cam_info topics
-
-    depth_sub_.subscribe(nodeHandle_, depth_image_topic_name_, 20);
-    depth_camera_info_sub_.subscribe(nodeHandle_,
-                                     depth_image_camera_info_topic_name_, 20);
+    depth_sub_.subscribe(nh_, "depth/image",
+                         maximum_sensor_message_queue_length_);
+    depth_camera_info_sub_.subscribe(nh_, "depth/camera_info",
+                                     maximum_sensor_message_queue_length_);
 
     timesync_depth_.reset(new message_filters::Synchronizer<time_policy_t>(
-        time_policy_t(kQueueSize), depth_sub_, depth_camera_info_sub_));
+        time_policy_t(maximum_sensor_message_queue_length_), depth_sub_,
+        depth_camera_info_sub_));
     timesync_depth_->registerCallback(std::bind(&NvbloxNode::depthImageCallback,
                                                 this, std::placeholders::_1,
                                                 std::placeholders::_2));
@@ -185,12 +182,14 @@ void NvbloxNode::subscribeToTopics() {
 
   if (use_color_) {
     // Subscribe to synchronized color + cam_info topics
-    color_sub_.subscribe(nodeHandle_, color_image_topic_name_, 20);
-    color_camera_info_sub_.subscribe(nodeHandle_,
-                                     color_image_camera_info_topic_name_, 20);
+    color_sub_.subscribe(nh_, "color/image",
+                         maximum_sensor_message_queue_length_);
+    color_camera_info_sub_.subscribe(nh_, "color/camera_info",
+                                     maximum_sensor_message_queue_length_);
 
     timesync_color_.reset(new message_filters::Synchronizer<time_policy_t>(
-        time_policy_t(kQueueSize), color_sub_, color_camera_info_sub_));
+        time_policy_t(maximum_sensor_message_queue_length_), color_sub_,
+        color_camera_info_sub_));
     timesync_color_->registerCallback(std::bind(&NvbloxNode::colorImageCallback,
                                                 this, std::placeholders::_1,
                                                 std::placeholders::_2));
@@ -198,80 +197,92 @@ void NvbloxNode::subscribeToTopics() {
 
   if (use_lidar_) {
     // Subscribe to pointclouds.
-    pointcloud_sub_ = nodeHandle_.subscribe(
-        pointcloud_topic_name_, 10, &NvbloxNode::pointcloudCallback, this);
+    pointcloud_sub_ =
+        nh_.subscribe("pointcloud", 10, &NvbloxNode::pointcloudCallback, this);
   }
 
   // Subscribe to transforms.
-  transform_sub_ = nodeHandle_.subscribe("/transform", 10,
-                                         &NvbloxNode::transformCallback, this);
-  pose_sub_ =
-      nodeHandle_.subscribe("/pose", 10, &NvbloxNode::poseCallback, this);
+  transform_sub_ =
+      nh_.subscribe("transform", 10, &NvbloxNode::transformCallback, this);
+  pose_sub_ = nh_.subscribe("pose", 10, &NvbloxNode::poseCallback, this);
 }
 
 void NvbloxNode::advertiseTopics() {
-  ROS_INFO_STREAM("NvbloxNode::advertiseTopics()");
-
-  mesh_publisher_ = nodeHandle_.advertise<nvblox_msgs::Mesh>("mesh", 1, false);
-  esdf_pointcloud_publisher_ = nodeHandle_.advertise<sensor_msgs::PointCloud2>(
+  mesh_publisher_ = nh_private_.advertise<nvblox_msgs::Mesh>("mesh", 1, false);
+  esdf_pointcloud_publisher_ = nh_private_.advertise<sensor_msgs::PointCloud2>(
       "esdf_pointcloud", 1, false);
-  map_slice_publisher_ = nodeHandle_.advertise<nvblox_msgs::DistanceMapSlice>(
+  map_slice_publisher_ = nh_private_.advertise<nvblox_msgs::DistanceMapSlice>(
       "map_slice", 1, false);
   mesh_marker_publisher_ =
-      nodeHandle_.advertise<visualization_msgs::MarkerArray>("mesh_marker", 1,
+      nh_private_.advertise<visualization_msgs::MarkerArray>("mesh_marker", 1,
                                                              false);
-  slice_bounds_publisher_ = nodeHandle_.advertise<visualization_msgs::Marker>(
+  slice_bounds_publisher_ = nh_private_.advertise<visualization_msgs::Marker>(
       "map_slice_bounds", 1, false);
   occupancy_publisher_ =
-      nodeHandle_.advertise<sensor_msgs::PointCloud2>("occupancy", 1, false);
+      nh_private_.advertise<sensor_msgs::PointCloud2>("occupancy", 1, false);
 }
 
 void NvbloxNode::advertiseServices() {
-  ROS_INFO_STREAM("NvbloxNode::advertiseServices()");
-
   save_ply_service_ =
-      nodeHandle_.advertiseService("save_ply", &NvbloxNode::savePly, this);
+      nh_private_.advertiseService("save_ply", &NvbloxNode::savePly, this);
   save_map_service_ =
-      nodeHandle_.advertiseService("save_map", &NvbloxNode::saveMap, this);
+      nh_private_.advertiseService("save_map", &NvbloxNode::saveMap, this);
   load_map_service_ =
-      nodeHandle_.advertiseService("load_map", &NvbloxNode::loadMap, this);
+      nh_private_.advertiseService("load_map", &NvbloxNode::loadMap, this);
 }
 
 void NvbloxNode::setupTimers() {
   ROS_INFO_STREAM("NvbloxNode::setupTimers()");
   if (use_depth_) {
-    depth_processing_timer_ =
-        nodeHandle_.createTimer(ros::Duration(1.0 / max_poll_rate_hz_),
-                                &NvbloxNode::processDepthQueue, this);
+    ros::TimerOptions timer_options(
+        ros::Duration(1.0 / max_poll_rate_hz_),
+        boost::bind(&NvbloxNode::processDepthQueue, this, _1),
+        &processing_queue_);
+
+    depth_processing_timer_ = nh_private_.createTimer(timer_options);
   }
   if (use_color_) {
-    color_processing_timer_ =
-        nodeHandle_.createTimer(ros::Duration(1.0 / max_poll_rate_hz_),
-                                &NvbloxNode::processColorQueue, this);
+    ros::TimerOptions timer_options(
+        ros::Duration(1.0 / max_poll_rate_hz_),
+        boost::bind(&NvbloxNode::processColorQueue, this, _1),
+        &processing_queue_);
+    color_processing_timer_ = nh_private_.createTimer(timer_options);
   }
   if (use_lidar_) {
-    pointcloud_processing_timer_ =
-        nodeHandle_.createTimer(ros::Duration(1.0 / max_poll_rate_hz_),
-                                &NvbloxNode::processPointcloudQueue, this);
+    ros::TimerOptions timer_options(
+        ros::Duration(1.0 / max_poll_rate_hz_),
+        boost::bind(&NvbloxNode::processPointcloudQueue, this, _1),
+        &processing_queue_);
+    pointcloud_processing_timer_ = nh_private_.createTimer(timer_options);
   }
-
-  esdf_processing_timer_ =
-      nodeHandle_.createTimer(ros::Duration(1.0 / esdf_update_rate_hz_),
-                              &NvbloxNode::processEsdf, this);
-  mesh_processing_timer_ =
-      nodeHandle_.createTimer(ros::Duration(1.0 / mesh_update_rate_hz_),
-                              &NvbloxNode::processMesh, this);
-
+  if (compute_esdf_) {
+    ros::TimerOptions timer_options(
+        ros::Duration(1.0 / esdf_update_rate_hz_),
+        boost::bind(&NvbloxNode::processEsdf, this, _1), &processing_queue_);
+    esdf_processing_timer_ = nh_private_.createTimer(timer_options);
+  }
+  if (compute_mesh_) {
+    ros::TimerOptions timer_options(
+        ros::Duration(1.0 / mesh_update_rate_hz_),
+        boost::bind(&NvbloxNode::processMesh, this, _1), &processing_queue_);
+    mesh_processing_timer_ =
+        nh_private_.createTimer(ros::Duration(1.0 / mesh_update_rate_hz_),
+                                &NvbloxNode::processMesh, this);
+  }
   if (static_projective_layer_type_ == ProjectiveLayerType::kOccupancy) {
-    occupancy_publishing_timer_ = nodeHandle_.createTimer(
+    ros::TimerOptions timer_options(
         ros::Duration(1.0 / occupancy_publication_rate_hz_),
-        &NvbloxNode::publishOccupancyPointcloud, this);
+        boost::bind(&NvbloxNode::publishOccupancyPointcloud, this, _1),
+        &processing_queue_);
+    occupancy_publishing_timer_ = nh_private_.createTimer(timer_options);
   }
-
   if (map_clearing_radius_m_ > 0.0f) {
-    clear_outside_radius_timer_ = nodeHandle_.createTimer(
+    ros::TimerOptions timer_options(
         ros::Duration(1.0 / clear_outside_radius_rate_hz_),
-        &NvbloxNode::clearMapOutsideOfRadiusOfLastKnownPose, this);
+        boost::bind(&NvbloxNode::clearMapOutsideOfRadiusOfLastKnownPose, this,
+                    _1),
+        &processing_queue_);
+    clear_outside_radius_timer_ = nh_private_.createTimer(timer_options);
   }
 }
 
@@ -288,10 +299,6 @@ void NvbloxNode::poseCallback(
 void NvbloxNode::depthImageCallback(
     const sensor_msgs::ImageConstPtr& depth_img_ptr,
     const sensor_msgs::CameraInfo::ConstPtr& camera_info_msg) {
-  /*
-  printMessageArrivalStatistics(
-    *depth_img_ptr, "Depth Statistics",
-    &depth_frame_statistics_);*/
   pushMessageOntoQueue({depth_img_ptr, camera_info_msg}, &depth_image_queue_,
                        &depth_queue_mutex_);
 }
@@ -299,20 +306,12 @@ void NvbloxNode::depthImageCallback(
 void NvbloxNode::colorImageCallback(
     const sensor_msgs::ImageConstPtr& color_image_ptr,
     const sensor_msgs::CameraInfo::ConstPtr& camera_info_msg) {
-  /*
-  printMessageArrivalStatistics(
-    *color_image_ptr, "Color Statistics",
-    &rgb_frame_statistics_);*/
   pushMessageOntoQueue({color_image_ptr, camera_info_msg}, &color_image_queue_,
                        &color_queue_mutex_);
 }
 
 void NvbloxNode::pointcloudCallback(
     const sensor_msgs::PointCloud2::ConstPtr pointcloud) {
-  /*
-  printMessageArrivalStatistics(
-    *pointcloud, "Pointcloud Statistics",
-    &pointcloud_frame_statistics_);*/
   pushMessageOntoQueue(pointcloud, &pointcloud_queue_,
                        &pointcloud_queue_mutex_);
 }
@@ -371,9 +370,8 @@ void NvbloxNode::processPointcloudQueue(const ros::TimerEvent& /*event*/) {
 }
 
 void NvbloxNode::processEsdf(const ros::TimerEvent& /*event*/) {
-  if (!compute_esdf_) {
-    return;
-  }
+  std::unique_lock<std::mutex> lock(map_mutex_);
+
   const ros::Time timestamp = ros::Time::now();
   timing::Timer ros_total_timer("ros/total");
   timing::Timer ros_esdf_timer("ros/esdf");
@@ -454,9 +452,8 @@ void NvbloxNode::processEsdf(const ros::TimerEvent& /*event*/) {
 }
 
 void NvbloxNode::processMesh(const ros::TimerEvent& /*event*/) {
-  if (!compute_mesh_) {
-    return;
-  }
+  std::unique_lock<std::mutex> lock(map_mutex_);
+
   const ros::Time timestamp = ros::Time::now();
   timing::Timer ros_total_timer("ros/total");
   timing::Timer ros_mesh_timer("ros/mesh");
@@ -571,6 +568,7 @@ bool NvbloxNode::processDepthImage(
   conversions_timer.Stop();
 
   // Integrate
+  std::unique_lock<std::mutex> lock(map_mutex_);
   timing::Timer integration_timer("ros/depth/integrate");
   mapper_->integrateDepth(depth_image_, T_L_C, camera);
   ROS_DEBUG("Depth Camera based depth integration is done.");
@@ -619,6 +617,7 @@ bool NvbloxNode::processColorImage(
   color_convert_timer.Stop();
 
   // Integrate.
+  std::unique_lock<std::mutex> lock(map_mutex_);
   timing::Timer color_integrate_timer("ros/color/integrate");
   mapper_->integrateColor(color_image_, T_L_C, camera);
   color_integrate_timer.Stop();
@@ -669,8 +668,9 @@ bool NvbloxNode::processLidarPointcloud(
                                                     &pointcloud_image_);
   lidar_conversion_timer.Stop();
 
-  timing::Timer lidar_integration_timer("ros/lidar/integration");
+  std::unique_lock<std::mutex> lock(map_mutex_);
 
+  timing::Timer lidar_integration_timer("ros/lidar/integration");
   mapper_->integrateLidarDepth(pointcloud_image_, T_L_C, lidar);
   lidar_integration_timer.Stop();
 
@@ -683,6 +683,7 @@ void NvbloxNode::publishOccupancyPointcloud(const ros::TimerEvent& /*event*/) {
 
   if (occupancy_publisher_.getNumSubscribers() > 0) {
     sensor_msgs::PointCloud2 pointcloud_msg;
+    std::unique_lock<std::mutex> lock(map_mutex_);
     layer_converter_.pointcloudMsgFromLayer(mapper_->occupancy_layer(),
                                             &pointcloud_msg);
     pointcloud_msg.header.frame_id = global_frame_;
@@ -698,6 +699,7 @@ void NvbloxNode::clearMapOutsideOfRadiusOfLastKnownPose(
     Transform T_L_MC;  // MC = map clearing frame
     if (transformer_.lookupTransformToGlobalFrame(map_clearing_frame_id_,
                                                   ros::Time(0), &T_L_MC)) {
+      std::unique_lock<std::mutex> lock(map_mutex_);
       const std::vector<Index3D> blocks_cleared = mapper_->clearOutsideRadius(
           T_L_MC.translation(), map_clearing_radius_m_);
       // We keep track of the deleted blocks for publishing later.
@@ -728,10 +730,12 @@ bool NvbloxNode::savePly(nvblox_msgs::FilePath::Request& request,
   // If we get a full path, then write to that path.
   bool success = false;
   if (ends_with(request.file_path, ".ply")) {
+    std::unique_lock<std::mutex> lock(map_mutex_);
     success =
         io::outputMeshLayerToPly(mapper_->mesh_layer(), request.file_path);
   } else {
     // If we get a partial path then output a bunch of stuff to a folder.
+    std::unique_lock<std::mutex> lock(map_mutex_);
     io::outputVoxelLayerToPly(mapper_->tsdf_layer(),
                               request.file_path + "/ros2_tsdf.ply");
     io::outputVoxelLayerToPly(mapper_->esdf_layer(),
@@ -751,8 +755,7 @@ bool NvbloxNode::savePly(nvblox_msgs::FilePath::Request& request,
 
 bool NvbloxNode::saveMap(nvblox_msgs::FilePath::Request& request,
                          nvblox_msgs::FilePath::Response& response) {
-  std::unique_lock<std::mutex> lock1(depth_queue_mutex_);
-  std::unique_lock<std::mutex> lock2(color_queue_mutex_);
+  std::unique_lock<std::mutex> lock(map_mutex_);
 
   std::string filename = request.file_path;
   if (!ends_with(request.file_path, ".nvblx")) {
@@ -770,8 +773,7 @@ bool NvbloxNode::saveMap(nvblox_msgs::FilePath::Request& request,
 
 bool NvbloxNode::loadMap(nvblox_msgs::FilePath::Request& request,
                          nvblox_msgs::FilePath::Response& response) {
-  std::unique_lock<std::mutex> lock1(depth_queue_mutex_);
-  std::unique_lock<std::mutex> lock2(color_queue_mutex_);
+  std::unique_lock<std::mutex> lock(map_mutex_);
 
   std::string filename = request.file_path;
   if (!ends_with(request.file_path, ".nvblx")) {
