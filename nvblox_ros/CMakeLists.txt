@@ -25,7 +25,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 endif()
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 
 # Default to release build
 if(NOT CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "")
@@ -129,11 +129,11 @@ add_dependencies(${PROJECT_NAME}_lib
   rescan_for_nvblox
 )
 if (${nvblox_FOUND})
-  target_link_libraries(${PROJECT_NAME}_lib 
+  target_link_libraries(${PROJECT_NAME}_lib
     nvblox::nvblox_lib
     nvblox::nvblox_eigen
     ${catkin_LIBRARIES})
-  
+
   get_target_property(CUDA_ARCHS nvblox::nvblox_lib CUDA_ARCHITECTURES)
   set_property(TARGET ${PROJECT_NAME}_lib APPEND PROPERTY CUDA_ARCHITECTURES ${CUDA_ARCHS})
 
@@ -179,13 +179,13 @@ add_dependencies(nvblox_human_node
 
 # # Install includes.
 # install(
-#   DIRECTORY 
+#   DIRECTORY
 #   include/${PROJECT_NAME}/
 #     include/
 #     config
 #     launch
 #     rviz
-#   DESTINATION 
+#   DESTINATION
 #     include
 #     #${CATKIN_PACKAGE_SHARE_DESTINATION}
 # )

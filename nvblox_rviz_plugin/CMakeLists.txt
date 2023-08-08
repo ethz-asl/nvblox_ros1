@@ -18,9 +18,9 @@
 cmake_minimum_required(VERSION 3.5)
 project(nvblox_rviz_plugin)
 
-# Default to C++17
+# Default to C++14 or we get hella warnings.
 if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 17)
+  set(CMAKE_CXX_STANDARD 14)
   set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 endif()
 
@@ -104,7 +104,7 @@ install(
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 
 install(
-  DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/icons" 
+  DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/icons"
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 
 install(

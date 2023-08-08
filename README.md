@@ -3,7 +3,6 @@
 This is the ROS1 wrapper of nvblox, intended to make nvblox usable for the wider robotics community (especially for research).
 This is a work in progress by [Turcan Tuna](https://github.com/tutunarsl) and [Helen Oleynikova](https://github.com/helenol).
 
-This repo is still under construction.
 See the [TODO](TODO.md) list for a complete list.
 
 <div align="center"><img src="resources/isaac_sim_nvblox_humans.gif" width=400px/></div>
@@ -14,7 +13,7 @@ Isaac ROS Nvblox contains ROS 1 packages for 3D reconstruction. The mapping pipe
 
 `nvblox_ros1` builds the reconstructed map in the form of a TSDF (Truncated Signed Distance Function) stored in a 3D voxel grid. This approach is similar to 3D occupancy grid mapping approaches in which occupancy probabilities are stored at each voxel. However, TSDF-based approaches like nvblox store the (signed) distance to the closest surface at each voxel. The surface of the environment can then be extracted as the zero-level set of this voxelized function. Typically, TSDF-based reconstructions provide higher quality surface reconstructions.
 
-In addition to their use in reconstruction, distance fields are also useful for path planning because they provide an immediate means of checking whether potential future robot positions are in collision. 
+In addition to their use in reconstruction, distance fields are also useful for path planning because they provide an immediate means of checking whether potential future robot positions are in collision.
 
 People are common obstacles for mobile robots, and while part of a costmap, people should not be part of the 3D reconstruction.  Planners that provide behavioral awareness by navigating differently depending on their proximity to people, benefit from a costmap for people. Person segmentation is computed using the color image, with the resulting mask applied to the depth image separating depth into scene depth and person depth images. The scene depth image is forwarded to TSDF mapping as explained above, the depth image for people is processed to an occupancy grid map.
 
@@ -53,7 +52,7 @@ This package is designed and tested to be compatible with ROS 1 Noetic running o
 | x86_64   | NVIDIA GPU   | [Ubuntu 20.04+](https://releases.ubuntu.com/20.04/) <br> [CUDA 11.8+](https://developer.nvidia.com/cuda-downloads) |                                                                                                                                                                                         |
 
 # Installation
-There's 2 options: docker 
+There's 2 options: docker
 ## Docker
 
 To simplify development, we strongly recommend using the docker images in [the docker subfolder](./docker/run_docker.sh)
@@ -163,7 +162,7 @@ Find all available ROS 1 parameters [here](./docs/parameters.md).
 Find all ROS 1 subscribers, publishers and services [here](./docs/topics-and-services.md).
 
 ## Troubleshooting
-Currently, the nvblox_ros1 package is only tested on Ubuntu 20.04 with ROS 1 Noetic. 
+Currently, the nvblox_ros1 package is only tested on Ubuntu 20.04 with ROS 1 Noetic.
 
 ## Updates
 
