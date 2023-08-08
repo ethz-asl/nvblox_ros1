@@ -188,8 +188,7 @@ template void LayerConverter::pointcloudMsgFromLayerInAABB<EsdfVoxel>(
 
 template void LayerConverter::pointcloudMsgFromLayerInAABB<OccupancyVoxel>(
     const VoxelBlockLayer<OccupancyVoxel>& layer,
-    const AxisAlignedBoundingBox& aabb,
-    sensor_msgs::PointCloud2* pointcloud);
+    const AxisAlignedBoundingBox& aabb, sensor_msgs::PointCloud2* pointcloud);
 
 }  // namespace conversions
 }  // namespace nvblox

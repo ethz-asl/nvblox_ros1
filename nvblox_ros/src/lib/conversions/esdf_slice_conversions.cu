@@ -22,8 +22,7 @@
 namespace nvblox {
 namespace conversions {
 
-EsdfSliceConverter::EsdfSliceConverter() {cudaStreamCreate(&cuda_stream_);}
-
+EsdfSliceConverter::EsdfSliceConverter() { cudaStreamCreate(&cuda_stream_); }
 
 __global__ void populateSliceFromLayerKernel(
     Index3DDeviceHashMapType<EsdfBlock> block_hash, AxisAlignedBoundingBox aabb,
@@ -70,12 +69,10 @@ __global__ void populateSliceFromLayerKernel(
   image::access(pixel_row, pixel_col, cols, image) = distance;
 }
 
-void EsdfSliceConverter::populateSliceFromLayer(const EsdfLayer& layer,
-                                          const AxisAlignedBoundingBox& aabb,
-                                          float z_slice_height,
-                                          float resolution,
-                                          float unobserved_value,
-                                          Image<float>* image) {
+void EsdfSliceConverter::populateSliceFromLayer(
+    const EsdfLayer& layer, const AxisAlignedBoundingBox& aabb,
+    float z_slice_height, float resolution, float unobserved_value,
+    Image<float>* image) {
   CHECK(image->memory_type() == MemoryType::kDevice ||
         image->memory_type() == MemoryType::kUnified)
       << "Output needs to be accessible on device";
@@ -111,32 +108,30 @@ void EsdfSliceConverter::populateSliceFromLayer(const EsdfLayer& layer,
 }
 
 void EsdfSliceConverter::distanceMapSliceImageFromLayer(
-  const EsdfLayer & layer, float z_slice_level,
-  const AxisAlignedBoundingBox & aabb, Image<float> * map_slice_image_ptr)
-{
+    const EsdfLayer& layer, float z_slice_level,
+    const AxisAlignedBoundingBox& aabb, Image<float>* map_slice_image_ptr) {
   CHECK_NOTNULL(map_slice_image_ptr);
 
   const float voxel_size =
-    layer.block_size() / VoxelBlock<EsdfVoxel>::kVoxelsPerSide;
+      layer.block_size() / VoxelBlock<EsdfVoxel>::kVoxelsPerSide;
   Vector3f bounding_size = aabb.sizes();
   int width = static_cast<int>(std::ceil(bounding_size.x() / voxel_size));
   int height = static_cast<int>(std::ceil(bounding_size.y() / voxel_size));
 
   // Allocate a new image if required
-  if (map_slice_image_ptr->rows() != height || map_slice_image_ptr->cols() != width) {
+  if (map_slice_image_ptr->rows() != height ||
+      map_slice_image_ptr->cols() != width) {
     *map_slice_image_ptr = Image<float>(height, width, MemoryType::kDevice);
   }
 
   // Fill in the float image.
-  populateSliceFromLayer(
-    layer, aabb, z_slice_level, voxel_size,
-    kDistanceMapSliceUnknownValue, map_slice_image_ptr);
+  populateSliceFromLayer(layer, aabb, z_slice_level, voxel_size,
+                         kDistanceMapSliceUnknownValue, map_slice_image_ptr);
 }
 
 void EsdfSliceConverter::distanceMapSliceImageFromLayer(
-  const EsdfLayer & layer, float z_slice_level, Image<float> * map_slice_image_ptr,
-  AxisAlignedBoundingBox * aabb_ptr)
-{
+    const EsdfLayer& layer, float z_slice_level,
+    Image<float>* map_slice_image_ptr, AxisAlignedBoundingBox* aabb_ptr) {
   CHECK_NOTNULL(map_slice_image_ptr);
   CHECK_NOTNULL(aabb_ptr);
   // Calls the AABB version of this function but first calculates the aabb
@@ -145,14 +140,14 @@ void EsdfSliceConverter::distanceMapSliceImageFromLayer(
   *aabb_ptr = getBoundingBoxOfLayerAtHeight(layer, z_slice_level);
 
   // Get the slice image
-  distanceMapSliceImageFromLayer(layer, z_slice_level, *aabb_ptr, map_slice_image_ptr);
+  distanceMapSliceImageFromLayer(layer, z_slice_level, *aabb_ptr,
+                                 map_slice_image_ptr);
 }
 
 void EsdfSliceConverter::distanceMapSliceImageToMsg(
-  const Image<float> & map_slice_image, const AxisAlignedBoundingBox & aabb,
-  float z_slice_level, float voxel_size,
-  nvblox_msgs::DistanceMapSlice * map_slice)
-{
+    const Image<float>& map_slice_image, const AxisAlignedBoundingBox& aabb,
+    float z_slice_level, float voxel_size,
+    nvblox_msgs::DistanceMapSlice* map_slice) {
   CHECK_NOTNULL(map_slice);
 
   // Set up the message
@@ -174,14 +169,12 @@ void EsdfSliceConverter::distanceMapSliceImageToMsg(
 
   // Copy into the message
   checkCudaErrors(
-    cudaMemcpy(
-      map_slice->data.data(), map_slice_image.dataConstPtr(),
-      map_slice_image.numel() * sizeof(float), cudaMemcpyDefault));
+      cudaMemcpy(map_slice->data.data(), map_slice_image.dataConstPtr(),
+                 map_slice_image.numel() * sizeof(float), cudaMemcpyDefault));
 }
 
 AxisAlignedBoundingBox EsdfSliceConverter::getBoundingBoxOfLayerAtHeight(
-  const EsdfLayer & layer, const float z_slice_level)
-{
+    const EsdfLayer& layer, const float z_slice_level) {
   // Get the bounding box of the layer at this height
   // To do this, we get all the block indices, figure out which intersect
   // with our desired height, and select the min and max in the X and Y
@@ -191,13 +184,13 @@ AxisAlignedBoundingBox EsdfSliceConverter::getBoundingBoxOfLayerAtHeight(
   Index3D desired_z_block_index;
   Index3D desired_z_voxel_index;
   getBlockAndVoxelIndexFromPositionInLayer(
-    layer.block_size(), Vector3f(0.0f, 0.0f, z_slice_level),
-    &desired_z_block_index, &desired_z_voxel_index);
+      layer.block_size(), Vector3f(0.0f, 0.0f, z_slice_level),
+      &desired_z_block_index, &desired_z_voxel_index);
 
   // Get a bounding box for the whole layer
   AxisAlignedBoundingBox aabb;
   aabb.setEmpty();
-  for (const Index3D & block_index : layer.getAllBlockIndices()) {
+  for (const Index3D& block_index : layer.getAllBlockIndices()) {
     // Skip all other heights of block.
     if (block_index.z() != desired_z_block_index.z()) {
       continue;
@@ -208,52 +201,45 @@ AxisAlignedBoundingBox EsdfSliceConverter::getBoundingBoxOfLayerAtHeight(
   return aabb;
 }
 
-
 void EsdfSliceConverter::distanceMapSliceFromLayer(
-  const EsdfLayer & layer, float z_slice_level,
-  nvblox_msgs::DistanceMapSlice * map_slice)
-{
+    const EsdfLayer& layer, float z_slice_level,
+    nvblox_msgs::DistanceMapSlice* map_slice) {
   CHECK_NOTNULL(map_slice);
 
   // Get the AABB of the layer
   const AxisAlignedBoundingBox aabb =
-    getBoundingBoxOfLayerAtHeight(layer, z_slice_level);
+      getBoundingBoxOfLayerAtHeight(layer, z_slice_level);
 
   // Get the slice as an image
   Image<float> map_slice_image;
   distanceMapSliceImageFromLayer(layer, z_slice_level, aabb, &map_slice_image);
 
   // Convert slice image to a message
-  distanceMapSliceImageToMsg(
-    map_slice_image, aabb, z_slice_level,
-    layer.voxel_size(), map_slice);
+  distanceMapSliceImageToMsg(map_slice_image, aabb, z_slice_level,
+                             layer.voxel_size(), map_slice);
 }
 
 void EsdfSliceConverter::distanceMapSliceFromLayers(
-  const EsdfLayer & layer_1, const EsdfLayer & layer_2, float z_slice_level,
-  Image<float> * map_slice_image_ptr, AxisAlignedBoundingBox * aabb_ptr)
-{
+    const EsdfLayer& layer_1, const EsdfLayer& layer_2, float z_slice_level,
+    Image<float>* map_slice_image_ptr, AxisAlignedBoundingBox* aabb_ptr) {
   CHECK_NOTNULL(map_slice_image_ptr);
 
   // Combined (enclosing) AABB
   const AxisAlignedBoundingBox aabb_1 =
-    getBoundingBoxOfLayerAtHeight(layer_1, z_slice_level);
+      getBoundingBoxOfLayerAtHeight(layer_1, z_slice_level);
   const AxisAlignedBoundingBox aabb_2 =
-    getBoundingBoxOfLayerAtHeight(layer_2, z_slice_level);
+      getBoundingBoxOfLayerAtHeight(layer_2, z_slice_level);
   *aabb_ptr = aabb_1.merged(aabb_2);
 
   Image<float> map_slice_image_1;
-  distanceMapSliceImageFromLayer(
-    layer_1, z_slice_level, *aabb_ptr,
-    &map_slice_image_1);
-  distanceMapSliceImageFromLayer(
-    layer_2, z_slice_level, *aabb_ptr,
-    map_slice_image_ptr);
+  distanceMapSliceImageFromLayer(layer_1, z_slice_level, *aabb_ptr,
+                                 &map_slice_image_1);
+  distanceMapSliceImageFromLayer(layer_2, z_slice_level, *aabb_ptr,
+                                 map_slice_image_ptr);
 
   // Get the minimal distance between the two slices
   image::elementWiseMinInPlaceGPU(map_slice_image_1, map_slice_image_ptr);
 }
-
 
 // Calling rules:
 // - Should be called with 2D grid of thread-blocks where the total number of
@@ -309,6 +295,10 @@ void EsdfSliceConverter::sliceImageToPointcloud(
     float z_slice_level, float voxel_size,
     sensor_msgs::PointCloud2* pointcloud_msg) {
   CHECK_NOTNULL(pointcloud_msg);
+
+  if (map_slice_image.numel() <= 1) {
+    return;
+  }
 
   // Allocate max space we could take up
   pcl_pointcloud_device_.reserve(map_slice_image.numel());

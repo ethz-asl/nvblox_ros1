@@ -23,17 +23,15 @@ namespace nvblox {
 namespace conversions {
 
 // Convert camera info message to NVBlox camera object
-Camera cameraFromMessage(
-    const sensor_msgs::CameraInfo& camera_info) {
+Camera cameraFromMessage(const sensor_msgs::CameraInfo& camera_info) {
   Camera camera(camera_info.K[0], camera_info.K[4], camera_info.K[2],
                 camera_info.K[5], camera_info.width, camera_info.height);
   return camera;
 }
 
 // Convert image to GPU image
-bool colorImageFromImageMessage(
-    const sensor_msgs::ImageConstPtr& image_msg,
-    ColorImage* color_image) {
+bool colorImageFromImageMessage(const sensor_msgs::ImageConstPtr& image_msg,
+                                ColorImage* color_image) {
   CHECK_NOTNULL(color_image);
 
   // Convert to our color encoding
@@ -49,9 +47,8 @@ bool colorImageFromImageMessage(
 }
 
 // Convert image to GPU image
-bool monoImageFromImageMessage(
-    const sensor_msgs::ImageConstPtr& image_msg,
-    MonoImage* mono_image) {
+bool monoImageFromImageMessage(const sensor_msgs::ImageConstPtr& image_msg,
+                               MonoImage* mono_image) {
   CHECK_NOTNULL(mono_image);
 
   // First check if we actually have a valid image here.
@@ -65,9 +62,9 @@ bool monoImageFromImageMessage(
   return true;
 }
 
-void imageMessageFromDepthImage(
-    const DepthImage& depth_image, const std::string& frame_id,
-    sensor_msgs::Image* image_msg) {
+void imageMessageFromDepthImage(const DepthImage& depth_image,
+                                const std::string& frame_id,
+                                sensor_msgs::Image* image_msg) {
   CHECK_NOTNULL(image_msg);
   size_t image_size =
       depth_image.width() * depth_image.height() * sizeof(float);
@@ -84,9 +81,9 @@ void imageMessageFromDepthImage(
              cudaMemcpyDefault);
 }
 
-void imageMessageFromColorImage(
-    const ColorImage& color_image, const std::string& frame_id,
-    sensor_msgs::Image* image_msg) {
+void imageMessageFromColorImage(const ColorImage& color_image,
+                                const std::string& frame_id,
+                                sensor_msgs::Image* image_msg) {
   CHECK_NOTNULL(image_msg);
   constexpr int num_channels = 4;
   size_t image_size = color_image.width() * color_image.height() *
@@ -111,9 +108,8 @@ struct DivideBy1000 : public thrust::unary_function<uint16_t, float> {
 };
 
 // Convert image to depth frame object
-bool depthImageFromImageMessage(
-    const sensor_msgs::ImageConstPtr& image_msg,
-    DepthImage* depth_image) {
+bool depthImageFromImageMessage(const sensor_msgs::ImageConstPtr& image_msg,
+                                DepthImage* depth_image) {
   CHECK_NOTNULL(depth_image);
   // If the image is a float, we can just copy it over directly.
   // If the image is int16, we need to divide by 1000 to get the correct
@@ -164,5 +160,5 @@ bool depthImageFromImageMessage(
   return true;
 }
 
-} // namespace conversions
+}  // namespace conversions
 }  // namespace nvblox

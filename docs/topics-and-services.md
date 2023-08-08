@@ -59,7 +59,7 @@ Additionally published topics by the `nvblox_human_node`:
 
 Example service calls from the command line:
 ```bash
-ros2 service call /nvblox_node/save_ply nvblox_msgs/srv/FilePath "{file_path: '/home/USERNAME/super_cool_map.ply'}"
-ros2 service call /nvblox_node/save_map nvblox_msgs/srv/FilePath "{file_path: '/home/USERNAME/super_cool_map.nvblx'}"
-ros2 service call /nvblox_node/load_map nvblox_msgs/srv/FilePath "{file_path: '/home/USERNAME/super_cool_map.nvblx'}"
+rosservice call /nvblox_node/save_ply nvblox_msgs/srv/FilePath "{file_path: '/home/$USER/super_cool_map.ply'}"
+rosservice call /nvblox_node/save_map nvblox_msgs/srv/FilePath "{file_path: '/home/$USER/super_cool_map.nvblx'}"
+rosservice call /nvblox_node/load_map nvblox_msgs/srv/FilePath "{file_path: '/home/$USER/super_cool_map.nvblx'}"
 ```

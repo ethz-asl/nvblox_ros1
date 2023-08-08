@@ -42,11 +42,9 @@
   <depend>visualization_msgs</depend>
   <depend>std_srvs</depend>
   <depend>tf2_ros</depend>
-  <depend>tf2_eigen</depend>
   <depend>nvblox</depend>
   <depend>message_filters</depend>
   <depend>cv_bridge</depend>
-  <depend>gflags</depend>
 
   <export>
     <build_type>catkin</build_type>
