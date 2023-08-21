@@ -73,6 +73,13 @@ class NvbloxNode {
   void depthImageCallback2(
       const sensor_msgs::ImageConstPtr& depth_img_ptr,
       const sensor_msgs::CameraInfo::ConstPtr& camera_info_msg);
+  void depthImageCallback3(
+      const sensor_msgs::ImageConstPtr& depth_img_ptr,
+      const sensor_msgs::CameraInfo::ConstPtr& camera_info_msg);
+  void depthImageCallback4(
+      const sensor_msgs::ImageConstPtr& depth_img_ptr,
+      const sensor_msgs::CameraInfo::ConstPtr& camera_info_msg);
+
   void colorImageCallback(
       const sensor_msgs::ImageConstPtr& color_img_ptr,
       const sensor_msgs::CameraInfo::ConstPtr& color_info_msg);
@@ -186,11 +193,19 @@ class NvbloxNode {
   // Depth sub.
   std::shared_ptr<message_filters::Synchronizer<time_policy_t>> timesync_depth_;
   std::shared_ptr<message_filters::Synchronizer<time_policy_t>> timesync_depth2_;
+std::shared_ptr<message_filters::Synchronizer<time_policy_t>> timesync_depth3_;
+  std::shared_ptr<message_filters::Synchronizer<time_policy_t>> timesync_depth4_;
   message_filters::Subscriber<sensor_msgs::Image> depth_sub_;
   message_filters::Subscriber<sensor_msgs::CameraInfo> depth_camera_info_sub_;
 
   message_filters::Subscriber<sensor_msgs::Image> depth_sub2_;
   message_filters::Subscriber<sensor_msgs::CameraInfo> depth_camera_info_sub2_;
+
+  message_filters::Subscriber<sensor_msgs::Image> depth_sub3_;
+  message_filters::Subscriber<sensor_msgs::CameraInfo> depth_camera_info_sub3_;
+
+  message_filters::Subscriber<sensor_msgs::Image> depth_sub4_;
+  message_filters::Subscriber<sensor_msgs::CameraInfo> depth_camera_info_sub4_;
 
   // Color sub
   std::shared_ptr<message_filters::Synchronizer<time_policy_t>> timesync_color_;
@@ -315,25 +330,16 @@ class NvbloxNode {
   std::deque<
       std::pair<sensor_msgs::ImageConstPtr, sensor_msgs::CameraInfo::ConstPtr>>
       depth_image_queue_;
-  std::deque<
-      std::pair<sensor_msgs::ImageConstPtr, sensor_msgs::CameraInfo::ConstPtr>>
-      depth_image_queue2_;
 
   std::deque<
       std::pair<sensor_msgs::ImageConstPtr, sensor_msgs::CameraInfo::ConstPtr>>
       color_image_queue_;
 
-  std::deque<
-      std::pair<sensor_msgs::ImageConstPtr, sensor_msgs::CameraInfo::ConstPtr>>
-      color_image_queue2_;
-
   std::deque<sensor_msgs::PointCloud2::ConstPtr> pointcloud_queue_;
 
   // Image queue mutexes.
   std::mutex depth_queue_mutex_;
-    std::mutex depth_queue_mutex2_;
   std::mutex color_queue_mutex_;
-    std::mutex color_queue_mutex2_;
   std::mutex pointcloud_queue_mutex_;
   // Safety check for only touching the map with one thread at a time.
   std::mutex map_mutex_;

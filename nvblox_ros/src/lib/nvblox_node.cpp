@@ -191,6 +191,33 @@ void NvbloxNode::subscribeToTopics() {
     timesync_depth2_->registerCallback(std::bind(&NvbloxNode::depthImageCallback2,
                                                 this, std::placeholders::_1,
                                                 std::placeholders::_2));
+  
+      // DEPTH THIRD CAMERA
+    depth_sub3_.subscribe(nh_, "depth/image_3",
+                         maximum_sensor_message_queue_length_);
+    depth_camera_info_sub3_.subscribe(nh_, "depth/camera_info_3",
+                                     maximum_sensor_message_queue_length_);
+
+    timesync_depth3_.reset(new message_filters::Synchronizer<time_policy_t>(
+        time_policy_t(maximum_sensor_message_queue_length_), depth_sub3_,
+        depth_camera_info_sub3_));
+    timesync_depth3_->registerCallback(std::bind(&NvbloxNode::depthImageCallback3,
+                                                this, std::placeholders::_1,
+                                                std::placeholders::_2));
+
+    // DEPTH FORTH CAMERA
+    depth_sub4_.subscribe(nh_, "depth/image_4",
+                         maximum_sensor_message_queue_length_);
+    depth_camera_info_sub4_.subscribe(nh_, "depth/camera_info_4",
+                                     maximum_sensor_message_queue_length_);
+
+    timesync_depth4_.reset(new message_filters::Synchronizer<time_policy_t>(
+        time_policy_t(maximum_sensor_message_queue_length_), depth_sub4_,
+        depth_camera_info_sub4_));
+    timesync_depth4_->registerCallback(std::bind(&NvbloxNode::depthImageCallback4,
+                                                this, std::placeholders::_1,
+                                                std::placeholders::_2));
+
   }
 
   if (use_color_) {
@@ -335,7 +362,20 @@ void NvbloxNode::depthImageCallback2(
     const sensor_msgs::CameraInfo::ConstPtr& camera_info_msg) {
   pushMessageOntoQueue({depth_img_ptr, camera_info_msg}, &depth_image_queue_,
                        &depth_queue_mutex_);
-                       //std::cout << "ADDED depth FROM CAM2 " << std::endl;
+}
+
+void NvbloxNode::depthImageCallback3(
+    const sensor_msgs::ImageConstPtr& depth_img_ptr,
+    const sensor_msgs::CameraInfo::ConstPtr& camera_info_msg) {
+  pushMessageOntoQueue({depth_img_ptr, camera_info_msg}, &depth_image_queue_,
+                       &depth_queue_mutex_);
+}
+
+void NvbloxNode::depthImageCallback4(
+    const sensor_msgs::ImageConstPtr& depth_img_ptr,
+    const sensor_msgs::CameraInfo::ConstPtr& camera_info_msg) {
+  pushMessageOntoQueue({depth_img_ptr, camera_info_msg}, &depth_image_queue_,
+                       &depth_queue_mutex_);
 }
 
 void NvbloxNode::colorImageCallback(

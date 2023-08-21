@@ -9,11 +9,17 @@
 
   <node pkg="nvblox_ros" type="nvblox_node" name="nvblox_node" respawn="false" output="screen" >
     <rosparam file="$(arg param_file)"/>
-    <remap from="depth/image" to="/depth_camera_front_upper/depth/image_rect_filtered" />
-    <remap from="depth/camera_info" to="/depth_camera_front_upper/depth/camera_info_filtered" />
+    <remap from="depth/image" to="/depth_camera_front_upper/depth/image_rect_raw" />
+    <remap from="depth/camera_info" to="/depth_camera_front_upper/depth/camera_info" />
 
-    <remap from="depth/image_2" to="/depth_camera_rear_upper/depth/image_rect_filtered" />
-    <remap from="depth/camera_info_2" to="/depth_camera_rear_upper/depth/camera_info_filtered" />
+    <remap from="depth/image_2" to="/depth_camera_rear_upper/depth/image_rect_raw" />
+    <remap from="depth/camera_info_2" to="/depth_camera_rear_upper/depth/camera_info" />
+
+    <remap from="depth/image_3" to="/depth_camera_left/depth/image_rect_raw" />
+    <remap from="depth/camera_info_3" to="/depth_camera_left/depth/camera_info" />
+
+    <remap from="depth/image_4" to="/depth_camera_right/depth/image_rect_raw" />
+    <remap from="depth/camera_info_4" to="/depth_camera_right/depth/camera_info" />
 
     <remap from="color/image" to="/wide_angle_camera_front/image_color" />
     <remap from="color/camera_info" to="/wide_angle_camera_front/camera_info" />
