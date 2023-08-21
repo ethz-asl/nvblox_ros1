@@ -58,7 +58,7 @@ Visualization Manager:
       Class: nvblox_rviz_plugin/NvbloxMesh
       Cut Ceiling: false
       Enabled: true
-      Mesh Color: Normals
+      Mesh Color: Color
       Name: NvbloxMesh
       Queue Size: 10
       Topic: /nvblox_node/mesh
@@ -187,11 +187,9 @@ Visualization Manager:
           Value: true
         RH_thigh_fixed:
           Value: true
-        apriltag_0_size_18cm:
+        aft_mapped:
           Value: true
-        apriltag_0_size_18cm__apriltag_0_size_18cm_link:
-          Value: true
-        apriltag_0_size_18cm__apriltag_0_size_18cm_link__visual__apriltag_0_size_18cm_visual:
+        aft_mapped_to_init_CORRECTED:
           Value: true
         base:
           Value: true
@@ -203,79 +201,125 @@ Visualization Manager:
           Value: true
         bottom_shell:
           Value: true
-        control:
+        camera:
+          Value: true
+        camera_CORRECTED:
+          Value: true
+        camera_head:
+          Value: true
+        camera_head_base:
+          Value: true
+        camera_head_pitch:
+          Value: true
+        camera_init:
+          Value: true
+        camera_init_CORRECTED:
+          Value: true
+        camera_init_GRAVITY_ALIGNED:
+          Value: true
+        camera_left_link:
+          Value: true
+        camera_right_link:
+          Value: true
+        collision_base:
+          Value: true
+        collision_lidar:
           Value: true
         depth_camera_front_lower_camera:
           Value: true
         depth_camera_front_lower_camera_parent:
           Value: true
-        depth_camera_front_lower_color_frame:
-          Value: true
-        depth_camera_front_lower_color_optical_frame:
-          Value: true
         depth_camera_front_lower_depth_frame:
           Value: true
         depth_camera_front_lower_depth_optical_frame:
+          Value: true
+        depth_camera_front_lower_infra1_frame:
+          Value: true
+        depth_camera_front_lower_infra1_optical_frame:
+          Value: true
+        depth_camera_front_lower_infra2_frame:
+          Value: true
+        depth_camera_front_lower_infra2_optical_frame:
           Value: true
         depth_camera_front_upper_camera:
           Value: true
         depth_camera_front_upper_camera_parent:
           Value: true
-        depth_camera_front_upper_color_frame:
-          Value: true
-        depth_camera_front_upper_color_optical_frame:
-          Value: true
         depth_camera_front_upper_depth_frame:
           Value: true
         depth_camera_front_upper_depth_optical_frame:
+          Value: true
+        depth_camera_front_upper_infra1_frame:
+          Value: true
+        depth_camera_front_upper_infra1_optical_frame:
+          Value: true
+        depth_camera_front_upper_infra2_frame:
+          Value: true
+        depth_camera_front_upper_infra2_optical_frame:
           Value: true
         depth_camera_left_camera:
           Value: true
         depth_camera_left_camera_parent:
           Value: true
-        depth_camera_left_color_frame:
-          Value: true
-        depth_camera_left_color_optical_frame:
-          Value: true
         depth_camera_left_depth_frame:
           Value: true
         depth_camera_left_depth_optical_frame:
+          Value: true
+        depth_camera_left_infra1_frame:
+          Value: true
+        depth_camera_left_infra1_optical_frame:
+          Value: true
+        depth_camera_left_infra2_frame:
+          Value: true
+        depth_camera_left_infra2_optical_frame:
           Value: true
         depth_camera_rear_lower_camera:
           Value: true
         depth_camera_rear_lower_camera_parent:
           Value: true
-        depth_camera_rear_lower_color_frame:
-          Value: true
-        depth_camera_rear_lower_color_optical_frame:
-          Value: true
         depth_camera_rear_lower_depth_frame:
           Value: true
         depth_camera_rear_lower_depth_optical_frame:
+          Value: true
+        depth_camera_rear_lower_infra1_frame:
+          Value: true
+        depth_camera_rear_lower_infra1_optical_frame:
+          Value: true
+        depth_camera_rear_lower_infra2_frame:
+          Value: true
+        depth_camera_rear_lower_infra2_optical_frame:
           Value: true
         depth_camera_rear_upper_camera:
           Value: true
         depth_camera_rear_upper_camera_parent:
           Value: true
-        depth_camera_rear_upper_color_frame:
-          Value: true
-        depth_camera_rear_upper_color_optical_frame:
-          Value: true
         depth_camera_rear_upper_depth_frame:
           Value: true
         depth_camera_rear_upper_depth_optical_frame:
+          Value: true
+        depth_camera_rear_upper_infra1_frame:
+          Value: true
+        depth_camera_rear_upper_infra1_optical_frame:
+          Value: true
+        depth_camera_rear_upper_infra2_frame:
+          Value: true
+        depth_camera_rear_upper_infra2_optical_frame:
           Value: true
         depth_camera_right_camera:
           Value: true
         depth_camera_right_camera_parent:
           Value: true
-        depth_camera_right_color_frame:
-          Value: true
-        depth_camera_right_color_optical_frame:
-          Value: true
         depth_camera_right_depth_frame:
           Value: true
         depth_camera_right_depth_optical_frame:
+          Value: true
+        depth_camera_right_infra1_frame:
+          Value: true
+        depth_camera_right_infra1_optical_frame:
+          Value: true
+        depth_camera_right_infra2_frame:
+          Value: true
+        depth_camera_right_infra2_optical_frame:
           Value: true
         docking_socket:
           Value: true
@@ -301,6 +345,54 @@ Visualization Manager:
           Value: true
         docking_station__docking_port_link__visual__docking_port_visual:
           Value: true
+        dummy_post_ftSensr_link:
+          Value: true
+        dynaarm_ELBOW:
+          Value: true
+        dynaarm_END_EFFECTOR:
+          Value: true
+        dynaarm_FOREARM:
+          Value: true
+        dynaarm_FOREARM_realsense_bracelet:
+          Value: true
+        dynaarm_FOREARM_realsense_mount:
+          Value: true
+        dynaarm_FOREARM_wrist1:
+          Value: true
+        dynaarm_REALSENSE_bottom_screw_frame:
+          Value: true
+        dynaarm_REALSENSE_color_frame:
+          Value: true
+        dynaarm_REALSENSE_color_optical_frame:
+          Value: true
+        dynaarm_REALSENSE_depth_frame:
+          Value: true
+        dynaarm_REALSENSE_depth_optical_frame:
+          Value: true
+        dynaarm_REALSENSE_infra_frame:
+          Value: true
+        dynaarm_REALSENSE_infra_optical_frame:
+          Value: true
+        dynaarm_REALSENSE_link:
+          Value: true
+        dynaarm_REALSENSE_lower_mount:
+          Value: true
+        dynaarm_REALSENSE_upper_mount:
+          Value: true
+        dynaarm_SHOULDER:
+          Value: true
+        dynaarm_UPPERARM:
+          Value: true
+        dynaarm_WRIST_1:
+          Value: true
+        dynaarm_WRIST_2:
+          Value: true
+        dynaarm_base:
+          Value: true
+        dynaarm_base_inertia:
+          Value: true
+        dynaarm_interface:
+          Value: true
         face_front:
           Value: true
         face_rear:
@@ -311,137 +403,73 @@ Visualization Manager:
           Value: true
         feetcenter:
           Value: true
-        fire_extinguisher_1_ground_floor:
-          Value: true
-        fire_extinguisher_1_ground_floor__fire_extinguisher_1_link:
-          Value: true
-        fire_extinguisher_1_ground_floor__fire_extinguisher_1_link__visual__fire_extinguisher_1_visual:
-          Value: true
-        fire_extinguisher_2_ground_floor:
-          Value: true
-        fire_extinguisher_2_ground_floor__fire_extinguisher_2_link:
-          Value: true
-        fire_extinguisher_2_ground_floor__fire_extinguisher_2_link__visual__fire_extinguisher_2_visual:
-          Value: true
-        floorplan_tf:
-          Value: true
         footprint:
           Value: true
-        gauge_ground_floor_1:
+        ftSensor:
           Value: true
-        gauge_ground_floor_1__pressure_gauge_501_link:
+        ftSensor_interfacePlate:
           Value: true
-        gauge_ground_floor_1__pressure_gauge_501_link__visual__pressure_gauge_501_visual:
+        ftSensor_interfacePlate2:
           Value: true
-        gauge_maze_exit:
+        ftSensor_link:
           Value: true
-        gauge_maze_exit__pressure_gauge_501_link:
+        gripper_BASE:
           Value: true
-        gauge_maze_exit__pressure_gauge_501_link__visual__pressure_gauge_501_visual:
+        gripper_base:
           Value: true
-        gauge_second_floor_2:
+        gripper_left_coupler:
           Value: true
-        gauge_second_floor_2__pressure_gauge_501_link:
+        gripper_left_driver:
           Value: true
-        gauge_second_floor_2__pressure_gauge_501_link__visual__pressure_gauge_501_visual:
+        gripper_left_follower:
+          Value: true
+        gripper_left_pad:
+          Value: true
+        gripper_left_spring_link:
+          Value: true
+        gripper_right_coupler:
+          Value: true
+        gripper_right_driver:
+          Value: true
+        gripper_right_follower:
+          Value: true
+        gripper_right_pad:
+          Value: true
+        gripper_right_spring_link:
+          Value: true
+        ground_plane:
+          Value: true
+        ground_plane__link:
+          Value: true
+        ground_plane__link__collision__collision:
+          Value: true
+        ground_plane__link__visual__visual:
           Value: true
         hatch_shell:
           Value: true
         hbc_receiver:
           Value: true
-        heat_first_floor_1:
-          Value: true
-        heat_first_floor_1__heat_plate_0.9x0.9_e0.5_link:
-          Value: true
-        heat_first_floor_1__heat_plate_0.9x0.9_e0.5_link__visual__heat_plate_0.9x0.9_e0.5_visual:
-          Value: true
-        heat_first_floor_4:
-          Value: true
-        heat_first_floor_4__heat_plate_0.9x0.9_e0.1_link:
-          Value: true
-        heat_first_floor_4__heat_plate_0.9x0.9_e0.1_link__visual__heat_plate_0.9x0.9_e0.1_visual:
-          Value: true
-        heat_maze_entrance:
-          Value: true
-        heat_maze_entrance__heat_plate_0.15x0.15_e1.0_link:
-          Value: true
-        heat_maze_entrance__heat_plate_0.15x0.15_e1.0_link__visual__heat_plate_0.15x0.15_e1.0_visual:
-          Value: true
         imu_link:
+          Value: true
+        laser_odom:
+          Value: true
+        laser_odom_CORRECTED:
           Value: true
         lidar:
           Value: true
         lidar_parent:
           Value: true
-        linear_gauge_1_ground_floor:
-          Value: true
-        linear_gauge_1_ground_floor__linear_gauge_1_link:
-          Value: true
-        linear_gauge_1_ground_floor__linear_gauge_1_link__visual__linear_gauge_1_visual:
-          Value: true
-        loco_footprint:
-          Value: true
         map:
+          Value: true
+        msf_body_imu_map:
           Value: true
         odom:
           Value: true
-        playground:
+        realsense_base:
           Value: true
-        playground__playground:
+        robotiq_coupler:
           Value: true
-        playground__playground__collision__collision:
-          Value: true
-        playground__playground__visual__visual:
-          Value: true
-        playground__slippery_area:
-          Value: true
-        playground__slippery_area__collision__collision:
-          Value: true
-        playground__slippery_area__visual__visual:
-          Value: true
-        playground__very_slippery_area:
-          Value: true
-        playground__very_slippery_area__collision__collision:
-          Value: true
-        playground__very_slippery_area__visual__visual:
-          Value: true
-        point_cloud_odom:
-          Value: true
-        round_gauge_1_ground_floor:
-          Value: true
-        round_gauge_1_ground_floor__round_gauge_1_link:
-          Value: true
-        round_gauge_1_ground_floor__round_gauge_1_link__visual__round_gauge_1_visual:
-          Value: true
-        round_gauge_2_ground_floor:
-          Value: true
-        round_gauge_2_ground_floor__round_gauge_2_link:
-          Value: true
-        round_gauge_2_ground_floor__round_gauge_2_link__visual__round_gauge_2_visual:
-          Value: true
-        round_gauge_501_ground_floor:
-          Value: true
-        round_gauge_501_ground_floor__pressure_gauge_501_link:
-          Value: true
-        round_gauge_501_ground_floor__pressure_gauge_501_link__visual__pressure_gauge_501_visual:
-          Value: true
-        safety_helmet_1_ground_floor:
-          Value: true
-        safety_helmet_1_ground_floor__safety_helmet_1_link:
-          Value: true
-        safety_helmet_1_ground_floor__safety_helmet_1_link__visual__safety_helmet_1_visual:
-          Value: true
-        square_gauge_1_ground_floor:
-          Value: true
-        square_gauge_1_ground_floor__square_gauge_1_link:
-          Value: true
-        square_gauge_1_ground_floor__square_gauge_1_link__visual__square_gauge_1_visual:
-          Value: true
-        square_gauge_2_ground_floor:
-          Value: true
-        square_gauge_2_ground_floor__square_gauge_2_link:
-          Value: true
-        square_gauge_2_ground_floor__square_gauge_2_link__visual__square_gauge_2_visual:
+        state_msf_body_imu:
           Value: true
         top_shell:
           Value: true
@@ -462,105 +490,6 @@ Visualization Manager:
       Show Axes: true
       Show Names: true
       Tree:
-        map:
-          apriltag_0_size_18cm:
-            apriltag_0_size_18cm__apriltag_0_size_18cm_link:
-              apriltag_0_size_18cm__apriltag_0_size_18cm_link__visual__apriltag_0_size_18cm_visual:
-                {}
-          docking_station:
-            docking_station__apriltag36_11_00000_link:
-              docking_station__apriltag36_11_00000_link__visual__apriltag36_11_00000_visual:
-                {}
-            docking_station__apriltag36_11_00001_link:
-              docking_station__apriltag36_11_00001_link__visual__apriltag36_11_00001_visual:
-                {}
-            docking_station__apriltag36_11_00002_link:
-              docking_station__apriltag36_11_00002_link__visual__apriltag36_11_00002_visual:
-                {}
-            docking_station__apriltag36_11_00003_link:
-              docking_station__apriltag36_11_00003_link__visual__apriltag36_11_00003_visual:
-                {}
-            docking_station__docking_port_link:
-              docking_station__docking_port_link__visual__docking_port_visual:
-                {}
-          fire_extinguisher_1_ground_floor:
-            fire_extinguisher_1_ground_floor__fire_extinguisher_1_link:
-              fire_extinguisher_1_ground_floor__fire_extinguisher_1_link__visual__fire_extinguisher_1_visual:
-                {}
-          fire_extinguisher_2_ground_floor:
-            fire_extinguisher_2_ground_floor__fire_extinguisher_2_link:
-              fire_extinguisher_2_ground_floor__fire_extinguisher_2_link__visual__fire_extinguisher_2_visual:
-                {}
-          floorplan_tf:
-            {}
-          gauge_ground_floor_1:
-            gauge_ground_floor_1__pressure_gauge_501_link:
-              gauge_ground_floor_1__pressure_gauge_501_link__visual__pressure_gauge_501_visual:
-                {}
-          gauge_maze_exit:
-            gauge_maze_exit__pressure_gauge_501_link:
-              gauge_maze_exit__pressure_gauge_501_link__visual__pressure_gauge_501_visual:
-                {}
-          gauge_second_floor_2:
-            gauge_second_floor_2__pressure_gauge_501_link:
-              gauge_second_floor_2__pressure_gauge_501_link__visual__pressure_gauge_501_visual:
-                {}
-          heat_first_floor_1:
-            heat_first_floor_1__heat_plate_0.9x0.9_e0.5_link:
-              heat_first_floor_1__heat_plate_0.9x0.9_e0.5_link__visual__heat_plate_0.9x0.9_e0.5_visual:
-                {}
-          heat_first_floor_4:
-            heat_first_floor_4__heat_plate_0.9x0.9_e0.1_link:
-              heat_first_floor_4__heat_plate_0.9x0.9_e0.1_link__visual__heat_plate_0.9x0.9_e0.1_visual:
-                {}
-          heat_maze_entrance:
-            heat_maze_entrance__heat_plate_0.15x0.15_e1.0_link:
-              heat_maze_entrance__heat_plate_0.15x0.15_e1.0_link__visual__heat_plate_0.15x0.15_e1.0_visual:
-                {}
-          linear_gauge_1_ground_floor:
-            linear_gauge_1_ground_floor__linear_gauge_1_link:
-              linear_gauge_1_ground_floor__linear_gauge_1_link__visual__linear_gauge_1_visual:
-                {}
-          playground:
-            playground__playground:
-              playground__playground__collision__collision:
-                {}
-              playground__playground__visual__visual:
-                {}
-            playground__slippery_area:
-              playground__slippery_area__collision__collision:
-                {}
-              playground__slippery_area__visual__visual:
-                {}
-            playground__very_slippery_area:
-              playground__very_slippery_area__collision__collision:
-                {}
-              playground__very_slippery_area__visual__visual:
-                {}
-          round_gauge_1_ground_floor:
-            round_gauge_1_ground_floor__round_gauge_1_link:
-              round_gauge_1_ground_floor__round_gauge_1_link__visual__round_gauge_1_visual:
-                {}
-          round_gauge_2_ground_floor:
-            round_gauge_2_ground_floor__round_gauge_2_link:
-              round_gauge_2_ground_floor__round_gauge_2_link__visual__round_gauge_2_visual:
-                {}
-          round_gauge_501_ground_floor:
-            round_gauge_501_ground_floor__pressure_gauge_501_link:
-              round_gauge_501_ground_floor__pressure_gauge_501_link__visual__pressure_gauge_501_visual:
-                {}
-          safety_helmet_1_ground_floor:
-            safety_helmet_1_ground_floor__safety_helmet_1_link:
-              safety_helmet_1_ground_floor__safety_helmet_1_link__visual__safety_helmet_1_visual:
-                {}
-          square_gauge_1_ground_floor:
-            square_gauge_1_ground_floor__square_gauge_1_link:
-              square_gauge_1_ground_floor__square_gauge_1_link__visual__square_gauge_1_visual:
-                {}
-          square_gauge_2_ground_floor:
-            square_gauge_2_ground_floor__square_gauge_2_link:
-              square_gauge_2_ground_floor__square_gauge_2_link__visual__square_gauge_2_visual:
-                {}
         odom:
           base:
             LF_HAA_drive:
@@ -619,40 +548,112 @@ Visualization Manager:
               {}
             bottom_shell:
               {}
+            camera_head:
+              camera_head_base:
+                {}
+            collision_base:
+              {}
             depth_camera_left_camera:
               depth_camera_left_camera_parent:
-                depth_camera_left_color_frame:
-                  depth_camera_left_color_optical_frame:
-                    {}
                 depth_camera_left_depth_frame:
                   depth_camera_left_depth_optical_frame:
                     {}
+                depth_camera_left_infra1_frame:
+                  depth_camera_left_infra1_optical_frame:
+                    {}
+                depth_camera_left_infra2_frame:
+                  depth_camera_left_infra2_optical_frame:
+                    {}
             depth_camera_right_camera:
               depth_camera_right_camera_parent:
-                depth_camera_right_color_frame:
-                  depth_camera_right_color_optical_frame:
-                    {}
                 depth_camera_right_depth_frame:
                   depth_camera_right_depth_optical_frame:
                     {}
+                depth_camera_right_infra1_frame:
+                  depth_camera_right_infra1_optical_frame:
+                    {}
+                depth_camera_right_infra2_frame:
+                  depth_camera_right_infra2_optical_frame:
+                    {}
             docking_socket:
+              {}
+            dynaarm_base:
+              dynaarm_SHOULDER:
+                dynaarm_UPPERARM:
+                  dynaarm_ELBOW:
+                    dynaarm_FOREARM:
+                      dynaarm_FOREARM_wrist1:
+                        dynaarm_WRIST_1:
+                          dynaarm_WRIST_2:
+                            ftSensor_interfacePlate:
+                              ftSensor_interfacePlate2:
+                                ftSensor_link:
+                                  dummy_post_ftSensr_link:
+                                    realsense_base:
+                                      gripper_base:
+                                        dynaarm_END_EFFECTOR:
+                                          {}
+                                        robotiq_coupler:
+                                          gripper_BASE:
+                                            gripper_left_driver:
+                                              gripper_left_coupler:
+                                                gripper_left_follower:
+                                                  gripper_left_pad:
+                                                    {}
+                                            gripper_left_spring_link:
+                                              {}
+                                            gripper_right_driver:
+                                              gripper_right_coupler:
+                                                gripper_right_follower:
+                                                  gripper_right_pad:
+                                                    {}
+                                            gripper_right_spring_link:
+                                              {}
+                                  ftSensor:
+                                    {}
+                    dynaarm_FOREARM_realsense_bracelet:
+                      dynaarm_FOREARM_realsense_mount:
+                        dynaarm_REALSENSE_bottom_screw_frame:
+                          dynaarm_REALSENSE_link:
+                            dynaarm_REALSENSE_color_frame:
+                              dynaarm_REALSENSE_color_optical_frame:
+                                {}
+                            dynaarm_REALSENSE_depth_frame:
+                              dynaarm_REALSENSE_depth_optical_frame:
+                                {}
+                            dynaarm_REALSENSE_infra_frame:
+                              dynaarm_REALSENSE_infra_optical_frame:
+                                {}
+                          dynaarm_REALSENSE_lower_mount:
+                            {}
+                          dynaarm_REALSENSE_upper_mount:
+                            {}
+              dynaarm_base_inertia:
+                {}
+            dynaarm_interface:
               {}
             face_front:
               depth_camera_front_lower_camera:
                 depth_camera_front_lower_camera_parent:
-                  depth_camera_front_lower_color_frame:
-                    depth_camera_front_lower_color_optical_frame:
-                      {}
                   depth_camera_front_lower_depth_frame:
                     depth_camera_front_lower_depth_optical_frame:
                       {}
+                  depth_camera_front_lower_infra1_frame:
+                    depth_camera_front_lower_infra1_optical_frame:
+                      {}
+                  depth_camera_front_lower_infra2_frame:
+                    depth_camera_front_lower_infra2_optical_frame:
+                      {}
               depth_camera_front_upper_camera:
                 depth_camera_front_upper_camera_parent:
-                  depth_camera_front_upper_color_frame:
-                    depth_camera_front_upper_color_optical_frame:
-                      {}
                   depth_camera_front_upper_depth_frame:
                     depth_camera_front_upper_depth_optical_frame:
+                      {}
+                  depth_camera_front_upper_infra1_frame:
+                    depth_camera_front_upper_infra1_optical_frame:
+                      {}
+                  depth_camera_front_upper_infra2_frame:
+                    depth_camera_front_upper_infra2_optical_frame:
                       {}
               face_shell_front:
                 {}
@@ -662,19 +663,25 @@ Visualization Manager:
             face_rear:
               depth_camera_rear_lower_camera:
                 depth_camera_rear_lower_camera_parent:
-                  depth_camera_rear_lower_color_frame:
-                    depth_camera_rear_lower_color_optical_frame:
-                      {}
                   depth_camera_rear_lower_depth_frame:
                     depth_camera_rear_lower_depth_optical_frame:
                       {}
+                  depth_camera_rear_lower_infra1_frame:
+                    depth_camera_rear_lower_infra1_optical_frame:
+                      {}
+                  depth_camera_rear_lower_infra2_frame:
+                    depth_camera_rear_lower_infra2_optical_frame:
+                      {}
               depth_camera_rear_upper_camera:
                 depth_camera_rear_upper_camera_parent:
-                  depth_camera_rear_upper_color_frame:
-                    depth_camera_rear_upper_color_optical_frame:
-                      {}
                   depth_camera_rear_upper_depth_frame:
                     depth_camera_rear_upper_depth_optical_frame:
+                      {}
+                  depth_camera_rear_upper_infra1_frame:
+                    depth_camera_rear_upper_infra1_optical_frame:
+                      {}
+                  depth_camera_rear_upper_infra2_frame:
+                    depth_camera_rear_upper_infra2_optical_frame:
                       {}
               face_shell_rear:
                 {}
@@ -689,21 +696,58 @@ Visualization Manager:
               {}
             lidar_parent:
               lidar:
-                {}
+                collision_lidar:
+                  {}
             top_shell:
               {}
-          control:
-            {}
+          docking_station:
+            docking_station__apriltag36_11_00000_link:
+              docking_station__apriltag36_11_00000_link__visual__apriltag36_11_00000_visual:
+                {}
+            docking_station__apriltag36_11_00001_link:
+              docking_station__apriltag36_11_00001_link__visual__apriltag36_11_00001_visual:
+                {}
+            docking_station__apriltag36_11_00002_link:
+              docking_station__apriltag36_11_00002_link__visual__apriltag36_11_00002_visual:
+                {}
+            docking_station__apriltag36_11_00003_link:
+              docking_station__apriltag36_11_00003_link__visual__apriltag36_11_00003_visual:
+                {}
+            docking_station__docking_port_link:
+              docking_station__docking_port_link__visual__docking_port_visual:
+                {}
           feetcenter:
             {}
           footprint:
             {}
-          loco_footprint:
+          ground_plane:
+            ground_plane__link:
+              ground_plane__link__collision__collision:
+                {}
+              ground_plane__link__visual__visual:
+                {}
+          map:
+            camera_init_CORRECTED:
+              aft_mapped_to_init_CORRECTED:
+                {}
+              camera_CORRECTED:
+                {}
+              camera_init:
+                aft_mapped:
+                  {}
+                camera:
+                  {}
+                laser_odom:
+                  {}
+              camera_init_GRAVITY_ALIGNED:
+                {}
+              laser_odom_CORRECTED:
+                {}
+          msf_body_imu_map:
+            state_msf_body_imu:
+              {}
+          world:
             {}
-          point_cloud_odom:
-            {}
-        world:
-          {}
       Update Interval: 0
       Value: true
   Enabled: true
@@ -734,7 +778,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 5.92850399017334
+      Distance: 9.194283485412598
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -742,17 +786,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -5.2469282150268555
-        Y: -7.606799602508545
-        Z: 2.2609972953796387
+        X: 1.7802209854125977
+        Y: -5.55448579788208
+        Z: 5.392282009124756
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.7197977900505066
+      Pitch: 0.819797694683075
       Target Frame: <Fixed Frame>
-      Yaw: 4.612149715423584
+      Yaw: 5.182149410247803
     Saved: ~
 Window Geometry:
   Displays:

@@ -22,7 +22,7 @@ is_realsense_data: true
 compute_mesh: true
 
 # Whether to compute the ESDF (map of distances to the nearest obstacle).
-compute_esdf: true
+compute_esdf: false
 
 # Whether to compute the ESDF in 2D (true) or 3D (false).
 esdf_2d: false
@@ -30,7 +30,7 @@ esdf_2d: false
 # Whether to output a distance slice of the ESDF to be used for path planning
 # and visualization (even if the computation is 3D, will output a 2D slice
 # for viz).
-esdf_distance_slice: true
+esdf_distance_slice: false
 
 # Whether to integrate color images to color the mesh.
 use_color: true
@@ -90,7 +90,9 @@ max_poll_rate_hz: 100.0
 maximum_sensor_message_queue_length: 30
 
 # Radius around the `map_clearing_frame_id` outside which we clear the map. Note that values <= 0.0 indicate that no clearing is performed.
-map_clearing_radius_m: -1.0
+# LOCAL MODE COMMENT FOR JAN
+# set it to 4.0  (no minus) to crop the map locally
+map_clearing_radius_m: -4.0
 
 # The name of the TF frame around which we clear the map.
 map_clearing_frame_id: "base"
@@ -109,13 +111,16 @@ projective_integrator_max_integration_distance_m: 3.0
 lidar_projective_integrator_max_integration_distance_m: 10.0
 
 # The truncation distance, in units of voxels, for the TSDF or occupancy map.
-projective_integrator_truncation_distance_vox: 5.0
+projective_integrator_truncation_distance_vox: 6.0
 
 # The weighting mode, applied to TSDF and color integrations. Options: [`constant`, `constant_dropoff`, `inverse_square`, `inverse_square_dropoff`].
 weighting_mode: "inverse_square"
 
 # Maximum weight for the TSDF. Setting this number higher will lead to higher-quality reconstructions but worse performance in dynamic scenes.
-tsdf_integrator_max_weight: 5000.0
+# COMMENT FOR JAN: 
+# NOISY SETTING: 1.0
+# ROBUST SETING SET TO 800
+tsdf_integrator_max_weight: 800.0
 
 # The inverse sensor model occupancy probability for voxels observed as free space.
 free_region_occupancy_probability: 0.2
@@ -126,7 +131,7 @@ occupied_region_occupancy_probability: 0.7
 # The inverse sensor model occupancy probability for unobserved voxels.
 unobserved_region_occupancy_probability: 0.4
 
-# Half the width of the region which is considered as occupied.
+# Half the width of the region which is considered as occupied. (is this parameter useless?)
 occupied_region_half_width_m: 0.1
 
 # The decay probability that is applied to the free region on decay. Must be in `[0.5, 1.0]`.
@@ -139,7 +144,7 @@ occupied_region_decay_probability: 0.4
 mesh_integrator_min_weight: 0.1
 
 # Whether to weld identical vertices together in the mesh.
-mesh_integrator_weld_vertices: true
+mesh_integrator_weld_vertices: false
 
 # Maximum distance, in meters, to integrate the color up to.
 color_integrator_max_integration_distance_m: 7.0
