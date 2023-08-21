@@ -178,6 +178,19 @@ void NvbloxNode::subscribeToTopics() {
     timesync_depth_->registerCallback(std::bind(&NvbloxNode::depthImageCallback,
                                                 this, std::placeholders::_1,
                                                 std::placeholders::_2));
+
+    // DEPTH SECOND CAMERA
+    depth_sub2_.subscribe(nh_, "depth/image_2",
+                         maximum_sensor_message_queue_length_);
+    depth_camera_info_sub2_.subscribe(nh_, "depth/camera_info_2",
+                                     maximum_sensor_message_queue_length_);
+
+    timesync_depth2_.reset(new message_filters::Synchronizer<time_policy_t>(
+        time_policy_t(maximum_sensor_message_queue_length_), depth_sub2_,
+        depth_camera_info_sub2_));
+    timesync_depth2_->registerCallback(std::bind(&NvbloxNode::depthImageCallback2,
+                                                this, std::placeholders::_1,
+                                                std::placeholders::_2));
   }
 
   if (use_color_) {
@@ -193,6 +206,20 @@ void NvbloxNode::subscribeToTopics() {
     timesync_color_->registerCallback(std::bind(&NvbloxNode::colorImageCallback,
                                                 this, std::placeholders::_1,
                                                 std::placeholders::_2));
+
+    // SECOND CAMERA
+    color_sub2_.subscribe(nh_, "color/image_2",
+                         maximum_sensor_message_queue_length_);
+    color_camera_info_sub2_.subscribe(nh_, "color/camera_info_2",
+                                     maximum_sensor_message_queue_length_);
+
+    timesync_color2_.reset(new message_filters::Synchronizer<time_policy_t>(
+        time_policy_t(maximum_sensor_message_queue_length_), color_sub2_,
+        color_camera_info_sub2_));
+    timesync_color2_->registerCallback(std::bind(&NvbloxNode::colorImageCallback2,
+                                                this, std::placeholders::_1,
+                                                std::placeholders::_2));
+
   }
 
   if (use_lidar_) {
@@ -300,6 +327,15 @@ void NvbloxNode::depthImageCallback(
     const sensor_msgs::CameraInfo::ConstPtr& camera_info_msg) {
   pushMessageOntoQueue({depth_img_ptr, camera_info_msg}, &depth_image_queue_,
                        &depth_queue_mutex_);
+                       //std::cout << "ADDED depth FROM CAM1 " << std::endl;
+}
+
+void NvbloxNode::depthImageCallback2(
+    const sensor_msgs::ImageConstPtr& depth_img_ptr,
+    const sensor_msgs::CameraInfo::ConstPtr& camera_info_msg) {
+  pushMessageOntoQueue({depth_img_ptr, camera_info_msg}, &depth_image_queue_,
+                       &depth_queue_mutex_);
+                       //std::cout << "ADDED depth FROM CAM2 " << std::endl;
 }
 
 void NvbloxNode::colorImageCallback(
@@ -307,6 +343,15 @@ void NvbloxNode::colorImageCallback(
     const sensor_msgs::CameraInfo::ConstPtr& camera_info_msg) {
   pushMessageOntoQueue({color_image_ptr, camera_info_msg}, &color_image_queue_,
                        &color_queue_mutex_);
+                       //std::cout << "ADDED COLOR FROM CAM1 " << std::endl;
+}
+
+void NvbloxNode::colorImageCallback2(
+    const sensor_msgs::ImageConstPtr& color_image_ptr,
+    const sensor_msgs::CameraInfo::ConstPtr& camera_info_msg) {
+  pushMessageOntoQueue({color_image_ptr, camera_info_msg}, &color_image_queue_,
+                       &color_queue_mutex_);
+                       //std::cout << "ADDED COLOR FROM CAM2 " << std::endl; 
 }
 
 void NvbloxNode::pointcloudCallback(
@@ -549,10 +594,10 @@ bool NvbloxNode::processDepthImage(
       depth_camera_pair.second;
 
   // Check that we're not updating more quickly than we should.
-  if (isUpdateTooFrequent(depth_img_ptr->header.stamp, last_depth_update_time_,
-                          max_depth_update_hz_)) {
-    return true;
-  }
+  //if (isUpdateTooFrequent(depth_img_ptr->header.stamp, last_depth_update_time_,
+  //                        max_depth_update_hz_)) {
+  //  return true;
+  //}
   last_depth_update_time_ = depth_img_ptr->header.stamp;
 
   // Get the TF for this image.
@@ -598,10 +643,10 @@ bool NvbloxNode::processColorImage(
       color_camera_pair.second;
 
   // Check that we're not updating more quickly than we should.
-  if (isUpdateTooFrequent(color_img_ptr->header.stamp, last_color_update_time_,
-                          max_color_update_hz_)) {
-    return true;
-  }
+  //if (isUpdateTooFrequent(color_img_ptr->header.stamp, last_color_update_time_,
+  //                        max_color_update_hz_)) {
+  //  return true;
+  //}
   last_color_update_time_ = color_img_ptr->header.stamp;
 
   // Get the TF for this image.

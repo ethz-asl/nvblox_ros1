@@ -3,20 +3,27 @@
 <launch>
   <arg name="use_sim_time"  default="true" />
   <arg name="param_file" default="$(find nvblox_ros)/config/min_parameters.yaml"/>
-  <arg name="rviz" default="false" />
+  <arg name="rviz" default="true" />
 
-  <node type="rviz" name="rviz" pkg="rviz" args="-d $(find nvblox_ros)/rviz/panopt.rviz" if="$(arg rviz)"/>
+  <node type="rviz" name="rviz_nvblox" pkg="rviz" args="-d $(find nvblox_ros)/rviz/panopt.rviz" if="$(arg rviz)"/>
 
   <node pkg="nvblox_ros" type="nvblox_node" name="nvblox_node" respawn="false" output="screen" >
     <rosparam file="$(arg param_file)"/>
-    <remap from="depth/image" to="/data/depth_image" />
-    <remap from="depth/camera_info" to="/data/depth_image/camera_info" />
+    <remap from="depth/image" to="/depth_camera_front_upper/depth/image_rect_raw" />
+    <remap from="depth/camera_info" to="/depth_camera_front_upper/depth/camera_info" />
 
-    <remap from="color/image" to="/data/color_image" />
-    <remap from="color/camera_info" to="/data/color_image/camera_info" />
+    <remap from="depth/image_2" to="/depth_camera_rear_upper/depth/image_rect_filtered" />
+    <remap from="depth/camera_info_2" to="/depth_camera_rear_upper/depth/camera_info_filtered" />
+
+    <remap from="color/image" to="/wide_angle_camera_front/image_color" />
+    <remap from="color/camera_info" to="/wide_angle_camera_front/camera_info" />
+
+    <remap from="color/image_2" to="/wide_angle_camera_rear/image_color" />
+    <remap from="color/camera_info_2" to="/wide_angle_camera_rear/camera_info" />
+
 
     <!-- Anything here ovewrites the parameters in the config file. -->
-    <param name="global_frame" value="odom" />
+    <param name="global_frame" value="map" />
     <param name="use_sim_time" value="$(arg use_sim_time)" />
     <param name="use_lidar" value="false" />
     <param name="voxel_size" value="0.05" />

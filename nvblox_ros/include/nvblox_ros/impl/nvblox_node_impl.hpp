@@ -91,8 +91,8 @@ void NvbloxNode::processMessageQueue(
   }
 
   // nvblox statistics
-  ROS_INFO_STREAM_THROTTLE(10, "Timing statistics: \n"
-                                   << nvblox::timing::Timing::Print());
+  //ROS_INFO_STREAM_THROTTLE(10, "Timing statistics: \n"
+  //                                 << nvblox::timing::Timing::Print());
 }
 
 template <typename MessageType>

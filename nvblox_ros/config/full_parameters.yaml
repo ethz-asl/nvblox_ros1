@@ -136,7 +136,7 @@ free_region_decay_probability: 0.55
 occupied_region_decay_probability: 0.4
 
 # Minimum weight of the TSDF to consider for inclusion in the mesh.
-mesh_integrator_min_weight: 0.0001
+mesh_integrator_min_weight: 0.01
 
 # Whether to weld identical vertices together in the mesh.
 mesh_integrator_weld_vertices: true

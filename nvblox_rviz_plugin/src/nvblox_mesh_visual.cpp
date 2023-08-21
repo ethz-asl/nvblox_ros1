@@ -144,6 +144,8 @@ void NvbloxMeshVisual::setMessage(
       object_map_.insert(std::make_pair(block_index, ogre_object));
 
       frame_node_->attachObject(ogre_object);
+      Ogre::MaterialPtr mat = Ogre::MaterialManager::getSingleton().getByName("BaseWhiteNoLighting");
+	    mat->setCullingMode(Ogre::CULL_NONE);
     }
 
     ogre_object->estimateVertexCount(mesh_block.vertices.size());
@@ -151,6 +153,7 @@ void NvbloxMeshVisual::setMessage(
     if (new_object) {
       ogre_object->begin("BaseWhiteNoLighting",
                          Ogre::RenderOperation::OT_TRIANGLE_LIST);
+      ogre_object->setDynamic(true);
     } else {
       ogre_object->beginUpdate(0);
     }
