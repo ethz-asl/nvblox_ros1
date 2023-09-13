@@ -17,6 +17,7 @@
 
     <!-- Anything here ovewrites the parameters in the config file. -->
     <param name="global_frame" value="odom" />
+    <param name="pose_frame" value="body" />
     <param name="use_sim_time" value="$(arg use_sim_time)" />
     <param name="use_lidar" value="false" />
     <param name="voxel_size" value="0.05" />

@@ -1,7 +1,7 @@
 ##########################
 ### General Parameters ###
 ##########################
-# Use this file as a minimum set of example parameters that you'll most likely 
+# Use this file as a minimum set of example parameters that you'll most likely
 # have to modify.
 
 # Whether to use the static occupancy layer for projective integration. If this flag is set to false (default), TSDF integration is used.

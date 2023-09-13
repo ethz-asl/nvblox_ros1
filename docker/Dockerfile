@@ -1,15 +1,12 @@
+ARG install_nvblox
+
 FROM nvidia/cuda:11.8.0-devel-ubuntu20.04
-
-# This docker is intended to run on a development machine.
-# No CUDA (for now), but with simulation and without sensor drivers.
-
-# Based heavily on Piloting docker from Julian Keller
 
 # Install ROS first. This should be the only image where you have to
 # manually install ROS so...
 # Taken from OSRF docker file.
 
-RUN apt-get -qq update && DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata 
+RUN apt-get -qq update && DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata
 
 # We're in Zurich!
 ENV TZ="Europe/Zurich"
@@ -49,6 +46,9 @@ RUN scripts/install_sys_deps.sh
 
 # Run the ROS workspace set-up and dep installation
 RUN scripts/install_ros_deps.sh
+
+# Check out a copy of nvblox in there
+RUN if [[ -z "$install_nvblox" ]] ; then scripts/install_nvblox.sh ; fi
 
 # Finally, build all the stuff we downloaded.
 RUN scripts/build_ros.sh
