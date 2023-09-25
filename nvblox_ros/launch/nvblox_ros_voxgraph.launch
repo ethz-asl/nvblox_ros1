@@ -28,6 +28,7 @@
     <param name="esdf_slice_height" value="0.5" />
     <param name="use_static_occupancy_layer" value="false" />
     <param name="mesh_update_rate_hz" value="1.0" />
+    <param name="esdf_update_rate_hz" value="1.0" />
   </node>
 
 </launch>
