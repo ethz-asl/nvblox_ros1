@@ -54,8 +54,8 @@ NvbloxHumanNode::NvbloxHumanNode(ros::NodeHandle& nh,
 
 void NvbloxHumanNode::getParameters() {
   // TODO(TT) how to handle this node?
-  nh_.getParam("human_occupancy_decay_rate_hz", human_occupancy_decay_rate_hz_);
-  nh_.getParam("human_esdf_update_rate_hz", human_esdf_update_rate_hz_);
+  nh_private_.getParam("human_occupancy_decay_rate_hz", human_occupancy_decay_rate_hz_);
+  nh_private_.getParam("human_esdf_update_rate_hz", human_esdf_update_rate_hz_);
 }
 
 void NvbloxHumanNode::initializeMultiMapper() {
