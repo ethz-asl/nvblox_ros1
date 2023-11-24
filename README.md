@@ -134,7 +134,7 @@ Put it in `~/data` so that it gets mapped in the docker (if using a docker).
 
 In one terminal, start up nvblox with:
 ```
-roslaunch nvblox_ros nvblox_panopt.launch rviz:=true
+roslaunch nvblox_ros nvblox_ros_panopt.launch rviz:=true
 ```
 
 In another terminal (if in docker, start with `docker exec -it nvblox bash`):
