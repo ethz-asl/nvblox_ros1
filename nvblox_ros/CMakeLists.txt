@@ -62,7 +62,7 @@ catkin_package(
   INCLUDE_DIRS
     include
   LIBRARIES
-    ${PROJECT_NAME}
+    ${PROJECT_NAME}_lib
   CATKIN_DEPENDS
     roscpp
     std_msgs
@@ -139,7 +139,7 @@ if (${nvblox_FOUND})
 
   target_include_directories(${PROJECT_NAME}_lib PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
+    $<INSTALL_INTERFACE:include/${PROJECT_NAME}>
     ${catkin_INCLUDE_DIRS})
   target_include_directories(${PROJECT_NAME}_lib SYSTEM BEFORE PUBLIC
     $<TARGET_PROPERTY:nvblox::nvblox_eigen,INTERFACE_INCLUDE_DIRECTORIES>)
@@ -177,6 +177,19 @@ add_dependencies(nvblox_human_node
 # # INSTALL #
 # ###########
 
+install(
+  DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
+
+install(
+  TARGETS ${PROJECT_NAME}_lib nvblox_interface 
+  EXPORT ${PROJECT_NAME}
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  INCLUDES DESTINATION include/${PROJECT_NAME}/
+)
+
 # # Install includes.
 # install(
 #   DIRECTORY
@@ -205,3 +218,4 @@ add_dependencies(nvblox_human_node
 #   TARGETS nvblox_node nvblox_human_node
 #   DESTINATION lib/${PROJECT_NAME}
 # )
+
