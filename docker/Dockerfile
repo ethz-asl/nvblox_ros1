@@ -1,4 +1,4 @@
-ARG install_nvblox
+ARG INSTALL_NVBLOX=true
 
 FROM nvidia/cuda:11.8.0-devel-ubuntu20.04
 
@@ -47,8 +47,8 @@ RUN scripts/install_sys_deps.sh
 # Run the ROS workspace set-up and dep installation
 RUN scripts/install_ros_deps.sh
 
-# Check out a copy of nvblox in there
-RUN if [[ -z "$install_nvblox" ]] ; then scripts/install_nvblox.sh ; fi
+# Check out a copy of nvblox in there (optionally)
+RUN scripts/install_nvblox.sh $INSTALL_NVBLOX
 
 # Finally, build all the stuff we downloaded.
 RUN scripts/build_ros.sh

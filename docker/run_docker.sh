@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Based on the ETH Robotics Summer school docker: 
+# Based on the ETH Robotics Summer school docker:
 # https://github.com/ETHZ-RobotX/smb_docker/
 
 # If not working, first do: sudo rm -rf /tmp/.docker.xauth
@@ -11,18 +11,21 @@ DOCKER=nvblox
 DOCKERFILE=Dockerfile
 NAME=nvblox
 BUILD=false
+INSTALL_NVBLOX=false
 WORKSPACE=/home/$USER/nvblox_ws
 
 help()
 {
-    echo "Usage: run_docker.sh 
+    echo "Usage: run_docker.sh
                [ -b | --build ] [ -n | --name <docker name> ]
-               [ -h | --help  ] [ -w | --workspace </workspace/path> ]"
+               [ -h | --help  ] [ -w | --workspace </workspace/path> ]
+               [ -i | --install (whether to install a copy of nvblox
+               inside the docker)]"
     exit 2
 }
 
-SHORT=b,n:,w:,h
-LONG=build,name:,workspace:,help
+SHORT=b,n:,w:,i,h
+LONG=build,name:,workspace:,install,help
 OPTS=$(getopt -a -n run_docker --options $SHORT --longoptions $LONG -- "$@")
 echo $OPTS
 
@@ -46,6 +49,10 @@ do
     -h | --help)
       help
       ;;
+    -i | --install)
+      INSTALL_NVBLOX="true"
+      shift
+      ;;
     --)
       shift;
       break
@@ -60,8 +67,10 @@ done
 
 if [ "$BUILD" = true ]; then
     echo "Building docker: $DOCKERFILE as $DOCKER"
-    docker build -f $DOCKERFILE -t $DOCKER .
+    docker build --build-arg="INSTALL_NVBLOX=${INSTALL_NVBLOX}" --progress=plain -f $DOCKERFILE -t $DOCKER  .
 fi
+
+echo "Installing NVBLOX: ${INSTALL_NVBLOX}"
 
 XAUTH=/tmp/.docker.xauth
 
