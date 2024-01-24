@@ -14,19 +14,12 @@ ExternalProject_Add(nvblox
   PREFIX nvblox
   SOURCE_DIR ${NVBLOX_DIR}
   UPDATE_COMMAND ""
-  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR> #-DCMAKE_INSTALL_INCLUDEDIR=${NVBLOX_INCLUDE_DIR}
+  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR> -DCMAKE_INSTALL_INCLUDEDIR=${NVBLOX_INCLUDE_DIR}
   INSTALL_DIR "${CATKIN_DEVEL_PREFIX}"
 )
 
 # Set up correct include directories
 include_directories(BEFORE include ${NVBLOX_INCLUDE_OUTPUT_DIR} ${NVBLOX_INCLUDE_OUTPUT_DIR}/eigen3)
 
-message(WARNING "Output dir for eigen: ${NVBLOX_INCLUDE_OUTPUT_DIR}")
-
-
 add_library(nvblox_interface INTERFACE)
 add_dependencies(nvblox_interface nvblox)
-target_include_directories(nvblox_interface PUBLIC INTERFACE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:${NVBLOX_INCLUDE_OUTPUT_DIR}/eigen3>
-)
