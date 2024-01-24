@@ -51,7 +51,7 @@ message(WARNING "Found? ${nvblox_FOUND} Includes? ${nvblox_INCLUDE_DIRS} Libs? $
 message(WARNING "Found ROS? ${nvblox_ros_FOUND} Includes? ${nvblox_ros_INCLUDE_DIRS} Libs? ${nvblox_ros_LIBRARIES}")
 
 ## Declare a C++ library
- add_library(${PROJECT_NAME}
+add_executable(${PROJECT_NAME}
    src/${PROJECT_NAME}/nvblox_test.cpp
  )
 
