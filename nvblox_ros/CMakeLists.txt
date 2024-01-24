@@ -62,7 +62,7 @@ catkin_package(
   INCLUDE_DIRS
     include
   LIBRARIES
-    ${PROJECT_NAME}
+    ${PROJECT_NAME}_lib
   CATKIN_DEPENDS
     roscpp
     std_msgs
@@ -170,38 +170,19 @@ add_dependencies(nvblox_human_node
   ${catkin_EXPORTED_TARGETS}
 )
 
-# TODO(helenol): Make sure we're properly setting up the install targets.
+###########
+# INSTALL #
+###########
 
-# #get_target_property(nvblox_INCLUDES nvblox_interface INTERFACE_INCLUDE_DIRECTORIES)
-# ###########
-# # INSTALL #
-# ###########
+install(
+  DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
 
-# # Install includes.
-# install(
-#   DIRECTORY
-#   include/${PROJECT_NAME}/
-#     include/
-#     config
-#     launch
-#     rviz
-#   DESTINATION
-#     include
-#     #${CATKIN_PACKAGE_SHARE_DESTINATION}
-# )
-
-# # Install the library target.
-# install(
-#   TARGETS ${PROJECT_NAME}_lib nvblox_lib nvblox_gpu_hash nvblox_eigen
-#   EXPORT ${PROJECT_NAME}Targets
-#   LIBRARY DESTINATION lib
-#   ARCHIVE DESTINATION lib
-#   RUNTIME DESTINATION bin
-#   INCLUDES DESTINATION include
-# )
-
-# # Install nodes which live in lib for some reason.
-# install(
-#   TARGETS nvblox_node nvblox_human_node
-#   DESTINATION lib/${PROJECT_NAME}
-# )
+install(
+  TARGETS ${PROJECT_NAME}_lib nvblox_interface
+  EXPORT ${PROJECT_NAME}
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}/${PROJECT_NAME}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}/${PROJECT_NAME}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  INCLUDES DESTINATION include/${PROJECT_NAME}/
+)
