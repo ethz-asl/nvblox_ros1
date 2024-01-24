@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(nvblox_test)
+project(nvblox_test LANGUAGES CXX CUDA)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -39,25 +39,17 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(BEFORE
  include
- ${CATKIN_DEVEL_PREFIX}/include/nvblox_ros/eigen3
- ${CATKIN_DEVEL_PREFIX}/include/nvblox_ros/nvblox
+ ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}
  ${catkin_INCLUDE_DIRS}
  ${nvblox_ros_INCLUDE_DIRS}
 )
-
-message(WARNING "What is this? ${CATKIN_DEVEL_PREFIX}/include/nvblox_ros/eigen3")
-
-message(WARNING "Found? ${nvblox_FOUND} Includes? ${nvblox_INCLUDE_DIRS} Libs? ${nvblox_LIBRARIES}")
-message(WARNING "Found ROS? ${nvblox_ros_FOUND} Includes? ${nvblox_ros_INCLUDE_DIRS} Libs? ${nvblox_ros_LIBRARIES}")
 
 ## Declare a C++ library
 add_executable(${PROJECT_NAME}
    src/${PROJECT_NAME}/nvblox_test.cpp
  )
 
-add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS} )
-
- message(WARNING "Exported targets? ${nvblox_ros_EXPORTED_TARGETS}")
+add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
@@ -79,8 +71,9 @@ add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS} )
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
- target_link_libraries(${PROJECT_NAME} nvblox::nvblox_eigen
-   ${catkin_LIBRARIES}  ${nvblox_ros_LIBRARIES}
+ target_link_libraries(${PROJECT_NAME}
+   ${nvblox_ros_LIBRARIES} nvblox::nvblox_lib
+   ${catkin_LIBRARIES}
  )
 
 #############

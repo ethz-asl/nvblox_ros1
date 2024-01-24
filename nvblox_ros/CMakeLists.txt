@@ -62,7 +62,7 @@ catkin_package(
   INCLUDE_DIRS
     include
   LIBRARIES
-    ${PROJECT_NAME}
+    ${PROJECT_NAME}_lib
   CATKIN_DEPENDS
     roscpp
     std_msgs
@@ -176,6 +176,19 @@ add_dependencies(nvblox_human_node
 # ###########
 # # INSTALL #
 # ###########
+
+install(
+  DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
+
+install(
+  TARGETS ${PROJECT_NAME}_lib nvblox_interface
+  EXPORT ${PROJECT_NAME}
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}/${PROJECT_NAME}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}/${PROJECT_NAME}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  INCLUDES DESTINATION include/${PROJECT_NAME}/
+)
 
 # # Install includes.
 # install(
