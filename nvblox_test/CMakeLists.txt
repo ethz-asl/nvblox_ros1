@@ -7,11 +7,11 @@ project(nvblox_test)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS nvblox_ros)
 find_package(nvblox REQUIRED)
+find_package(catkin REQUIRED COMPONENTS nvblox_ros)
+#find_package(nvblox REQUIRED)
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
-
 
 
 
@@ -28,7 +28,6 @@ catkin_package(
   INCLUDE_DIRS include
   LIBRARIES nvblox_test
   CATKIN_DEPENDS nvblox_ros
-  DEPENDS nvblox
 )
 
 
@@ -38,21 +37,27 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(
+include_directories(BEFORE
  include
+ ${CATKIN_DEVEL_PREFIX}/include/nvblox_ros/eigen3
+ ${CATKIN_DEVEL_PREFIX}/include/nvblox_ros/nvblox
  ${catkin_INCLUDE_DIRS}
  ${nvblox_ros_INCLUDE_DIRS}
 )
 
+message(WARNING "What is this? ${CATKIN_DEVEL_PREFIX}/include/nvblox_ros/eigen3")
+
 message(WARNING "Found? ${nvblox_FOUND} Includes? ${nvblox_INCLUDE_DIRS} Libs? ${nvblox_LIBRARIES}")
+message(WARNING "Found ROS? ${nvblox_ros_FOUND} Includes? ${nvblox_ros_INCLUDE_DIRS} Libs? ${nvblox_ros_LIBRARIES}")
 
 ## Declare a C++ library
  add_library(${PROJECT_NAME}
    src/${PROJECT_NAME}/nvblox_test.cpp
  )
 
- add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS} ${nvblox_ros_EXPORTED_TARGETS} nvblox::nvblox_lib)
+add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS} )
 
+ message(WARNING "Exported targets? ${nvblox_ros_EXPORTED_TARGETS}")
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
@@ -74,8 +79,8 @@ message(WARNING "Found? ${nvblox_FOUND} Includes? ${nvblox_INCLUDE_DIRS} Libs? $
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
- target_link_libraries(${PROJECT_NAME}
-   ${catkin_LIBRARIES}  ${nvblox_ros_LIBRARIES} nvblox::nvblox_lib
+ target_link_libraries(${PROJECT_NAME} nvblox::nvblox_eigen
+   ${catkin_LIBRARIES}  ${nvblox_ros_LIBRARIES}
  )
 
 #############

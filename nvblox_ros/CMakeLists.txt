@@ -63,6 +63,8 @@ catkin_package(
     include
   LIBRARIES
     ${PROJECT_NAME}_lib
+    nvblox::nvblox_lib
+    nvblox::nvblox_eigen
   CATKIN_DEPENDS
     roscpp
     std_msgs
@@ -74,6 +76,8 @@ catkin_package(
     cv_bridge
     message_filters
     nvblox_msgs
+  DEPENDS
+    nvblox
 )
 
 # Set up correct include directories
@@ -143,10 +147,18 @@ if (${nvblox_FOUND})
     ${catkin_INCLUDE_DIRS})
   target_include_directories(${PROJECT_NAME}_lib SYSTEM BEFORE PUBLIC
     $<TARGET_PROPERTY:nvblox::nvblox_eigen,INTERFACE_INCLUDE_DIRECTORIES>)
+  target_include_directories(${PROJECT_NAME}_lib BEFORE INTERFACE
+    $<INSTALL_INTERFACE:include/${PROJECT_NAME}/eigen3>)
 else()
   message(WARNING "No nvblox found!")
 endif()
 
+
+get_target_property(nvblox_ros_INCLUDES_INT ${PROJECT_NAME}_lib INTERFACE_INCLUDE_DIRECTORIES)
+get_target_property(nvblox_ros_INCLUDES ${PROJECT_NAME}_lib INCLUDE_DIRECTORIES)
+
+message(WARNING "nvblox_ros_interface_includes: ${nvblox_ros_INCLUDES_INT}")
+message(WARNING "nvblox_ros_includes: ${nvblox_ros_INCLUDES}")
 
 
 ############
@@ -172,7 +184,10 @@ add_dependencies(nvblox_human_node
 
 # TODO(helenol): Make sure we're properly setting up the install targets.
 
-# #get_target_property(nvblox_INCLUDES nvblox_interface INTERFACE_INCLUDE_DIRECTORIES)
+#get_target_property(nvblox_INCLUDES nvblox::nvblox_eigen INTERFACE_INCLUDE_DIRECTORIES)
+
+#message(WARNING "nvblox_includes: ${nvblox_INCLUDES}")
+message(WARNING "Outputting includes to: ${CATKIN_PACKAGE_INCLUDE_DESTINATION}")
 # ###########
 # # INSTALL #
 # ###########
@@ -182,13 +197,15 @@ install(
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
 
 install(
-  TARGETS ${PROJECT_NAME}_lib nvblox_interface 
+  TARGETS ${PROJECT_NAME}_lib nvblox_interface
   EXPORT ${PROJECT_NAME}
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}/${PROJECT_NAME}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}/${PROJECT_NAME}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
   INCLUDES DESTINATION include/${PROJECT_NAME}/
 )
+
+message(WARNING "CATKIN_PACKAGE_SHARE_DESTINATION: ${CATKIN_PACKAGE_SHARE_DESTINATION}")
 
 # # Install includes.
 # install(
@@ -203,15 +220,15 @@ install(
 #     #${CATKIN_PACKAGE_SHARE_DESTINATION}
 # )
 
-# # Install the library target.
-# install(
-#   TARGETS ${PROJECT_NAME}_lib nvblox_lib nvblox_gpu_hash nvblox_eigen
+# Install the library target.
+#install(
+#   TARGETS ${PROJECT_NAME}_lib nvblox::nvblox_lib nvblox::nvblox_gpu_hash nvblox::nvblox_eigen
 #   EXPORT ${PROJECT_NAME}Targets
 #   LIBRARY DESTINATION lib
 #   ARCHIVE DESTINATION lib
 #   RUNTIME DESTINATION bin
 #   INCLUDES DESTINATION include
-# )
+#)
 
 # # Install nodes which live in lib for some reason.
 # install(
