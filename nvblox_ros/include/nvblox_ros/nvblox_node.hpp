@@ -282,6 +282,9 @@ class NvbloxNode {
   std::string map_clearing_frame_id_ = "lidar";
   float clear_outside_radius_rate_hz_ = 1.0f;
 
+  // Synthetic camera parameters.
+  std::string synthetic_camera_frame_ = "synthetic_camera";
+
   // Mapper
   // Holds the map layers and their associated integrators
   // - TsdfLayer, ColorLayer, EsdfLayer, MeshLayer

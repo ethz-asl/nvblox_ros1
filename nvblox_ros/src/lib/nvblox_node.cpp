@@ -146,6 +146,8 @@ void NvbloxNode::getParameters() {
   nh_private_.param("synthetic_publication_rate_hz",
                     synthetic_publication_rate_hz_,
                     synthetic_publication_rate_hz_);
+  nh_private_.param("synthetic_camera_frame", synthetic_camera_frame_,
+                    synthetic_camera_frame_);
   nh_private_.param("max_poll_rate_hz", max_poll_rate_hz_, max_poll_rate_hz_);
   nh_private_.param("maximum_sensor_message_queue_length",
                     maximum_sensor_message_queue_length_,
@@ -758,13 +760,11 @@ void NvbloxNode::publishSyntheticDepthAndRGBImage(
     // Get a camera pose
     // TODO: don't hardcode this
     Transform T_L_C = Transform::Identity();
-    // Move the camera 2 meters up.
-    Eigen::Vector3f translation(1.0f, 0.0f, 0.0f);
-    // Make the camera point down.
-    Eigen::Quaternionf rotation(
-        Eigen::AngleAxisf(M_PI / 2.0f, Vector3f::UnitZ()));
-    T_L_C.prerotate(rotation);
-    T_L_C.pretranslate(translation);
+
+    if (!transformer_.lookupTransformToGlobalFrame(synthetic_camera_frame_,
+                                                   ros::Time(0), &T_L_C)) {
+      ROS_WARN_ONCE("No synthetic camera transform available, using identity.");
+    }
 
     // Generate the images.
     SphereTracer sphere_tracer;
