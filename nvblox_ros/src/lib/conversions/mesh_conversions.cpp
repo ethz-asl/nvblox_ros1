@@ -19,6 +19,8 @@
 
 #include <geometry_msgs/Point.h>
 #include <geometry_msgs/Point32.h>
+#include <sensor_msgs/PointCloud2.h>
+#include <sensor_msgs/point_cloud2_iterator.h>
 #include <std_msgs/ColorRGBA.h>
 
 namespace nvblox {
@@ -181,6 +183,73 @@ void markerMessageFromMeshLayer(const BlockLayer<MeshBlock>& mesh_layer,
     output_index++;
   }
   marker_msg->markers.resize(output_index);
+}
+
+// Convert a mesh to a marker array.
+void pointcloudMessageFromMeshLayer(const BlockLayer<MeshBlock>& mesh_layer,
+                                    const std::string& frame_id,
+                                    sensor_msgs::PointCloud2* pointcloud_msg) {
+  // Get all the mesh blocks.
+  std::vector<Index3D> indices = mesh_layer.getAllBlockIndices();
+
+  // Set the header
+  pointcloud_msg->header.stamp = ros::Time::now();
+  pointcloud_msg->header.frame_id = frame_id;
+
+  // Set the fields (x, y, z, rgb)
+  pointcloud_msg->height = 1;  // Unordered point cloud
+  pointcloud_msg->width = 0;
+  pointcloud_msg->is_dense = true;  // Assuming no NaN or invalid points
+
+  sensor_msgs::PointCloud2Modifier modifier(*pointcloud_msg);
+  modifier.setPointCloud2FieldsByString(2, "xyz", "rgb");
+
+  // Figure out how big the pointcloud should be.
+  size_t total_size = 0;
+    for (size_t i = 0; i < indices.size(); i++) {
+    MeshBlock::ConstPtr mesh_block = mesh_layer.getBlockAtIndex(indices[i]);
+    total_size += mesh_block->size();
+  }
+
+  modifier.resize(total_size);
+
+  // Fill the point cloud
+  sensor_msgs::PointCloud2Iterator<float> iter_x(*pointcloud_msg, "x");
+  sensor_msgs::PointCloud2Iterator<float> iter_y(*pointcloud_msg, "y");
+  sensor_msgs::PointCloud2Iterator<float> iter_z(*pointcloud_msg, "z");
+  sensor_msgs::PointCloud2Iterator<uint8_t> iter_r(*pointcloud_msg, "r");
+  sensor_msgs::PointCloud2Iterator<uint8_t> iter_g(*pointcloud_msg, "g");
+  sensor_msgs::PointCloud2Iterator<uint8_t> iter_b(*pointcloud_msg, "b");
+
+  for (size_t i = 0; i < indices.size(); i++) {
+    MeshBlock::ConstPtr mesh_block = mesh_layer.getBlockAtIndex(indices[i]);
+    if (mesh_block->size() == 0) {
+      continue;
+    }
+
+    std::vector<Vector3f> vertices = mesh_block->getVertexVectorOnCPU();
+    std::vector<Color> colors = mesh_block->getColorVectorOnCPU();
+
+    for (const Vector3f& vertex : vertices) {
+      // Set XYZ
+      *iter_x = vertex.x();
+      *iter_y = vertex.y();
+      *iter_z = vertex.z();
+      ++iter_x;
+      ++iter_y;
+      ++iter_z;
+    }
+
+    for (const Color& color : colors) {
+      // Set RGB
+      *iter_r = color.r;
+      *iter_g = color.g;
+      *iter_b = color.b;
+      ++iter_r;
+      ++iter_g;
+      ++iter_b;
+    }
+  }
 }
 
 }  // namespace conversions

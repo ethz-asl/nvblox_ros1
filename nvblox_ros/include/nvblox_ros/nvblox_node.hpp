@@ -200,6 +200,7 @@ class NvbloxNode {
   ros::Publisher map_slice_publisher_;
   ros::Publisher slice_bounds_publisher_;
   ros::Publisher mesh_marker_publisher_;
+  ros::Publisher color_pointcloud_publisher_;
 
   // Services.
   ros::ServiceServer save_ply_service_;

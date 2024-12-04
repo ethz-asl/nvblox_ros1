@@ -220,6 +220,8 @@ void NvbloxNode::advertiseTopics() {
       "map_slice_bounds", 1, true);
   occupancy_publisher_ =
       nh_private_.advertise<sensor_msgs::PointCloud2>("occupancy", 1, false);
+  color_pointcloud_publisher_ = nh_private_.advertise<sensor_msgs::PointCloud2>(
+      "color_pointcloud", 1, false);
 }
 
 void NvbloxNode::advertiseServices() {
@@ -515,6 +517,14 @@ void NvbloxNode::processMesh(const ros::TimerEvent& /*event*/) {
     conversions::markerMessageFromMeshLayer(mapper_->mesh_layer(),
                                             global_frame_, &marker_msg);
     mesh_marker_publisher_.publish(marker_msg);
+  }
+
+  // Optionally publish a color pointcloud.
+  if (color_pointcloud_publisher_.getNumSubscribers() > 0) {
+    sensor_msgs::PointCloud2 pointcloud_msg;
+    conversions::pointcloudMessageFromMeshLayer(mapper_->mesh_layer(),
+                                                global_frame_, &pointcloud_msg);
+    color_pointcloud_publisher_.publish(pointcloud_msg);
   }
 
   mesh_output_timer.Stop();

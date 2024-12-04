@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<launch>
+  <arg name="use_sim_time"  default="true" />
+  <arg name="param_file" default="$(find nvblox_ros)/config/min_parameters.yaml"/>
+  <arg name="rviz" default="false" />
+
+  <node pkg="nvblox_ros" type="nvblox_node" name="nvblox_node" respawn="false" output="screen" clear_params="true">
+    <rosparam file="$(arg param_file)"/>
+    <remap from="depth/image" to="/rs_435_2/depth/image_rect_raw" />
+    <remap from="depth/camera_info" to="/rs_435_2/depth/camera_info" />
+
+    <remap from="color/image" to="/rs_435_2/color/image_raw" />
+    <remap from="color/camera_info" to="/rs_435_2/color/camera_info" />
+
+    <!-- Anything here ovewrites the parameters in the config file. -->
+    <param name="global_frame" value="world" />
+    <param name="use_sim_time" value="$(arg use_sim_time)"/>
+    <param name="use_depth" value="true" />
+    <param name="use_lidar" value="false" />
+    <param name="voxel_size" value="0.01" />
+    <param name="compute_esdf" value="false" />
+    <param name="esdf_distance_slice" value="false" />
+    <param name="esdf_slice_height" value="0.5" />
+    <param name="use_static_occupancy_layer" value="false" />
+  </node>
+
+</launch>
