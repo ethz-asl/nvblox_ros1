@@ -98,6 +98,8 @@ class NvbloxNode {
   // Publish data on fixed frequency
   void publishOccupancyPointcloud(const ros::TimerEvent& /*event*/);
 
+  void publishSyntheticDepthAndRGBImage(const ros::TimerEvent& /*event*/);
+
   // Process data
   virtual bool processDepthImage(
       const std::pair<sensor_msgs::ImageConstPtr,
@@ -201,6 +203,9 @@ class NvbloxNode {
   ros::Publisher slice_bounds_publisher_;
   ros::Publisher mesh_marker_publisher_;
   ros::Publisher color_pointcloud_publisher_;
+  ros::Publisher synthetic_depth_publisher_;
+  ros::Publisher synthetic_rgb_publisher_;
+  ros::Publisher synthetic_camera_publisher_;
 
   // Services.
   ros::ServiceServer save_ply_service_;

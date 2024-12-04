@@ -700,7 +700,7 @@ bool NvbloxNode::processLidarPointcloud(
 
 void NvbloxNode::publishOccupancyPointcloud(const ros::TimerEvent& /*event*/) {
   timing::Timer ros_total_timer("ros/total");
-  timing::Timer esdf_output_timer("ros/occupancy/output");
+  timing::Timer occupancy_output_timer("ros/occupancy/output");
 
   if (occupancy_publisher_.getNumSubscribers() > 0) {
     sensor_msgs::PointCloud2 pointcloud_msg;
@@ -710,6 +710,52 @@ void NvbloxNode::publishOccupancyPointcloud(const ros::TimerEvent& /*event*/) {
     pointcloud_msg.header.frame_id = global_frame_;
     pointcloud_msg.header.stamp = ros::Time::now();
     occupancy_publisher_.publish(pointcloud_msg);
+  }
+}
+
+void NvbloxNode::publishSyntheticDepthAndRGBImage(
+    const ros::TimerEvent& /*event*/) {
+  timing::Timer ros_total_timer("ros/total");
+  timing::Timer synthetic_timer("ros/synthetic");
+
+  if (synthetic_depth_publisher_.getNumSubscribers() > 0 ||
+      synthetic_rgb_publisher_.getNumSubscribers() > 0) {
+    // TODO: store all of this stuff.
+    // Create a synthetic camera.
+    constexpr float fu = 300;
+    constexpr float fv = 300;
+    constexpr int width = 640;
+    constexpr int height = 480;
+    constexpr float cu = static_cast<float>(width) / 2.0f;
+    constexpr float cv = static_cast<float>(height) / 2.0f;
+    Camera camera(fu, fv, cu, cv, width, height);
+
+    // Create depth and RGBD images (TODO: store these).
+    DepthImage depth_image(camera.height(), camera.width(),
+                           MemoryType::kDevice);
+    ColorImage color_image(camera.height(), camera.width(),
+                           MemoryType::kDevice);
+
+    DepthImageView depth_image_view(depth_image);
+    ColorImageView color_image_view(color_image);
+
+    // Get a camera pose
+    // TODO: don't hardcode this
+    Transform T_L_C = Transform::Identity();
+    // Move the camera 2 meters up.
+    Eigen::Vector3f translation(0.0f, 0.0f, 2.0f);
+    // Make the camera point down.
+    Eigen::Quaternionf rotation(Eigen::AngleAxisf(0, -Vector3f::UnitZ()));
+    T_L_C.prerotate(rotation);
+    T_L_C.pretranslate(translation);
+
+    // Generate the images.
+    SphereTracer sphere_tracer;
+    sphere_tracer.renderRgbdImageOnGPU(
+        camera, T_L_C, mapper_->tsdf_layer(), mapper_->color_layer(),
+        mapper_->tsdf_integrator().get_truncation_distance_m(
+            mapper_->voxel_size_m()),
+        &depth_image_view, &color_image_view, MemoryType::kDevice);
   }
 }
 
