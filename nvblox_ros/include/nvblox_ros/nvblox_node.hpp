@@ -204,7 +204,7 @@ class NvbloxNode {
   ros::Publisher mesh_marker_publisher_;
   ros::Publisher color_pointcloud_publisher_;
   ros::Publisher synthetic_depth_publisher_;
-  ros::Publisher synthetic_rgb_publisher_;
+  ros::Publisher synthetic_color_publisher_;
   ros::Publisher synthetic_camera_publisher_;
 
   // Services.
@@ -220,6 +220,7 @@ class NvbloxNode {
   ros::Timer esdf_processing_timer_;
   ros::Timer mesh_processing_timer_;
   ros::Timer clear_outside_radius_timer_;
+  ros::Timer publish_synthetic_timer_;
 
   // ROS & nvblox settings
   float voxel_size_ = 0.05f;
@@ -263,6 +264,8 @@ class NvbloxNode {
   float mesh_update_rate_hz_ = 5.0f;
   float esdf_update_rate_hz_ = 2.0f;
   float occupancy_publication_rate_hz_ = 2.0f;
+  // 0 means disabled in this case, > 0 is enabled.
+  float synthetic_publication_rate_hz_ = 0.0f;
 
   /// Specifies what rate to poll the color & depth updates at.
   /// Will exit as no-op if no new images are in the queue so it is safe to

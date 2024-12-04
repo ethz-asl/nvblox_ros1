@@ -143,6 +143,9 @@ void NvbloxNode::getParameters() {
   nh_private_.param("occupancy_publication_rate_hz",
                     occupancy_publication_rate_hz_,
                     occupancy_publication_rate_hz_);
+  nh_private_.param("synthetic_publication_rate_hz",
+                    synthetic_publication_rate_hz_,
+                    synthetic_publication_rate_hz_);
   nh_private_.param("max_poll_rate_hz", max_poll_rate_hz_, max_poll_rate_hz_);
   nh_private_.param("maximum_sensor_message_queue_length",
                     maximum_sensor_message_queue_length_,
@@ -222,6 +225,12 @@ void NvbloxNode::advertiseTopics() {
       nh_private_.advertise<sensor_msgs::PointCloud2>("occupancy", 1, false);
   color_pointcloud_publisher_ = nh_private_.advertise<sensor_msgs::PointCloud2>(
       "color_pointcloud", 1, false);
+  synthetic_depth_publisher_ =
+      nh_private_.advertise<sensor_msgs::Image>("synthetic/depth", 1, false);
+  synthetic_color_publisher_ =
+      nh_private_.advertise<sensor_msgs::Image>("synthetic/color", 1, false);
+  synthetic_camera_publisher_ = nh_private_.advertise<sensor_msgs::CameraInfo>(
+      "synthetic/camera_info", 1, false);
 }
 
 void NvbloxNode::advertiseServices() {
@@ -284,6 +293,13 @@ void NvbloxNode::setupTimers() {
                     _1),
         &processing_queue_);
     clear_outside_radius_timer_ = nh_private_.createTimer(timer_options);
+  }
+  if (synthetic_publication_rate_hz_ > 0.0f) {
+    ros::TimerOptions timer_options(
+        ros::Duration(1.0 / synthetic_publication_rate_hz_),
+        boost::bind(&NvbloxNode::publishSyntheticDepthAndRGBImage, this, _1),
+        &processing_queue_);
+    publish_synthetic_timer_ = nh_private_.createTimer(timer_options);
   }
 }
 
@@ -714,12 +730,12 @@ void NvbloxNode::publishOccupancyPointcloud(const ros::TimerEvent& /*event*/) {
 }
 
 void NvbloxNode::publishSyntheticDepthAndRGBImage(
-    const ros::TimerEvent& /*event*/) {
+    const ros::TimerEvent& event) {
   timing::Timer ros_total_timer("ros/total");
   timing::Timer synthetic_timer("ros/synthetic");
 
   if (synthetic_depth_publisher_.getNumSubscribers() > 0 ||
-      synthetic_rgb_publisher_.getNumSubscribers() > 0) {
+      synthetic_color_publisher_.getNumSubscribers() > 0) {
     // TODO: store all of this stuff.
     // Create a synthetic camera.
     constexpr float fu = 300;
@@ -743,9 +759,10 @@ void NvbloxNode::publishSyntheticDepthAndRGBImage(
     // TODO: don't hardcode this
     Transform T_L_C = Transform::Identity();
     // Move the camera 2 meters up.
-    Eigen::Vector3f translation(0.0f, 0.0f, 2.0f);
+    Eigen::Vector3f translation(1.0f, 0.0f, 0.0f);
     // Make the camera point down.
-    Eigen::Quaternionf rotation(Eigen::AngleAxisf(0, -Vector3f::UnitZ()));
+    Eigen::Quaternionf rotation(
+        Eigen::AngleAxisf(M_PI / 2.0f, Vector3f::UnitZ()));
     T_L_C.prerotate(rotation);
     T_L_C.pretranslate(translation);
 
@@ -756,6 +773,20 @@ void NvbloxNode::publishSyntheticDepthAndRGBImage(
         mapper_->tsdf_integrator().get_truncation_distance_m(
             mapper_->voxel_size_m()),
         &depth_image_view, &color_image_view, MemoryType::kDevice);
+
+    // Convert to image messages.
+    sensor_msgs::Image depth_image_msg, color_image_msg;
+    conversions::imageMessageFromDepthImage(depth_image, global_frame_,
+                                            &depth_image_msg);
+    conversions::imageMessageFromColorImage(color_image, global_frame_,
+                                            &color_image_msg);
+
+    // Populate the headers
+    depth_image_msg.header.stamp = event.current_real;
+    color_image_msg.header.stamp = event.current_real;
+
+    synthetic_depth_publisher_.publish(depth_image_msg);
+    synthetic_color_publisher_.publish(color_image_msg);
   }
 }
 
