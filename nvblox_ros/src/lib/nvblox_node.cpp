@@ -121,7 +121,7 @@ void NvbloxNode::getParameters() {
   nh_private_.param("esdf_2d_max_height", esdf_2d_max_height_,
                     esdf_2d_max_height_);
   nh_private_.param("lidar_width", lidar_width_, lidar_width_);
-  nh_private_.param("lidar_height", lidar_width_, lidar_width_);
+  nh_private_.param("lidar_height", lidar_height_, lidar_height_);
   nh_private_.param("lidar_vertical_fov_deg", lidar_vertical_fov_deg_,
                     lidar_vertical_fov_deg_);
   nh_private_.param("slice_visualization_attachment_frame_id",
